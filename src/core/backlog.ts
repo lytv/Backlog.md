@@ -37,8 +37,10 @@ function ensureDescriptionHeader(body: string): string {
 export class Core {
 	public fs: FileSystem;
 	public git: GitOperations;
+	public projectPath: string;
 
 	constructor(projectRoot: string) {
+		this.projectPath = projectRoot;
 		this.fs = new FileSystem(projectRoot);
 		this.git = new GitOperations(projectRoot);
 		// Note: Config is loaded lazily when needed since constructor can't be async

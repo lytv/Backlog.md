@@ -101,6 +101,9 @@ export class BacklogServer {
 					"/api/statistics": {
 						GET: async () => await this.handleGetStatistics(),
 					},
+					"/api/files": {
+						GET: async (req) => await this.handleListFiles(req),
+					},
 				},
 				fetch: async (req, server) => {
 					return await this.handleRequest(req, server);
@@ -573,6 +576,75 @@ export class BacklogServer {
 		} catch (error) {
 			console.error("Error getting statistics:", error);
 			return Response.json({ error: "Failed to get statistics" }, { status: 500 });
+		}
+	}
+
+	private async handleListFiles(req: Request): Promise<Response> {
+		try {
+			const url = new URL(req.url);
+			const path = url.searchParams.get("path") || "";
+
+			const fs = await import("fs/promises");
+			const pathModule = await import("path");
+
+			const fullPath = pathModule.resolve(this.core.projectPath, path);
+
+			// Security check - ensure we don't go outside project directory
+			if (!fullPath.startsWith(pathModule.resolve(this.core.projectPath))) {
+				return Response.json({ error: "Access denied" }, { status: 403 });
+			}
+
+			try {
+				const stats = await fs.stat(fullPath);
+
+				if (stats.isDirectory()) {
+					const entries = await fs.readdir(fullPath, { withFileTypes: true });
+
+					// Filter out hidden files and common ignore patterns
+					const filteredEntries = entries.filter((entry) => {
+						const name = entry.name;
+						return (
+							!name.startsWith(".") &&
+							name !== "node_modules" &&
+							name !== "dist" &&
+							name !== "build" &&
+							name !== "__pycache__"
+						);
+					});
+
+					const items = await Promise.all(
+						filteredEntries.map(async (entry) => {
+							const itemPath = pathModule.join(fullPath, entry.name);
+							const relativePath = pathModule.relative(this.core.projectPath, itemPath);
+
+							return {
+								name: entry.name,
+								path: relativePath,
+								type: entry.isDirectory() ? "directory" : "file",
+								isDirectory: entry.isDirectory(),
+							};
+						}),
+					);
+
+					// Sort directories first, then files, both alphabetically
+					items.sort((a, b) => {
+						if (a.isDirectory && !b.isDirectory) return -1;
+						if (!a.isDirectory && b.isDirectory) return 1;
+						return a.name.localeCompare(b.name);
+					});
+
+					return Response.json({
+						path: path,
+						items: items,
+					});
+				}
+				return Response.json({ error: "Path is not a directory" }, { status: 400 });
+			} catch (error) {
+				return Response.json({ error: "Path not found" }, { status: 404 });
+			}
+		} catch (error) {
+			console.error("Error listing files:", error);
+			return Response.json({ error: "Failed to list files" }, { status: 500 });
 		}
 	}
 }

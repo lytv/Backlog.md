@@ -7,6 +7,7 @@ import ErrorBoundary from './ErrorBoundary';
 import { SidebarSkeleton } from './LoadingSpinner';
 import { sanitizeUrlTitle } from '../utils/urlHelpers';
 import { getWebVersion } from '../utils/version';
+import FileExplorer from './FileExplorer';
 
 // Utility functions for ID transformations
 const stripIdPrefix = (id: string): string => {
@@ -171,6 +172,14 @@ const SideNavigation = memo(function SideNavigation({
 		// Auto-collapse if more than 6 decisions
 		return decisions.length > 6;
 	});
+	const [isFileExplorerCollapsed, setIsFileExplorerCollapsed] = useState(() => {
+		const saved = localStorage.getItem('fileExplorerCollapsed');
+		if (saved !== null) {
+			return JSON.parse(saved);
+		}
+		// Default to collapsed
+		return true;
+	});
 	const [version, setVersion] = useState<string>('');
 	const location = useLocation();
 	const navigate = useNavigate();
@@ -202,6 +211,11 @@ const SideNavigation = memo(function SideNavigation({
 	useEffect(() => {
 		localStorage.setItem('decisionsCollapsed', JSON.stringify(isDecisionsCollapsed));
 	}, [isDecisionsCollapsed]);
+
+	// Save file explorer collapse state to localStorage
+	useEffect(() => {
+		localStorage.setItem('fileExplorerCollapsed', JSON.stringify(isFileExplorerCollapsed));
+	}, [isFileExplorerCollapsed]);
 
 	// Auto-collapse when data loads/changes if no saved preference exists
 	useEffect(() => {
@@ -634,6 +648,37 @@ const SideNavigation = memo(function SideNavigation({
 								</div>
 							)}
 						</div>
+
+						{/* Divider before File Explorer */}
+						<div className="mx-4 my-2 border-t border-gray-200 dark:border-gray-700"></div>
+
+						{/* File Explorer Section */}
+						<div className="px-4 py-4">
+							<div className="flex items-center justify-between mb-4">
+								<div className="flex items-center space-x-3">
+									<button
+										onClick={() => setIsFileExplorerCollapsed(!isFileExplorerCollapsed)}
+										className="p-1 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 rounded transition-colors duration-200 cursor-pointer"
+										title={isFileExplorerCollapsed ? "Expand file explorer" : "Collapse file explorer"}
+									>
+										{isFileExplorerCollapsed ? <Icons.ChevronRight /> : <Icons.ChevronDown />}
+									</button>
+									<span className="text-gray-500 dark:text-gray-400">
+										<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-5l-2-2H5a2 2 0 00-2 2z" />
+										</svg>
+									</span>
+									<span className="text-sm font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-400 whitespace-nowrap">File Explorer</span>
+								</div>
+							</div>
+							
+							{/* File Explorer Component */}
+							{!isFileExplorerCollapsed && (
+								<div className="-mx-4">
+									<FileExplorer isCollapsed={false} />
+								</div>
+							)}
+						</div>
 					</>
 				)}
 
@@ -737,6 +782,23 @@ const SideNavigation = memo(function SideNavigation({
 						>
 							<div className="w-6 h-6 flex items-center justify-center">
 								<Icons.Decision />
+							</div>
+						</button>
+						
+						{/* File Explorer in collapsed mode */}
+						<button
+							onClick={() => {
+								setIsCollapsed(false);
+								setIsFileExplorerCollapsed(false);
+							}}
+							data-tooltip-id="sidebar-tooltip"
+							data-tooltip-content="File Explorer"
+							className={`flex items-center justify-center p-3 rounded-md transition-colors duration-200 cursor-pointer w-full text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100`}
+						>
+							<div className="w-6 h-6 flex items-center justify-center">
+								<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-5l-2-2H5a2 2 0 00-2 2z" />
+								</svg>
 							</div>
 						</button>
 					</div>

@@ -297,6 +297,18 @@ export class ApiClient {
 			TaskStatistics & { statusCounts: Record<string, number>; priorityCounts: Record<string, number> }
 		>(`${API_BASE}/statistics`);
 	}
+
+	async fetchFiles(
+		path = "",
+	): Promise<{
+		path: string;
+		items: Array<{ name: string; path: string; type: "file" | "directory"; isDirectory: boolean }>;
+	}> {
+		return this.fetchJson<{
+			path: string;
+			items: Array<{ name: string; path: string; type: "file" | "directory"; isDirectory: boolean }>;
+		}>(`${API_BASE}/files?path=${encodeURIComponent(path)}`);
+	}
 }
 
 export const apiClient = new ApiClient();
