@@ -76,6 +76,18 @@ export class BacklogServer {
 						PUT: async (req) => await this.handleUpdateDoc(req, req.params.id),
 						DELETE: async (req) => await this.handleDeleteDoc(req.params.id),
 					},
+					"/api/sprints": {
+						GET: async () => await this.handleListSprints(),
+						POST: async (req) => await this.handleCreateSprint(req),
+					},
+					"/api/sprint/:id": {
+						GET: async (req) => await this.handleGetSprint(req.params.id),
+					},
+					"/api/sprints/:id": {
+						GET: async (req) => await this.handleGetSprint(req.params.id),
+						PUT: async (req) => await this.handleUpdateSprint(req, req.params.id),
+						DELETE: async (req) => await this.handleDeleteSprint(req.params.id),
+					},
 					"/api/decisions": {
 						GET: async () => await this.handleListDecisions(),
 						POST: async (req) => await this.handleCreateDecision(req),
@@ -376,6 +388,96 @@ export class BacklogServer {
 		} catch (error) {
 			console.error("Error deleting document:", error);
 			return Response.json({ error: "Failed to delete document" }, { status: 500 });
+		}
+	}
+
+	// Sprint handlers
+	private async handleListSprints(): Promise<Response> {
+		try {
+			const sprints = await this.core.filesystem.listSprints();
+			const sprintFiles = sprints.map((sprint) => ({
+				name: `${sprint.title}.md`,
+				id: sprint.id,
+				title: sprint.title,
+				type: sprint.type,
+				createdDate: sprint.createdDate,
+				updatedDate: sprint.updatedDate,
+				lastModified: sprint.updatedDate || sprint.createdDate,
+				tags: sprint.tags || [],
+			}));
+			return Response.json(sprintFiles);
+		} catch (error) {
+			console.error("Error listing sprints:", error);
+			return Response.json([]);
+		}
+	}
+
+	private async handleGetSprint(sprintId: string): Promise<Response> {
+		try {
+			const sprints = await this.core.filesystem.listSprints();
+			const sprint = sprints.find((s) => s.id === sprintId || s.title === sprintId);
+
+			if (!sprint) {
+				return Response.json({ error: "Sprint not found" }, { status: 404 });
+			}
+
+			return Response.json(sprint);
+		} catch (error) {
+			console.error("Error loading sprint:", error);
+			return Response.json({ error: "Sprint not found" }, { status: 404 });
+		}
+	}
+
+	private async handleCreateSprint(req: Request): Promise<Response> {
+		const { filename, content } = await req.json();
+
+		try {
+			const title = filename.replace(".md", "");
+			const sprint = await this.core.createSprintWithId(title, content);
+			return Response.json({ success: true, id: sprint.id }, { status: 201 });
+		} catch (error) {
+			console.error("Error creating sprint:", error);
+			return Response.json({ error: "Failed to create sprint" }, { status: 500 });
+		}
+	}
+
+	private async handleUpdateSprint(req: Request, sprintId: string): Promise<Response> {
+		const content = await req.text();
+
+		try {
+			const sprints = await this.core.filesystem.listSprints();
+			const existingSprint = sprints.find((s) => s.id === sprintId || s.title === sprintId);
+
+			if (!existingSprint) {
+				return Response.json({ error: "Sprint not found" }, { status: 404 });
+			}
+
+			await this.core.updateSprint(existingSprint, content);
+			return Response.json({ success: true });
+		} catch (error) {
+			console.error("Error updating sprint:", error);
+			return Response.json({ error: "Failed to update sprint" }, { status: 500 });
+		}
+	}
+
+	private async handleDeleteSprint(sprintId: string): Promise<Response> {
+		try {
+			const sprints = await this.core.filesystem.listSprints();
+			const existingSprint = sprints.find((s) => s.id === sprintId || s.title === sprintId);
+
+			if (!existingSprint) {
+				return Response.json({ error: "Sprint not found" }, { status: 404 });
+			}
+
+			const success = await this.core.deleteSprint(existingSprint.id);
+			if (!success) {
+				return Response.json({ error: "Failed to delete sprint" }, { status: 500 });
+			}
+
+			return Response.json({ success: true });
+		} catch (error) {
+			console.error("Error deleting sprint:", error);
+			return Response.json({ error: "Failed to delete sprint" }, { status: 500 });
 		}
 	}
 

@@ -2,7 +2,7 @@ import { join } from "node:path";
 import { DEFAULT_DIRECTORIES, DEFAULT_STATUSES, FALLBACK_STATUS } from "../constants/index.ts";
 import { FileSystem } from "../file-system/operations.ts";
 import { GitOperations } from "../git/operations.ts";
-import type { BacklogConfig, Decision, Document, Task } from "../types/index.ts";
+import type { BacklogConfig, Decision, Document, Sprint, Task } from "../types/index.ts";
 import { openInEditor } from "../utils/editor.ts";
 import { getTaskFilename, getTaskPath } from "../utils/task-path.ts";
 import { migrateConfig, needsMigration } from "./config-migration.ts";
@@ -568,6 +568,87 @@ export class Core {
 			return true;
 		} catch (error) {
 			console.error("Error deleting document:", error);
+			return false;
+		}
+	}
+
+	// Sprint operations
+	async createSprint(sprint: Sprint, autoCommit?: boolean): Promise<void> {
+		await this.fs.saveSprint(sprint);
+
+		const config = await this.fs.loadConfig();
+		const shouldAutoCommit = autoCommit ?? config?.autoCommit ?? false;
+
+		if (shouldAutoCommit) {
+			try {
+				await this.git.addAndCommit(`Create sprint: ${sprint.title} (${sprint.id})`);
+			} catch (gitError) {
+				console.warn("Failed to auto-commit sprint creation:", gitError);
+				// Don't fail the operation if git commit fails
+			}
+		}
+	}
+
+	async updateSprint(existingSprint: Sprint, content: string, autoCommit?: boolean): Promise<void> {
+		const updatedSprint = {
+			...existingSprint,
+			body: content,
+			updatedDate: new Date().toISOString().slice(0, 16).replace("T", " "),
+		};
+
+		await this.createSprint(updatedSprint, autoCommit);
+	}
+
+	async createSprintWithId(title: string, content: string, autoCommit?: boolean): Promise<Sprint> {
+		// Import the generateNextSprintId function from CLI
+		const { generateNextSprintId } = await import("../cli.js");
+		const id = await generateNextSprintId(this);
+
+		const sprint: Sprint = {
+			id,
+			title,
+			type: "other" as const,
+			createdDate: new Date().toISOString().slice(0, 16).replace("T", " "),
+			body: content,
+		};
+
+		await this.createSprint(sprint, autoCommit);
+		return sprint;
+	}
+
+	async deleteSprint(sprintId: string, autoCommit?: boolean): Promise<boolean> {
+		try {
+			const config = await this.fs.loadConfig();
+			const shouldAutoCommit = autoCommit ?? config?.autoCommit ?? false;
+
+			// Find the sprint file by scanning the sprints directory
+			const sprintsDir = join(this.projectPath, DEFAULT_DIRECTORIES.BACKLOG, DEFAULT_DIRECTORIES.SPRINTS);
+			
+			// Use glob to find the actual file with the correct name
+			const files = await Array.fromAsync(new Bun.Glob("sprint-*.md").scan({ cwd: sprintsDir }));
+			const normalizedId = sprintId.replace(/^sprint-/, "");
+			const sprintFile = files.find((file) => file.startsWith(`sprint-${normalizedId} -`));
+			
+			if (!sprintFile) {
+				return false;
+			}
+
+			const sprintPath = join(sprintsDir, sprintFile);
+			await this.fs.deleteFile(sprintPath);
+
+			// Auto-commit if enabled
+			if (shouldAutoCommit) {
+				try {
+					await this.git.addAndCommit(`Delete sprint: ${sprintFile} (${sprintId})`);
+				} catch (gitError) {
+					console.warn("Failed to auto-commit sprint deletion:", gitError);
+					// Don't fail the operation if git commit fails
+				}
+			}
+
+			return true;
+		} catch (error) {
+			console.error("Error deleting sprint:", error);
 			return false;
 		}
 	}

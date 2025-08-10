@@ -3,7 +3,7 @@ import { Outlet } from 'react-router-dom';
 import SideNavigation from './SideNavigation';
 import Navigation from './Navigation';
 import { HealthIndicator, HealthSuccessToast } from './HealthIndicator';
-import { type Task, type Document, type Decision } from '../../types';
+import { type Task, type Document, type Decision, type Sprint } from '../../types';
 
 interface LayoutProps {
 	projectName: string;
@@ -11,6 +11,7 @@ interface LayoutProps {
 	onDismissToast: () => void;
 	tasks: Task[];
 	docs: Document[];
+	sprints: Sprint[];
 	decisions: Decision[];
 	isLoading: boolean;
 	onRefreshData: () => Promise<void>;
@@ -22,6 +23,7 @@ export default function Layout({
 	onDismissToast, 
 	tasks, 
 	docs, 
+	sprints, 
 	decisions, 
 	isLoading, 
 	onRefreshData 
@@ -32,6 +34,7 @@ export default function Layout({
 			<SideNavigation 
 				tasks={tasks}
 				docs={docs}
+				sprints={sprints}
 				decisions={decisions}
 				isLoading={isLoading}
 				onRefreshData={onRefreshData}
@@ -39,7 +42,7 @@ export default function Layout({
 			<div className="flex-1 flex flex-col min-h-0">
 				<Navigation projectName={projectName} />
 				<main className="flex-1 overflow-auto">
-					<Outlet context={{ tasks, docs, decisions, isLoading, onRefreshData }} />
+					<Outlet context={{ tasks, docs, sprints, decisions, isLoading, onRefreshData }} />
 				</main>
 			</div>
 			{showSuccessToast && (

@@ -689,6 +689,74 @@ export async function generateNextDocId(core: Core): Promise<string> {
 	return `doc-${nextIdNumber}`;
 }
 
+export async function generateNextSprintId(core: Core): Promise<string> {
+	const config = await core.filesystem.loadConfig();
+	// Load local sprints
+	const sprints = await core.filesystem.listSprints();
+	const allIds: string[] = [];
+
+	try {
+		const backlogDir = DEFAULT_DIRECTORIES.BACKLOG;
+
+		// Skip remote operations if disabled
+		if (config?.remoteOperations === false) {
+			if (process.env.DEBUG) {
+				console.log("Remote operations disabled - generating ID from local sprints only");
+			}
+		} else {
+			await core.gitOps.fetch();
+		}
+
+		const branches = await core.gitOps.listAllBranches();
+
+		// Load files from all branches in parallel
+		const branchFilePromises = branches.map(async (branch) => {
+			const files = await core.gitOps.listFilesInTree(branch, `${backlogDir}/sprints`);
+			return files
+				.map((file) => {
+					const match = file.match(/sprint-(\d+)/);
+					return match ? `sprint-${match[1]}` : null;
+				})
+				.filter((id): id is string => id !== null);
+		});
+
+		const branchResults = await Promise.all(branchFilePromises);
+		for (const branchIds of branchResults) {
+			allIds.push(...branchIds);
+		}
+	} catch (error) {
+		// Suppress errors for offline mode or other git issues
+		if (process.env.DEBUG) {
+			console.error("Could not fetch remote sprint IDs:", error);
+		}
+	}
+
+	// Add local sprint IDs
+	for (const sprint of sprints) {
+		allIds.push(sprint.id);
+	}
+
+	// Find the highest numeric ID
+	let max = 0;
+	for (const id of allIds) {
+		const match = id.match(/^sprint-(\d+)$/);
+		if (match) {
+			const num = Number.parseInt(match[1] || "0", 10);
+			if (num > max) max = num;
+		}
+	}
+
+	const nextIdNumber = max + 1;
+	const padding = config?.zeroPaddedIds;
+
+	if (padding && typeof padding === "number" && padding > 0) {
+		const paddedId = String(nextIdNumber).padStart(padding, "0");
+		return `sprint-${paddedId}`;
+	}
+
+	return `sprint-${nextIdNumber}`;
+}
+
 export async function generateNextDecisionId(core: Core): Promise<string> {
 	const config = await core.filesystem.loadConfig();
 	// Load local decisions

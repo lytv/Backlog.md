@@ -1,5 +1,5 @@
 import type { TaskStatistics } from "../../core/statistics.ts";
-import type { BacklogConfig, Decision, Document, Task, TaskStatus } from "../../types/index.ts";
+import type { BacklogConfig, Decision, Document, Sprint, Task, TaskStatus } from "../../types/index.ts";
 
 const API_BASE = "/api";
 
@@ -245,6 +245,66 @@ export class ApiClient {
 		});
 		if (!response.ok) {
 			throw new Error("Failed to delete document");
+		}
+	}
+
+	async fetchSprints(): Promise<Sprint[]> {
+		const response = await fetch(`${API_BASE}/sprints`);
+		if (!response.ok) {
+			throw new Error("Failed to fetch sprints");
+		}
+		return response.json();
+	}
+
+	async fetchSprint(filename: string): Promise<Sprint> {
+		const response = await fetch(`${API_BASE}/sprints/${encodeURIComponent(filename)}`);
+		if (!response.ok) {
+			throw new Error("Failed to fetch sprint");
+		}
+		return response.json();
+	}
+
+	async fetchSprintData(id: string): Promise<Sprint> {
+		const response = await fetch(`${API_BASE}/sprint/${encodeURIComponent(id)}`);
+		if (!response.ok) {
+			throw new Error("Failed to fetch sprint");
+		}
+		return response.json();
+	}
+
+	async updateSprint(filename: string, content: string): Promise<void> {
+		const response = await fetch(`${API_BASE}/sprints/${encodeURIComponent(filename)}`, {
+			method: "PUT",
+			headers: {
+				"Content-Type": "text/plain",
+			},
+			body: content,
+		});
+		if (!response.ok) {
+			throw new Error("Failed to update sprint");
+		}
+	}
+
+	async createSprint(filename: string, content: string): Promise<{ id: string }> {
+		const response = await fetch(`${API_BASE}/sprints`, {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify({ filename, content }),
+		});
+		if (!response.ok) {
+			throw new Error("Failed to create sprint");
+		}
+		return response.json();
+	}
+
+	async deleteSprint(id: string): Promise<void> {
+		const response = await fetch(`${API_BASE}/sprints/${encodeURIComponent(id)}`, {
+			method: "DELETE",
+		});
+		if (!response.ok) {
+			throw new Error("Failed to delete sprint");
 		}
 	}
 

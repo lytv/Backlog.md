@@ -1,5 +1,5 @@
 import matter from "gray-matter";
-import type { Decision, Document, Task } from "../types/index.ts";
+import type { Decision, Document, Sprint, Task } from "../types/index.ts";
 
 export function serializeTask(task: Task): string {
 	const frontmatter = {
@@ -54,6 +54,19 @@ export function serializeDocument(document: Document): string {
 	};
 
 	return matter.stringify(document.body, frontmatter);
+}
+
+export function serializeSprint(sprint: Sprint): string {
+	const frontmatter = {
+		id: sprint.id,
+		title: sprint.title,
+		type: sprint.type,
+		created_date: sprint.createdDate,
+		...(sprint.updatedDate && { updated_date: sprint.updatedDate }),
+		...(sprint.tags && sprint.tags.length > 0 && { tags: sprint.tags }),
+	};
+
+	return matter.stringify(sprint.body, frontmatter);
 }
 
 export function updateTaskAcceptanceCriteria(content: string, criteria: string[]): string {

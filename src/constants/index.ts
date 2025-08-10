@@ -18,6 +18,8 @@ export const DEFAULT_DIRECTORIES = {
 	ARCHIVE_DRAFTS: "archive/drafts",
 	/** Documentation directory */
 	DOCS: "docs",
+	/** Sprints directory */
+	SPRINTS: "sprints",
 	/** Decision logs directory */
 	DECISIONS: "decisions",
 } as const;

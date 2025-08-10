@@ -49,6 +49,20 @@ export interface Document {
 	lastModified?: string;
 }
 
+export interface Sprint {
+	id: string;
+	title: string;
+	type: "planning" | "active" | "completed" | "other";
+	createdDate: string;
+	updatedDate?: string;
+	body: string; // Raw markdown content without frontmatter
+	tags?: string[];
+	// Web UI specific fields
+	name?: string;
+	path?: string;
+	lastModified?: string;
+}
+
 export interface BacklogConfig {
 	projectName: string;
 	defaultAssignee?: string;

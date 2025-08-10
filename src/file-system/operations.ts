@@ -2,9 +2,9 @@ import { mkdir, rename, unlink } from "node:fs/promises";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import { DEFAULT_DIRECTORIES, DEFAULT_FILES, DEFAULT_STATUSES } from "../constants/index.ts";
-import { parseDecision, parseDocument, parseTask } from "../markdown/parser.ts";
-import { serializeDecision, serializeDocument, serializeTask } from "../markdown/serializer.ts";
-import type { BacklogConfig, Decision, Document, Task } from "../types/index.ts";
+import { parseDecision, parseDocument, parseSprint, parseTask } from "../markdown/parser.ts";
+import { serializeDecision, serializeDocument, serializeSprint, serializeTask } from "../markdown/serializer.ts";
+import type { BacklogConfig, Decision, Document, Sprint, Task } from "../types/index.ts";
 import { getTaskFilename, getTaskPath } from "../utils/task-path.ts";
 import { sortByTaskId } from "../utils/task-sorting.ts";
 
@@ -120,6 +120,11 @@ export class FileSystem {
 		return join(backlogDir, DEFAULT_DIRECTORIES.DOCS);
 	}
 
+	private async getSprintsDir(): Promise<string> {
+		const backlogDir = await this.getBacklogDir();
+		return join(backlogDir, DEFAULT_DIRECTORIES.SPRINTS);
+	}
+
 	private async getCompletedDir(): Promise<string> {
 		const backlogDir = await this.getBacklogDir();
 		return join(backlogDir, DEFAULT_DIRECTORIES.COMPLETED);
@@ -135,6 +140,7 @@ export class FileSystem {
 			join(backlogDir, DEFAULT_DIRECTORIES.ARCHIVE_TASKS),
 			join(backlogDir, DEFAULT_DIRECTORIES.ARCHIVE_DRAFTS),
 			join(backlogDir, DEFAULT_DIRECTORIES.DOCS),
+			join(backlogDir, DEFAULT_DIRECTORIES.SPRINTS),
 			join(backlogDir, DEFAULT_DIRECTORIES.DECISIONS),
 		];
 
@@ -477,6 +483,62 @@ export class FileSystem {
 			return docs.sort((a, b) => a.title.localeCompare(b.title));
 		} catch {
 			return [];
+		}
+	}
+
+	// Sprint operations
+	async saveSprint(sprint: Sprint, subPath = ""): Promise<void> {
+		const sprintsDir = await this.getSprintsDir();
+		const dir = join(sprintsDir, subPath);
+		// Normalize ID - remove "sprint-" prefix if present
+		const normalizedId = sprint.id.replace(/^sprint-/, "");
+		const filename = `sprint-${normalizedId} - ${this.sanitizeFilename(sprint.title)}.md`;
+		const filePath = join(dir, filename);
+
+		await this.ensureDirectoryExists(dir);
+		const content = serializeSprint(sprint);
+		await Bun.write(filePath, content);
+	}
+
+	async listSprints(): Promise<Sprint[]> {
+		try {
+			const sprintsDir = await this.getSprintsDir();
+			const sprintFiles = await Array.fromAsync(new Bun.Glob("*.md").scan({ cwd: sprintsDir }));
+			const sprints: Sprint[] = [];
+			for (const file of sprintFiles) {
+				// Filter out README files as they're just instruction files
+				if (file.toLowerCase().match(/^readme\.md$/i)) {
+					continue;
+				}
+				const filepath = join(sprintsDir, file);
+				const content = await Bun.file(filepath).text();
+				sprints.push(parseSprint(content));
+			}
+			return sprints.sort((a, b) => a.title.localeCompare(b.title));
+		} catch {
+			return [];
+		}
+	}
+
+	async loadSprint(sprintId: string): Promise<Sprint | null> {
+		try {
+			const sprintsDir = await this.getSprintsDir();
+			const sprintFiles = await Array.fromAsync(new Bun.Glob("*.md").scan({ cwd: sprintsDir }));
+
+			// Normalize ID - remove "sprint-" prefix if present
+			const normalizedId = sprintId.replace(/^sprint-/, "");
+			const sprintFile = sprintFiles.find((file) => file.startsWith(`sprint-${normalizedId} -`));
+
+			if (!sprintFile) {
+				return null;
+			}
+
+			const filePath = join(sprintsDir, sprintFile);
+			const content = await Bun.file(filePath).text();
+			return parseSprint(content);
+		} catch (error) {
+			console.error("Error loading sprint:", error);
+			return null;
 		}
 	}
 

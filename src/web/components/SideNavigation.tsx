@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback, memo } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { Tooltip } from 'react-tooltip';
 import Fuse from 'fuse.js';
-import { type Task, type Document, type Decision } from '../../types';
+import { type Task, type Document, type Decision, type Sprint } from '../../types';
 import ErrorBoundary from './ErrorBoundary';
 import { SidebarSkeleton } from './LoadingSpinner';
 import { sanitizeUrlTitle } from '../utils/urlHelpers';
@@ -75,6 +75,16 @@ const Icons = {
 			<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
 		</svg>
 	),
+	Sprint: () => (
+		<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+			<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+		</svg>
+	),
+	SprintPage: () => (
+		<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+			<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+		</svg>
+	),
 	Decision: () => (
 		<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 			<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
@@ -135,6 +145,7 @@ const Icons = {
 interface SideNavigationProps {
 	tasks: Task[];
 	docs: Document[];
+	sprints: Sprint[];
 	decisions: Decision[];
 	isLoading: boolean;
 	error?: Error | null;
@@ -145,6 +156,7 @@ interface SideNavigationProps {
 const SideNavigation = memo(function SideNavigation({ 
 	tasks, 
 	docs, 
+	sprints, 
 	decisions, 
 	isLoading, 
 	error, 
@@ -163,6 +175,14 @@ const SideNavigation = memo(function SideNavigation({
 		}
 		// Auto-collapse if more than 6 documents
 		return docs.length > 6;
+	});
+	const [isSprintsCollapsed, setIsSprintsCollapsed] = useState(() => {
+		const saved = localStorage.getItem('sprintsCollapsed');
+		if (saved !== null) {
+			return JSON.parse(saved);
+		}
+		// Auto-collapse if more than 6 sprints
+		return sprints.length > 6;
 	});
 	const [isDecisionsCollapsed, setIsDecisionsCollapsed] = useState(() => {
 		const saved = localStorage.getItem('decisionsCollapsed');
@@ -189,6 +209,10 @@ const SideNavigation = memo(function SideNavigation({
 		navigate('/documentation/new');
 	}, [navigate]);
 
+	const handleCreateSprint = useCallback(() => {
+		navigate('/sprints/new');
+	}, [navigate]);
+
 	useCallback(() => {
 		navigate('/decisions/new');
 	}, [navigate]);
@@ -207,6 +231,11 @@ const SideNavigation = memo(function SideNavigation({
 		localStorage.setItem('docsCollapsed', JSON.stringify(isDocsCollapsed));
 	}, [isDocsCollapsed]);
 
+	// Save sprints collapse state to localStorage
+	useEffect(() => {
+		localStorage.setItem('sprintsCollapsed', JSON.stringify(isSprintsCollapsed));
+	}, [isSprintsCollapsed]);
+
 	// Save decisions collapse state to localStorage
 	useEffect(() => {
 		localStorage.setItem('decisionsCollapsed', JSON.stringify(isDecisionsCollapsed));
@@ -224,6 +253,13 @@ const SideNavigation = memo(function SideNavigation({
 			setIsDocsCollapsed(true);
 		}
 	}, [docs.length]);
+
+	useEffect(() => {
+		const savedSprintsCollapsed = localStorage.getItem('sprintsCollapsed');
+		if (savedSprintsCollapsed === null && sprints.length > 6) {
+			setIsSprintsCollapsed(true);
+		}
+	}, [sprints.length]);
 
 	useEffect(() => {
 		const savedDecisionsCollapsed = localStorage.getItem('decisionsCollapsed');
@@ -262,6 +298,7 @@ const SideNavigation = memo(function SideNavigation({
 	}, [isCollapsed, searchInputRef]);
 
 	location.pathname.startsWith('/documentation');
+	location.pathname.startsWith('/sprints');
 	location.pathname.startsWith('/decisions');
 
 
@@ -273,6 +310,12 @@ const SideNavigation = memo(function SideNavigation({
 				type: 'doc' as const,
 				searchableTitle: doc.title,
 				searchableContent: doc.body || ''
+			})),
+			...sprints.map(sprint => ({
+				...sprint,
+				type: 'sprint' as const,
+				searchableTitle: sprint.title,
+				searchableContent: sprint.body || ''
 			})),
 			...decisions.map(decision => ({
 				...decision,
@@ -302,7 +345,7 @@ const SideNavigation = memo(function SideNavigation({
 			distance: 100,
 			minMatchCharLength: 2,
 		});
-	}, [docs, decisions, tasks]);
+	}, [docs, sprints, decisions, tasks]);
 
 	// Perform unified search or show filtered results
 	const searchResults = useMemo(() => {
@@ -323,6 +366,7 @@ const SideNavigation = memo(function SideNavigation({
 		
 		return {
 			docs: sortedResults.filter(r => r.item.type === 'doc').map(r => r.item as unknown as Document),
+			sprints: sortedResults.filter(r => r.item.type === 'sprint').map(r => r.item as unknown as Sprint),
 			decisions: sortedResults.filter(r => r.item.type === 'decision').map(r => r.item as Decision),
 			tasks: sortedResults.filter(r => r.item.type === 'task').map(r => r.item as Task),
 			unified: sortedResults.slice(0, 5) // Show only top 5 unified results
@@ -331,6 +375,7 @@ const SideNavigation = memo(function SideNavigation({
 
 	// Always show full lists in their sections, search results are separate
 	const filteredDocs = docs;
+	const filteredSprints = sprints;
 	const filteredDecisions = decisions;
 
 	const toggleCollapse = useCallback(() => {
@@ -400,6 +445,7 @@ const SideNavigation = memo(function SideNavigation({
 							const item = result.item;
 							const getResultLink = () => {
 								if (item.type === 'doc') return `/documentation/${stripIdPrefix(item.id)}/${sanitizeUrlTitle(item.title)}`;
+								if (item.type === 'sprint') return `/sprints/${stripIdPrefix(item.id)}/${sanitizeUrlTitle(item.title)}`;
 								if (item.type === 'decision') return `/decisions/${stripIdPrefix(item.id)}/${sanitizeUrlTitle(item.title)}`;
 								if (item.type === 'task') return `/?highlight=${encodeURIComponent(item.id)}`; // Tasks are shown on the board page with highlight
 								return '/';
@@ -407,6 +453,7 @@ const SideNavigation = memo(function SideNavigation({
 							
 							const getResultIcon = () => {
 								if (item.type === 'doc') return <span className="text-green-500"><Icons.DocumentPage /></span>;
+								if (item.type === 'sprint') return <span className="text-blue-500"><Icons.SprintPage /></span>;
 								if (item.type === 'decision') return <span className="text-stone-500"><Icons.DecisionPage /></span>;
 								return <span className="text-purple-500"><Icons.Tasks /></span>;
 							};
@@ -534,7 +581,63 @@ const SideNavigation = memo(function SideNavigation({
 
 				{!isCollapsed && !isLoading && (
 					<>
-						{/* Divider between Tasks and Documents */}
+						{/* Divider between Tasks and Sprints */}
+						<div className="mx-4 my-2 border-t border-gray-200 dark:border-gray-700"></div>
+						
+						{/* Sprints Section */}
+						<div className="px-4 py-4">
+							<div className="flex items-center justify-between mb-4">
+								<div className="flex items-center space-x-3">
+									<button
+										onClick={() => setIsSprintsCollapsed(!isSprintsCollapsed)}
+										className="p-1 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 rounded transition-colors duration-200 cursor-pointer"
+										title={isSprintsCollapsed ? "Expand sprints" : "Collapse sprints"}
+									>
+										{isSprintsCollapsed ? <Icons.ChevronRight /> : <Icons.ChevronDown />}
+									</button>
+									<span className="text-gray-500 dark:text-gray-400"><Icons.Sprint /></span>
+									<span className="text-sm font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-400 whitespace-nowrap">Sprints ({sprints.length})</span>
+								</div>
+								<button
+									onClick={handleCreateSprint}
+									className="p-1 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors duration-200 cursor-pointer"
+									title="Create new sprint"
+								>
+									<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+										<circle cx="12" cy="12" r="10" />
+									</svg>
+								</button>
+							</div>
+							
+							{/* Sprint List */}
+							{!isSprintsCollapsed && (
+								<div className="space-y-1">
+									{filteredSprints.length === 0 ? (
+										<p className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">No sprints</p>
+									) : (
+										filteredSprints.map((sprint) => (
+											<NavLink
+												key={sprint.id}
+												to={`/sprints/${stripIdPrefix(sprint.id)}/${sanitizeUrlTitle(sprint.title)}`}
+												className={({ isActive }) =>
+													`flex items-center space-x-3 px-3 py-2 text-sm rounded-lg transition-colors duration-200 ${
+														isActive
+															? 'bg-blue-50 dark:bg-blue-600/20 text-blue-600 dark:text-blue-400 font-medium'
+															: 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100'
+													}`
+												}
+											>
+												<span className="text-gray-400 dark:text-gray-500"><Icons.SprintPage /></span>
+												<span className="truncate">{sprint.title}</span>
+											</NavLink>
+										))
+									)}
+								</div>
+							)}
+						</div>
+
+						{/* Divider between Sprints and Documents */}
 						<div className="mx-4 my-2 border-t border-gray-200 dark:border-gray-700"></div>
 						
 						{/* Documents Section */}

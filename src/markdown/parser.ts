@@ -1,5 +1,5 @@
 import matter from "gray-matter";
-import type { Decision, Document, ParsedMarkdown, Task } from "../types/index.ts";
+import type { Decision, Document, ParsedMarkdown, Sprint, Task } from "../types/index.ts";
 
 function preprocessFrontmatter(frontmatter: string): string {
 	return frontmatter
@@ -160,6 +160,20 @@ export function parseDocument(content: string): Document {
 		id: String(frontmatter.id || ""),
 		title: String(frontmatter.title || ""),
 		type: String(frontmatter.type || "other") as Document["type"],
+		createdDate: normalizeDate(frontmatter.created_date),
+		updatedDate: frontmatter.updated_date ? normalizeDate(frontmatter.updated_date) : undefined,
+		body: body,
+		tags: Array.isArray(frontmatter.tags) ? frontmatter.tags.map(String) : undefined,
+	};
+}
+
+export function parseSprint(content: string): Sprint {
+	const { frontmatter, content: body } = parseMarkdown(content);
+
+	return {
+		id: String(frontmatter.id || ""),
+		title: String(frontmatter.title || ""),
+		type: String(frontmatter.type || "other") as Sprint["type"],
 		createdDate: normalizeDate(frontmatter.created_date),
 		updatedDate: frontmatter.updated_date ? normalizeDate(frontmatter.updated_date) : undefined,
 		body: body,

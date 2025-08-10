@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Layout from './components/Layout';
 import BoardPage from './components/BoardPage';
 import DocumentationDetail from './components/DocumentationDetail';
+import SprintDetail from './components/SprintDetail';
 import DecisionDetail from './components/DecisionDetail';
 import TaskList from './components/TaskList';
 import DraftsList from './components/DraftsList';
@@ -12,7 +13,7 @@ import Modal from './components/Modal';
 import TaskForm from './components/TaskForm';
 import { SuccessToast } from './components/SuccessToast';
 import { ThemeProvider } from './contexts/ThemeContext';
-import { type Task, type Document, type Decision } from '../types';
+import { type Task, type Document, type Decision, type Sprint } from '../types';
 import { apiClient } from './lib/api';
 import { useHealthCheckContext } from './contexts/HealthCheckContext';
 import { getWebVersion } from './utils/version';
@@ -30,6 +31,7 @@ function App() {
   // Centralized data state
   const [tasks, setTasks] = useState<Task[]>([]);
   const [docs, setDocs] = useState<Document[]>([]);
+  const [sprints, setSprints] = useState<Sprint[]>([]);
   const [decisions, setDecisions] = useState<Decision[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
@@ -50,11 +52,12 @@ function App() {
     const loadData = async () => {
       try {
         setIsLoading(true);
-        const [statusesData, configData, tasksData, docsData, decisionsData] = await Promise.all([
+        const [statusesData, configData, tasksData, docsData, sprintsData, decisionsData] = await Promise.all([
           apiClient.fetchStatuses(),
           apiClient.fetchConfig(),
           apiClient.fetchTasks(),
           apiClient.fetchDocs(),
+          apiClient.fetchSprints(),
           apiClient.fetchDecisions()
         ]);
         
@@ -62,6 +65,7 @@ function App() {
         setProjectName(configData.projectName);
         setTasks(tasksData);
         setDocs(docsData);
+        setSprints(sprintsData);
         setDecisions(decisionsData);
       } catch (error) {
         console.error('Failed to load data:', error);
@@ -78,14 +82,16 @@ function App() {
       // Connection restored, reload data
       const loadData = async () => {
         try {
-          const [tasksData, docsData, decisionsData] = await Promise.all([
+          const [tasksData, docsData, sprintsData, decisionsData] = await Promise.all([
             apiClient.fetchTasks(),
             apiClient.fetchDocs(),
+            apiClient.fetchSprints(),
             apiClient.fetchDecisions()
           ]);
           
           setTasks(tasksData);
           setDocs(docsData);
+          setSprints(sprintsData);
           setDecisions(decisionsData);
         } catch (error) {
           console.error('Failed to reload data:', error);
@@ -154,14 +160,16 @@ function App() {
 
   const refreshData = async () => {
     try {
-      const [tasksData, docsData, decisionsData] = await Promise.all([
+      const [tasksData, docsData, sprintsData, decisionsData] = await Promise.all([
         apiClient.fetchTasks(),
         apiClient.fetchDocs(),
+        apiClient.fetchSprints(),
         apiClient.fetchDecisions()
       ]);
       
       setTasks(tasksData);
       setDocs(docsData);
+      setSprints(sprintsData);
       setDecisions(decisionsData);
     } catch (error) {
       console.error('Failed to refresh data:', error);
@@ -223,6 +231,7 @@ function App() {
                 onDismissToast={() => setShowSuccessToast(false)}
                 tasks={tasks}
                 docs={docs}
+                sprints={sprints}
                 decisions={decisions}
                 isLoading={isLoading}
                 onRefreshData={refreshData}
@@ -235,6 +244,9 @@ function App() {
             <Route path="documentation" element={<DocumentationDetail docs={docs} onRefreshData={refreshData} />} />
             <Route path="documentation/:id" element={<DocumentationDetail docs={docs} onRefreshData={refreshData} />} />
             <Route path="documentation/:id/:title" element={<DocumentationDetail docs={docs} onRefreshData={refreshData} />} />
+            <Route path="sprints" element={<SprintDetail sprints={sprints} onRefreshData={refreshData} />} />
+            <Route path="sprints/:id" element={<SprintDetail sprints={sprints} onRefreshData={refreshData} />} />
+            <Route path="sprints/:id/:title" element={<SprintDetail sprints={sprints} onRefreshData={refreshData} />} />
             <Route path="decisions" element={<DecisionDetail decisions={decisions} onRefreshData={refreshData} />} />
             <Route path="decisions/:id" element={<DecisionDetail decisions={decisions} onRefreshData={refreshData} />} />
             <Route path="decisions/:id/:title" element={<DecisionDetail decisions={decisions} onRefreshData={refreshData} />} />
