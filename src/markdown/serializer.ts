@@ -1,5 +1,5 @@
 import matter from "gray-matter";
-import type { Decision, Document, Sprint, Task } from "../types/index.ts";
+import type { Decision, Document, Milestone, Sprint, Task } from "../types/index.ts";
 
 export function serializeTask(task: Task): string {
 	const frontmatter = {
@@ -54,6 +54,19 @@ export function serializeDocument(document: Document): string {
 	};
 
 	return matter.stringify(document.body, frontmatter);
+}
+
+export function serializeMilestone(milestone: Milestone): string {
+	const frontmatter = {
+		id: milestone.id,
+		title: milestone.title,
+		type: milestone.type,
+		created_date: milestone.createdDate,
+		...(milestone.updatedDate && { updated_date: milestone.updatedDate }),
+		...(milestone.tags && milestone.tags.length > 0 && { tags: milestone.tags }),
+	};
+
+	return matter.stringify(milestone.body, frontmatter);
 }
 
 export function serializeSprint(sprint: Sprint): string {

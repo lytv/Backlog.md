@@ -1,5 +1,5 @@
 import type { TaskStatistics } from "../../core/statistics.ts";
-import type { BacklogConfig, Decision, Document, Sprint, Task, TaskStatus } from "../../types/index.ts";
+import type { BacklogConfig, Decision, Document, Milestone, Sprint, Task, TaskStatus } from "../../types/index.ts";
 
 const API_BASE = "/api";
 
@@ -308,6 +308,66 @@ export class ApiClient {
 		}
 	}
 
+	async fetchMilestones(): Promise<Milestone[]> {
+		const response = await fetch(`${API_BASE}/milestones`);
+		if (!response.ok) {
+			throw new Error("Failed to fetch milestones");
+		}
+		return response.json();
+	}
+
+	async fetchMilestone(filename: string): Promise<Milestone> {
+		const response = await fetch(`${API_BASE}/milestones/${encodeURIComponent(filename)}`);
+		if (!response.ok) {
+			throw new Error("Failed to fetch milestone");
+		}
+		return response.json();
+	}
+
+	async fetchMilestoneData(id: string): Promise<Milestone> {
+		const response = await fetch(`${API_BASE}/milestone/${encodeURIComponent(id)}`);
+		if (!response.ok) {
+			throw new Error("Failed to fetch milestone");
+		}
+		return response.json();
+	}
+
+	async updateMilestone(filename: string, content: string): Promise<void> {
+		const response = await fetch(`${API_BASE}/milestones/${encodeURIComponent(filename)}`, {
+			method: "PUT",
+			headers: {
+				"Content-Type": "text/plain",
+			},
+			body: content,
+		});
+		if (!response.ok) {
+			throw new Error("Failed to update milestone");
+		}
+	}
+
+	async createMilestone(filename: string, content: string): Promise<{ id: string }> {
+		const response = await fetch(`${API_BASE}/milestones`, {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify({ filename, content }),
+		});
+		if (!response.ok) {
+			throw new Error("Failed to create milestone");
+		}
+		return response.json();
+	}
+
+	async deleteMilestone(id: string): Promise<void> {
+		const response = await fetch(`${API_BASE}/milestones/${encodeURIComponent(id)}`, {
+			method: "DELETE",
+		});
+		if (!response.ok) {
+			throw new Error("Failed to delete milestone");
+		}
+	}
+
 	async fetchDecisions(): Promise<Decision[]> {
 		const response = await fetch(`${API_BASE}/decisions`);
 		if (!response.ok) {
@@ -367,9 +427,7 @@ export class ApiClient {
 		>(`${API_BASE}/statistics`);
 	}
 
-	async fetchFiles(
-		path = "",
-	): Promise<{
+	async fetchFiles(path = ""): Promise<{
 		path: string;
 		items: Array<{ name: string; path: string; type: "file" | "directory"; isDirectory: boolean }>;
 	}> {

@@ -689,6 +689,74 @@ export async function generateNextDocId(core: Core): Promise<string> {
 	return `doc-${nextIdNumber}`;
 }
 
+export async function generateNextMilestoneId(core: Core): Promise<string> {
+	const config = await core.filesystem.loadConfig();
+	// Load local milestones
+	const milestones = await core.filesystem.listMilestones();
+	const allIds: string[] = [];
+
+	try {
+		const backlogDir = DEFAULT_DIRECTORIES.BACKLOG;
+
+		// Skip remote operations if disabled
+		if (config?.remoteOperations === false) {
+			if (process.env.DEBUG) {
+				console.log("Remote operations disabled - generating ID from local milestones only");
+			}
+		} else {
+			await core.gitOps.fetch();
+		}
+
+		const branches = await core.gitOps.listAllBranches();
+
+		// Load files from all branches in parallel
+		const branchFilePromises = branches.map(async (branch) => {
+			const files = await core.gitOps.listFilesInTree(branch, `${backlogDir}/milestones`);
+			return files
+				.map((file) => {
+					const match = file.match(/milestone-(\d+)/);
+					return match ? `milestone-${match[1]}` : null;
+				})
+				.filter((id): id is string => id !== null);
+		});
+
+		const branchResults = await Promise.all(branchFilePromises);
+		for (const branchIds of branchResults) {
+			allIds.push(...branchIds);
+		}
+	} catch (error) {
+		// Suppress errors for offline mode or other git issues
+		if (process.env.DEBUG) {
+			console.error("Could not fetch remote milestone IDs:", error);
+		}
+	}
+
+	// Add local milestone IDs
+	for (const milestone of milestones) {
+		allIds.push(milestone.id);
+	}
+
+	// Find the highest numeric ID
+	let max = 0;
+	for (const id of allIds) {
+		const match = id.match(/^milestone-(\d+)$/);
+		if (match) {
+			const num = Number.parseInt(match[1] || "0", 10);
+			if (num > max) max = num;
+		}
+	}
+
+	const nextIdNumber = max + 1;
+	const padding = config?.zeroPaddedIds;
+
+	if (padding && typeof padding === "number" && padding > 0) {
+		const paddedId = String(nextIdNumber).padStart(padding, "0");
+		return `milestone-${paddedId}`;
+	}
+
+	return `milestone-${nextIdNumber}`;
+}
+
 export async function generateNextSprintId(core: Core): Promise<string> {
 	const config = await core.filesystem.loadConfig();
 	// Load local sprints

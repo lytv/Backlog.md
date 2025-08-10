@@ -2,7 +2,8 @@ import { join } from "node:path";
 import { DEFAULT_DIRECTORIES, DEFAULT_STATUSES, FALLBACK_STATUS } from "../constants/index.ts";
 import { FileSystem } from "../file-system/operations.ts";
 import { GitOperations } from "../git/operations.ts";
-import type { BacklogConfig, Decision, Document, Sprint, Task } from "../types/index.ts";
+import { parseMilestone } from "../markdown/parser.ts";
+import type { BacklogConfig, Decision, Document, Milestone, Sprint, Task } from "../types/index.ts";
 import { openInEditor } from "../utils/editor.ts";
 import { getTaskFilename, getTaskPath } from "../utils/task-path.ts";
 import { migrateConfig, needsMigration } from "./config-migration.ts";
@@ -542,12 +543,12 @@ export class Core {
 
 			// Find the document file by scanning the docs directory
 			const docsDir = join(this.projectPath, DEFAULT_DIRECTORIES.BACKLOG, DEFAULT_DIRECTORIES.DOCS);
-			
+
 			// Use glob to find the actual file with the correct name
 			const files = await Array.fromAsync(new Bun.Glob("doc-*.md").scan({ cwd: docsDir }));
 			const normalizedId = docId.replace(/^doc-/, "");
 			const docFile = files.find((file) => file.startsWith(`doc-${normalizedId} -`));
-			
+
 			if (!docFile) {
 				return false;
 			}
@@ -558,7 +559,8 @@ export class Core {
 			// Auto-commit if enabled
 			if (shouldAutoCommit) {
 				try {
-					await this.git.addAndCommit(`Delete document: ${docFile} (${docId})`);
+					await this.git.addFile(docPath);
+					await this.git.commitChanges(`Delete document: ${docFile} (${docId}`);
 				} catch (gitError) {
 					console.warn("Failed to auto-commit document deletion:", gitError);
 					// Don't fail the operation if git commit fails
@@ -572,6 +574,119 @@ export class Core {
 		}
 	}
 
+	// Milestone operations
+	async createMilestone(milestone: Milestone, autoCommit?: boolean): Promise<void> {
+		await this.fs.saveMilestone(milestone);
+
+		const config = await this.fs.loadConfig();
+		const shouldAutoCommit = autoCommit ?? config?.autoCommit ?? false;
+
+		if (shouldAutoCommit) {
+			try {
+				// Get the milestone file path
+				const milestonesDir = join(this.projectPath, DEFAULT_DIRECTORIES.BACKLOG, DEFAULT_DIRECTORIES.MILESTONES);
+				const normalizedId = milestone.id.replace(/^milestone-/, "");
+				const filename = `milestone-${normalizedId} - ${milestone.title.replace(/[^a-zA-Z0-9-_ ]/g, "")}.md`;
+				const milestonePath = join(milestonesDir, filename);
+
+				await this.git.addFile(milestonePath);
+				await this.git.commitChanges(`Create milestone: ${milestone.title} (${milestone.id}`);
+			} catch (gitError) {
+				console.warn("Failed to auto-commit milestone creation:", gitError);
+				// Don't fail the operation if git commit fails
+			}
+		}
+	}
+
+	async updateMilestone(existingMilestone: Milestone, content: string, autoCommit?: boolean): Promise<void> {
+		const updatedMilestone = {
+			...existingMilestone,
+			body: content,
+			updatedDate: new Date().toISOString().slice(0, 16).replace("T", " "),
+		};
+
+		await this.createMilestone(updatedMilestone, autoCommit);
+	}
+
+	async createMilestoneWithId(title: string, content: string, autoCommit?: boolean): Promise<Milestone> {
+		// Import the generateNextMilestoneId function from CLI
+		const { generateNextMilestoneId } = await import("../cli.js");
+		const id = await generateNextMilestoneId(this);
+
+		const milestone: Milestone = {
+			id,
+			title,
+			type: "other" as const,
+			createdDate: new Date().toISOString().slice(0, 16).replace("T", " "),
+			body: content,
+		};
+
+		await this.createMilestone(milestone, autoCommit);
+		return milestone;
+	}
+
+	async deleteMilestone(milestoneId: string, autoCommit?: boolean): Promise<boolean> {
+		try {
+			const config = await this.fs.loadConfig();
+			const shouldAutoCommit = autoCommit ?? config?.autoCommit ?? false;
+
+			// Find the milestone file by scanning the milestones directory
+			const milestonesDir = join(this.projectPath, DEFAULT_DIRECTORIES.BACKLOG, DEFAULT_DIRECTORIES.MILESTONES);
+
+			// Use glob to find the actual file with the correct name
+			// Support both old (m-X) and new (milestone-XXX) naming patterns
+			const allFiles = await Array.fromAsync(new Bun.Glob("*.md").scan({ cwd: milestonesDir }));
+			const normalizedId = milestoneId.replace(/^milestone-/, "").replace(/^m-/, "");
+
+			// Try to find the file with either naming pattern
+			let milestoneFile = allFiles.find(
+				(file) => file.startsWith(`milestone-${normalizedId} -`) || file.startsWith(`m-${normalizedId} -`),
+			);
+
+			// If not found by ID prefix, try to find by exact ID match in the parsed content
+			if (!milestoneFile) {
+				// Load all milestones and find the one with matching ID
+				const milestones = await this.fs.listMilestones();
+				const targetMilestone = milestones.find((m) => m.id === milestoneId);
+				if (targetMilestone) {
+					// Find the file that contains this milestone
+					for (const file of allFiles) {
+						if (file === "readme.md") continue;
+						const content = await Bun.file(join(milestonesDir, file)).text();
+						const parsed = parseMilestone(content);
+						if (parsed.id === milestoneId) {
+							milestoneFile = file;
+							break;
+						}
+					}
+				}
+			}
+
+			if (!milestoneFile) {
+				return false;
+			}
+
+			const milestonePath = join(milestonesDir, milestoneFile);
+			await this.fs.deleteFile(milestonePath);
+
+			// Auto-commit if enabled
+			if (shouldAutoCommit) {
+				try {
+					await this.git.addFile(milestonePath);
+					await this.git.commitChanges(`Delete milestone: ${milestoneFile} (${milestoneId}`);
+				} catch (gitError) {
+					console.warn("Failed to auto-commit milestone deletion:", gitError);
+					// Don't fail the operation if git commit fails
+				}
+			}
+
+			return true;
+		} catch (error) {
+			console.error("Error deleting milestone:", error);
+			return false;
+		}
+	}
+
 	// Sprint operations
 	async createSprint(sprint: Sprint, autoCommit?: boolean): Promise<void> {
 		await this.fs.saveSprint(sprint);
@@ -581,7 +696,14 @@ export class Core {
 
 		if (shouldAutoCommit) {
 			try {
-				await this.git.addAndCommit(`Create sprint: ${sprint.title} (${sprint.id})`);
+				// Get the sprint file path
+				const sprintsDir = join(this.projectPath, DEFAULT_DIRECTORIES.BACKLOG, DEFAULT_DIRECTORIES.SPRINTS);
+				const normalizedId = sprint.id.replace(/^sprint-/, "");
+				const filename = `sprint-${normalizedId} - ${sprint.title.replace(/[^a-zA-Z0-9-_ ]/g, "")}.md`;
+				const sprintPath = join(sprintsDir, filename);
+
+				await this.git.addFile(sprintPath);
+				await this.git.commitChanges(`Create sprint: ${sprint.title} (${sprint.id}`);
 			} catch (gitError) {
 				console.warn("Failed to auto-commit sprint creation:", gitError);
 				// Don't fail the operation if git commit fails
@@ -623,12 +745,12 @@ export class Core {
 
 			// Find the sprint file by scanning the sprints directory
 			const sprintsDir = join(this.projectPath, DEFAULT_DIRECTORIES.BACKLOG, DEFAULT_DIRECTORIES.SPRINTS);
-			
+
 			// Use glob to find the actual file with the correct name
 			const files = await Array.fromAsync(new Bun.Glob("sprint-*.md").scan({ cwd: sprintsDir }));
 			const normalizedId = sprintId.replace(/^sprint-/, "");
 			const sprintFile = files.find((file) => file.startsWith(`sprint-${normalizedId} -`));
-			
+
 			if (!sprintFile) {
 				return false;
 			}
@@ -639,7 +761,8 @@ export class Core {
 			// Auto-commit if enabled
 			if (shouldAutoCommit) {
 				try {
-					await this.git.addAndCommit(`Delete sprint: ${sprintFile} (${sprintId})`);
+					await this.git.addFile(sprintPath);
+					await this.git.commitChanges(`Delete sprint: ${sprintFile} (${sprintId}`);
 				} catch (gitError) {
 					console.warn("Failed to auto-commit sprint deletion:", gitError);
 					// Don't fail the operation if git commit fails

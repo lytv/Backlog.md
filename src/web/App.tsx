@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Layout from './components/Layout';
 import BoardPage from './components/BoardPage';
 import DocumentationDetail from './components/DocumentationDetail';
+import MilestoneDetail from './components/MilestoneDetail';
 import SprintDetail from './components/SprintDetail';
 import DecisionDetail from './components/DecisionDetail';
 import TaskList from './components/TaskList';
@@ -13,7 +14,7 @@ import Modal from './components/Modal';
 import TaskForm from './components/TaskForm';
 import { SuccessToast } from './components/SuccessToast';
 import { ThemeProvider } from './contexts/ThemeContext';
-import { type Task, type Document, type Decision, type Sprint } from '../types';
+import { type Task, type Document, type Decision, type Milestone, type Sprint } from '../types';
 import { apiClient } from './lib/api';
 import { useHealthCheckContext } from './contexts/HealthCheckContext';
 import { getWebVersion } from './utils/version';
@@ -31,6 +32,7 @@ function App() {
   // Centralized data state
   const [tasks, setTasks] = useState<Task[]>([]);
   const [docs, setDocs] = useState<Document[]>([]);
+  const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [sprints, setSprints] = useState<Sprint[]>([]);
   const [decisions, setDecisions] = useState<Decision[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -52,11 +54,12 @@ function App() {
     const loadData = async () => {
       try {
         setIsLoading(true);
-        const [statusesData, configData, tasksData, docsData, sprintsData, decisionsData] = await Promise.all([
+        const [statusesData, configData, tasksData, docsData, milestonesData, sprintsData, decisionsData] = await Promise.all([
           apiClient.fetchStatuses(),
           apiClient.fetchConfig(),
           apiClient.fetchTasks(),
           apiClient.fetchDocs(),
+          apiClient.fetchMilestones(),
           apiClient.fetchSprints(),
           apiClient.fetchDecisions()
         ]);
@@ -65,6 +68,7 @@ function App() {
         setProjectName(configData.projectName);
         setTasks(tasksData);
         setDocs(docsData);
+        setMilestones(milestonesData);
         setSprints(sprintsData);
         setDecisions(decisionsData);
       } catch (error) {
@@ -82,15 +86,17 @@ function App() {
       // Connection restored, reload data
       const loadData = async () => {
         try {
-          const [tasksData, docsData, sprintsData, decisionsData] = await Promise.all([
+          const [tasksData, docsData, milestonesData, sprintsData, decisionsData] = await Promise.all([
             apiClient.fetchTasks(),
             apiClient.fetchDocs(),
+            apiClient.fetchMilestones(),
             apiClient.fetchSprints(),
             apiClient.fetchDecisions()
           ]);
           
           setTasks(tasksData);
           setDocs(docsData);
+          setMilestones(milestonesData);
           setSprints(sprintsData);
           setDecisions(decisionsData);
         } catch (error) {
@@ -160,15 +166,17 @@ function App() {
 
   const refreshData = async () => {
     try {
-      const [tasksData, docsData, sprintsData, decisionsData] = await Promise.all([
+      const [tasksData, docsData, milestonesData, sprintsData, decisionsData] = await Promise.all([
         apiClient.fetchTasks(),
         apiClient.fetchDocs(),
+        apiClient.fetchMilestones(),
         apiClient.fetchSprints(),
         apiClient.fetchDecisions()
       ]);
       
       setTasks(tasksData);
       setDocs(docsData);
+      setMilestones(milestonesData);
       setSprints(sprintsData);
       setDecisions(decisionsData);
     } catch (error) {
@@ -231,6 +239,7 @@ function App() {
                 onDismissToast={() => setShowSuccessToast(false)}
                 tasks={tasks}
                 docs={docs}
+                milestones={milestones}
                 sprints={sprints}
                 decisions={decisions}
                 isLoading={isLoading}
@@ -244,6 +253,9 @@ function App() {
             <Route path="documentation" element={<DocumentationDetail docs={docs} onRefreshData={refreshData} />} />
             <Route path="documentation/:id" element={<DocumentationDetail docs={docs} onRefreshData={refreshData} />} />
             <Route path="documentation/:id/:title" element={<DocumentationDetail docs={docs} onRefreshData={refreshData} />} />
+            <Route path="milestones" element={<MilestoneDetail milestones={milestones} onRefreshData={refreshData} />} />
+            <Route path="milestones/:id" element={<MilestoneDetail milestones={milestones} onRefreshData={refreshData} />} />
+            <Route path="milestones/:id/:title" element={<MilestoneDetail milestones={milestones} onRefreshData={refreshData} />} />
             <Route path="sprints" element={<SprintDetail sprints={sprints} onRefreshData={refreshData} />} />
             <Route path="sprints/:id" element={<SprintDetail sprints={sprints} onRefreshData={refreshData} />} />
             <Route path="sprints/:id/:title" element={<SprintDetail sprints={sprints} onRefreshData={refreshData} />} />

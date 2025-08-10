@@ -2,9 +2,15 @@ import { mkdir, rename, unlink } from "node:fs/promises";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import { DEFAULT_DIRECTORIES, DEFAULT_FILES, DEFAULT_STATUSES } from "../constants/index.ts";
-import { parseDecision, parseDocument, parseSprint, parseTask } from "../markdown/parser.ts";
-import { serializeDecision, serializeDocument, serializeSprint, serializeTask } from "../markdown/serializer.ts";
-import type { BacklogConfig, Decision, Document, Sprint, Task } from "../types/index.ts";
+import { parseDecision, parseDocument, parseMilestone, parseSprint, parseTask } from "../markdown/parser.ts";
+import {
+	serializeDecision,
+	serializeDocument,
+	serializeMilestone,
+	serializeSprint,
+	serializeTask,
+} from "../markdown/serializer.ts";
+import type { BacklogConfig, Decision, Document, Milestone, Sprint, Task } from "../types/index.ts";
 import { getTaskFilename, getTaskPath } from "../utils/task-path.ts";
 import { sortByTaskId } from "../utils/task-sorting.ts";
 
@@ -120,6 +126,11 @@ export class FileSystem {
 		return join(backlogDir, DEFAULT_DIRECTORIES.DOCS);
 	}
 
+	private async getMilestonesDir(): Promise<string> {
+		const backlogDir = await this.getBacklogDir();
+		return join(backlogDir, DEFAULT_DIRECTORIES.MILESTONES);
+	}
+
 	private async getSprintsDir(): Promise<string> {
 		const backlogDir = await this.getBacklogDir();
 		return join(backlogDir, DEFAULT_DIRECTORIES.SPRINTS);
@@ -140,6 +151,7 @@ export class FileSystem {
 			join(backlogDir, DEFAULT_DIRECTORIES.ARCHIVE_TASKS),
 			join(backlogDir, DEFAULT_DIRECTORIES.ARCHIVE_DRAFTS),
 			join(backlogDir, DEFAULT_DIRECTORIES.DOCS),
+			join(backlogDir, DEFAULT_DIRECTORIES.MILESTONES),
 			join(backlogDir, DEFAULT_DIRECTORIES.SPRINTS),
 			join(backlogDir, DEFAULT_DIRECTORIES.DECISIONS),
 		];
@@ -483,6 +495,62 @@ export class FileSystem {
 			return docs.sort((a, b) => a.title.localeCompare(b.title));
 		} catch {
 			return [];
+		}
+	}
+
+	// Milestone operations
+	async saveMilestone(milestone: Milestone, subPath = ""): Promise<void> {
+		const milestonesDir = await this.getMilestonesDir();
+		const dir = join(milestonesDir, subPath);
+		// Normalize ID - remove "milestone-" prefix if present
+		const normalizedId = milestone.id.replace(/^milestone-/, "");
+		const filename = `milestone-${normalizedId} - ${this.sanitizeFilename(milestone.title)}.md`;
+		const filePath = join(dir, filename);
+
+		await this.ensureDirectoryExists(dir);
+		const content = serializeMilestone(milestone);
+		await Bun.write(filePath, content);
+	}
+
+	async listMilestones(): Promise<Milestone[]> {
+		try {
+			const milestonesDir = await this.getMilestonesDir();
+			const milestoneFiles = await Array.fromAsync(new Bun.Glob("*.md").scan({ cwd: milestonesDir }));
+			const milestones: Milestone[] = [];
+			for (const file of milestoneFiles) {
+				// Filter out README files as they're just instruction files
+				if (file.toLowerCase().match(/^readme\.md$/i)) {
+					continue;
+				}
+				const filepath = join(milestonesDir, file);
+				const content = await Bun.file(filepath).text();
+				milestones.push(parseMilestone(content));
+			}
+			return milestones.sort((a, b) => a.title.localeCompare(b.title));
+		} catch {
+			return [];
+		}
+	}
+
+	async loadMilestone(milestoneId: string): Promise<Milestone | null> {
+		try {
+			const milestonesDir = await this.getMilestonesDir();
+			const milestoneFiles = await Array.fromAsync(new Bun.Glob("*.md").scan({ cwd: milestonesDir }));
+
+			// Normalize ID - remove "milestone-" prefix if present
+			const normalizedId = milestoneId.replace(/^milestone-/, "");
+			const milestoneFile = milestoneFiles.find((file) => file.startsWith(`milestone-${normalizedId} -`));
+
+			if (!milestoneFile) {
+				return null;
+			}
+
+			const filePath = join(milestonesDir, milestoneFile);
+			const content = await Bun.file(filePath).text();
+			return parseMilestone(content);
+		} catch (error) {
+			console.error("Error loading milestone:", error);
+			return null;
 		}
 	}
 

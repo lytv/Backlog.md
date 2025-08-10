@@ -76,6 +76,18 @@ export class BacklogServer {
 						PUT: async (req) => await this.handleUpdateDoc(req, req.params.id),
 						DELETE: async (req) => await this.handleDeleteDoc(req.params.id),
 					},
+					"/api/milestones": {
+						GET: async () => await this.handleListMilestones(),
+						POST: async (req) => await this.handleCreateMilestone(req),
+					},
+					"/api/milestone/:id": {
+						GET: async (req) => await this.handleGetMilestone(req.params.id),
+					},
+					"/api/milestones/:id": {
+						GET: async (req) => await this.handleGetMilestone(req.params.id),
+						PUT: async (req) => await this.handleUpdateMilestone(req, req.params.id),
+						DELETE: async (req) => await this.handleDeleteMilestone(req.params.id),
+					},
 					"/api/sprints": {
 						GET: async () => await this.handleListSprints(),
 						POST: async (req) => await this.handleCreateSprint(req),
@@ -388,6 +400,96 @@ export class BacklogServer {
 		} catch (error) {
 			console.error("Error deleting document:", error);
 			return Response.json({ error: "Failed to delete document" }, { status: 500 });
+		}
+	}
+
+	// Milestone handlers
+	private async handleListMilestones(): Promise<Response> {
+		try {
+			const milestones = await this.core.filesystem.listMilestones();
+			const milestoneFiles = milestones.map((milestone) => ({
+				name: `${milestone.title}.md`,
+				id: milestone.id,
+				title: milestone.title,
+				type: milestone.type,
+				createdDate: milestone.createdDate,
+				updatedDate: milestone.updatedDate,
+				lastModified: milestone.updatedDate || milestone.createdDate,
+				tags: milestone.tags || [],
+			}));
+			return Response.json(milestoneFiles);
+		} catch (error) {
+			console.error("Error listing milestones:", error);
+			return Response.json([]);
+		}
+	}
+
+	private async handleGetMilestone(milestoneId: string): Promise<Response> {
+		try {
+			const milestones = await this.core.filesystem.listMilestones();
+			const milestone = milestones.find((m) => m.id === milestoneId || m.title === milestoneId);
+
+			if (!milestone) {
+				return Response.json({ error: "Milestone not found" }, { status: 404 });
+			}
+
+			return Response.json(milestone);
+		} catch (error) {
+			console.error("Error loading milestone:", error);
+			return Response.json({ error: "Milestone not found" }, { status: 404 });
+		}
+	}
+
+	private async handleCreateMilestone(req: Request): Promise<Response> {
+		const { filename, content } = await req.json();
+
+		try {
+			const title = filename.replace(".md", "");
+			const milestone = await this.core.createMilestoneWithId(title, content);
+			return Response.json({ success: true, id: milestone.id }, { status: 201 });
+		} catch (error) {
+			console.error("Error creating milestone:", error);
+			return Response.json({ error: "Failed to create milestone" }, { status: 500 });
+		}
+	}
+
+	private async handleUpdateMilestone(req: Request, milestoneId: string): Promise<Response> {
+		const content = await req.text();
+
+		try {
+			const milestones = await this.core.filesystem.listMilestones();
+			const existingMilestone = milestones.find((m) => m.id === milestoneId || m.title === milestoneId);
+
+			if (!existingMilestone) {
+				return Response.json({ error: "Milestone not found" }, { status: 404 });
+			}
+
+			await this.core.updateMilestone(existingMilestone, content);
+			return Response.json({ success: true });
+		} catch (error) {
+			console.error("Error updating milestone:", error);
+			return Response.json({ error: "Failed to update milestone" }, { status: 500 });
+		}
+	}
+
+	private async handleDeleteMilestone(milestoneId: string): Promise<Response> {
+		try {
+			const milestones = await this.core.filesystem.listMilestones();
+			const existingMilestone = milestones.find((m) => m.id === milestoneId || m.title === milestoneId);
+
+			if (!existingMilestone) {
+				return Response.json({ error: "Milestone not found" }, { status: 404 });
+			}
+
+			const success = await this.core.deleteMilestone(existingMilestone.id);
+			if (!success) {
+				return Response.json({ error: "Failed to delete milestone" }, { status: 500 });
+			}
+
+			return Response.json({ success: true });
+		} catch (error) {
+			console.error("Error deleting milestone:", error);
+			return Response.json({ error: "Failed to delete milestone" }, { status: 500 });
 		}
 	}
 

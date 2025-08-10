@@ -63,6 +63,20 @@ export interface Sprint {
 	lastModified?: string;
 }
 
+export interface Milestone {
+	id: string;
+	title: string;
+	type: "upcoming" | "current" | "completed" | "other";
+	createdDate: string;
+	updatedDate?: string;
+	body: string; // Raw markdown content without frontmatter
+	tags?: string[];
+	// Web UI specific fields
+	name?: string;
+	path?: string;
+	lastModified?: string;
+}
+
 export interface BacklogConfig {
 	projectName: string;
 	defaultAssignee?: string;
