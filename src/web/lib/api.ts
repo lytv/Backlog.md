@@ -239,6 +239,15 @@ export class ApiClient {
 		return response.json();
 	}
 
+	async deleteDoc(id: string): Promise<void> {
+		const response = await fetch(`${API_BASE}/docs/${encodeURIComponent(id)}`, {
+			method: "DELETE",
+		});
+		if (!response.ok) {
+			throw new Error("Failed to delete document");
+		}
+	}
+
 	async fetchDecisions(): Promise<Decision[]> {
 		const response = await fetch(`${API_BASE}/decisions`);
 		if (!response.ok) {

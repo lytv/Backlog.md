@@ -571,6 +571,15 @@ export class FileSystem {
 			.replace(/^-|-$/g, "");
 	}
 
+	async deleteFile(filePath: string): Promise<void> {
+		try {
+			await unlink(filePath);
+		} catch (error) {
+			// Re-throw the error so caller can handle it
+			throw new Error(`Failed to delete file ${filePath}: ${error}`);
+		}
+	}
+
 	private async ensureDirectoryExists(dirPath: string): Promise<void> {
 		try {
 			await mkdir(dirPath, { recursive: true });

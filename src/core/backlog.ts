@@ -535,6 +535,43 @@ export class Core {
 		return document;
 	}
 
+	async deleteDocument(docId: string, autoCommit?: boolean): Promise<boolean> {
+		try {
+			const config = await this.fs.loadConfig();
+			const shouldAutoCommit = autoCommit ?? config?.autoCommit ?? false;
+
+			// Find the document file by scanning the docs directory
+			const docsDir = join(this.projectPath, DEFAULT_DIRECTORIES.BACKLOG, DEFAULT_DIRECTORIES.DOCS);
+			
+			// Use glob to find the actual file with the correct name
+			const files = await Array.fromAsync(new Bun.Glob("doc-*.md").scan({ cwd: docsDir }));
+			const normalizedId = docId.replace(/^doc-/, "");
+			const docFile = files.find((file) => file.startsWith(`doc-${normalizedId} -`));
+			
+			if (!docFile) {
+				return false;
+			}
+
+			const docPath = join(docsDir, docFile);
+			await this.fs.deleteFile(docPath);
+
+			// Auto-commit if enabled
+			if (shouldAutoCommit) {
+				try {
+					await this.git.addAndCommit(`Delete document: ${docFile} (${docId})`);
+				} catch (gitError) {
+					console.warn("Failed to auto-commit document deletion:", gitError);
+					// Don't fail the operation if git commit fails
+				}
+			}
+
+			return true;
+		} catch (error) {
+			console.error("Error deleting document:", error);
+			return false;
+		}
+	}
+
 	async initializeProject(projectName: string, autoCommit = false): Promise<void> {
 		await this.fs.ensureBacklogStructure();
 

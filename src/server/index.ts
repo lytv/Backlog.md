@@ -74,6 +74,7 @@ export class BacklogServer {
 					"/api/docs/:id": {
 						GET: async (req) => await this.handleGetDoc(req.params.id),
 						PUT: async (req) => await this.handleUpdateDoc(req, req.params.id),
+						DELETE: async (req) => await this.handleDeleteDoc(req.params.id),
 					},
 					"/api/decisions": {
 						GET: async () => await this.handleListDecisions(),
@@ -354,6 +355,27 @@ export class BacklogServer {
 		} catch (error) {
 			console.error("Error updating document:", error);
 			return Response.json({ error: "Failed to update document" }, { status: 500 });
+		}
+	}
+
+	private async handleDeleteDoc(docId: string): Promise<Response> {
+		try {
+			const docs = await this.core.filesystem.listDocuments();
+			const existingDoc = docs.find((d) => d.id === docId || d.title === docId);
+
+			if (!existingDoc) {
+				return Response.json({ error: "Document not found" }, { status: 404 });
+			}
+
+			const success = await this.core.deleteDocument(existingDoc.id);
+			if (!success) {
+				return Response.json({ error: "Failed to delete document" }, { status: 500 });
+			}
+
+			return Response.json({ success: true });
+		} catch (error) {
+			console.error("Error deleting document:", error);
+			return Response.json({ error: "Failed to delete document" }, { status: 500 });
 		}
 	}
 
