@@ -38,6 +38,9 @@ const TaskForm: React.FC<TaskFormProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [availableTasks, setAvailableTasks] = useState<Task[]>([]);
   const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
+  const [showMetadata, setShowMetadata] = useState(true);
+  const [showClaudeCommand, setShowClaudeCommand] = useState(false);
+  const [activeClaudeTab, setActiveClaudeTab] = useState<'send' | 'results'>('send');
 
   // Load available tasks for dependency selection
   useEffect(() => {
@@ -130,73 +133,217 @@ const TaskForm: React.FC<TaskFormProps> = ({
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label htmlFor="task-status" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 transition-colors duration-200">
-            Status
-          </label>
-          <select
-            id="task-status"
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-stone-500 dark:focus:ring-stone-400 focus:border-transparent transition-colors duration-200"
-            value={formData.status}
-            onChange={(e) => handleChange('status', e.target.value)}
+      {/* Collapsible Metadata Section */}
+      <div className="border border-gray-200 dark:border-gray-600 rounded-lg transition-colors duration-200">
+        <button
+          type="button"
+          onClick={() => setShowMetadata(!showMetadata)}
+          className={`w-full flex items-center justify-between p-3 text-left bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-200 ${showMetadata ? 'rounded-t-lg' : 'rounded-lg'}`}
+        >
+          <div className="flex items-center gap-2">
+            <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Task Metadata
+            </span>
+            <span className="text-xs text-gray-500 dark:text-gray-400">
+              ({showMetadata ? 'Click to hide' : 'Click to show'})
+            </span>
+          </div>
+          <svg 
+            className={`w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform duration-200 ${showMetadata ? 'rotate-180' : ''}`} 
+            fill="none" 
+            stroke="currentColor" 
+            viewBox="0 0 24 24"
           >
-            {availableStatuses.map(status => (
-              <option key={status} value={status} className="bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100">
-                {status}
-              </option>
-            ))}
-          </select>
-        </div>
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+        
+        {showMetadata && (
+          <div className="p-4 space-y-4 border-t border-gray-200 dark:border-gray-600">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="task-status" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 transition-colors duration-200">
+                  Status
+                </label>
+                <select
+                  id="task-status"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-stone-500 dark:focus:ring-stone-400 focus:border-transparent transition-colors duration-200"
+                  value={formData.status}
+                  onChange={(e) => handleChange('status', e.target.value)}
+                >
+                  {availableStatuses.map(status => (
+                    <option key={status} value={status} className="bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100">
+                      {status}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-        <div>
-          <label htmlFor="task-priority" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 transition-colors duration-200">
-            Priority
-          </label>
-          <select
-            id="task-priority"
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-stone-500 dark:focus:ring-stone-400 focus:border-transparent transition-colors duration-200"
-            value={formData.priority}
-            onChange={(e) => handleChange('priority', e.target.value)}
-          >
-            <option value="" className="bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100">No Priority</option>
-            <option value="low" className="bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100">Low</option>
-            <option value="medium" className="bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100">Medium</option>
-            <option value="high" className="bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100">High</option>
-          </select>
-        </div>
+              <div>
+                <label htmlFor="task-priority" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 transition-colors duration-200">
+                  Priority
+                </label>
+                <select
+                  id="task-priority"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-stone-500 dark:focus:ring-stone-400 focus:border-transparent transition-colors duration-200"
+                  value={formData.priority}
+                  onChange={(e) => handleChange('priority', e.target.value)}
+                >
+                  <option value="" className="bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100">No Priority</option>
+                  <option value="low" className="bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100">Low</option>
+                  <option value="medium" className="bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100">Medium</option>
+                  <option value="high" className="bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100">High</option>
+                </select>
+              </div>
+            </div>
+
+            <ChipInput
+              name="assignee"
+              label="Assignee(s)"
+              value={formData.assignee}
+              onChange={(value) => handleChange('assignee', value)}
+              placeholder="Type name and press Enter or comma"
+            />
+
+            <ChipInput
+              name="labels"
+              label="Labels"
+              value={formData.labels}
+              onChange={(value) => handleChange('labels', value)}
+              placeholder="Type label and press Enter or comma"
+            />
+
+            <DependencyInput
+              value={formData.dependencies}
+              onChange={(value) => handleChange('dependencies', value)}
+              availableTasks={availableTasks}
+              currentTaskId={task?.id}
+            />
+          </div>
+        )}
       </div>
 
-      <ChipInput
-        name="assignee"
-        label="Assignee(s)"
-        value={formData.assignee}
-        onChange={(value) => handleChange('assignee', value)}
-        placeholder="Type name and press Enter or comma"
-      />
-
-      <ChipInput
-        name="labels"
-        label="Labels"
-        value={formData.labels}
-        onChange={(value) => handleChange('labels', value)}
-        placeholder="Type label and press Enter or comma"
-      />
-
-      <DependencyInput
-        value={formData.dependencies}
-        onChange={(value) => handleChange('dependencies', value)}
-        availableTasks={availableTasks}
-        currentTaskId={task?.id}
-      />
-
-      {/* Tmux Command Section - only show when editing existing task */}
+      {/* Collapsible Claude Code Command Section - only show when editing existing task */}
       {task && (
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 transition-colors duration-200">
-            Send Command to Claude Code
-          </label>
-          <TmuxCommand />
+        <div className="border border-gray-200 dark:border-gray-600 rounded-lg transition-colors duration-200">
+          <button
+            type="button"
+            onClick={() => setShowClaudeCommand(!showClaudeCommand)}
+            className={`w-full flex items-center justify-between p-3 text-left bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-200 ${showClaudeCommand ? 'rounded-t-lg' : 'rounded-lg'}`}
+          >
+            <div className="flex items-center gap-2">
+              <svg className="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+              </svg>
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Send Command to Claude Code
+              </span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                ({showClaudeCommand ? 'Click to hide' : 'Click to show'})
+              </span>
+            </div>
+            <svg 
+              className={`w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform duration-200 ${showClaudeCommand ? 'rotate-180' : ''}`} 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          
+          {showClaudeCommand && (
+            <div className="border-t border-gray-200 dark:border-gray-600">
+              {/* Tab Navigation */}
+              <div className="flex border-b border-gray-200 dark:border-gray-600">
+                <button
+                  type="button"
+                  onClick={() => setActiveClaudeTab('send')}
+                  className={`flex-1 px-4 py-3 text-sm font-medium transition-colors duration-200 ${
+                    activeClaudeTab === 'send'
+                      ? 'bg-white dark:bg-gray-800 text-green-600 dark:text-green-400 border-b-2 border-green-600 dark:border-green-400'
+                      : 'bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
+                  }`}
+                >
+                  <div className="flex items-center justify-center gap-2">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                    </svg>
+                    Send Command
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveClaudeTab('results')}
+                  className={`flex-1 px-4 py-3 text-sm font-medium transition-colors duration-200 ${
+                    activeClaudeTab === 'results'
+                      ? 'bg-white dark:bg-gray-800 text-green-600 dark:text-green-400 border-b-2 border-green-600 dark:border-green-400'
+                      : 'bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
+                  }`}
+                >
+                  <div className="flex items-center justify-center gap-2">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    View Results
+                  </div>
+                </button>
+              </div>
+
+              {/* Tab Content */}
+              <div className="p-4">
+                {activeClaudeTab === 'send' && (
+                  <div>
+                    <TmuxCommand />
+                  </div>
+                )}
+                
+                {activeClaudeTab === 'results' && (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Command Results
+                      </label>
+                      <button
+                        type="button"
+                        className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors duration-200"
+                      >
+                        Clear Results
+                      </button>
+                    </div>
+                    <div className="relative">
+                      <textarea
+                        readOnly
+                        rows={8}
+                        className="w-full px-3 py-2 text-sm font-mono bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-green-500 dark:focus:ring-green-400 focus:border-transparent transition-colors duration-200 resize-none"
+                        placeholder="Command results will appear here...&#10;&#10;Example output:&#10;$ echo 'Hello from Claude Code'&#10;Hello from Claude Code&#10;&#10;$ pwd&#10;/Users/mac/tools/Backlog.md&#10;&#10;$ date&#10;Mon Aug 11 12:45:30 PDT 2025"
+                        value=""
+                      />
+                      <div className="absolute top-2 right-2">
+                        <button
+                          type="button"
+                          className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors duration-200"
+                          title="Refresh Results"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                      <span>Last updated: Not available</span>
+                      <span>Auto-refresh: Off</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
