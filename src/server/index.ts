@@ -132,6 +132,9 @@ export class BacklogServer {
 					"/api/tmux/command": {
 						POST: async (req) => await this.handleTmuxCommand(req),
 					},
+					"/api/tmux/output/:token": {
+						GET: async (req) => await this.handleTmuxOutput(req, req.params.token),
+					},
 				},
 				fetch: async (req, server) => {
 					return await this.handleRequest(req, server);
@@ -951,6 +954,83 @@ export class BacklogServer {
 		} catch (error) {
 			console.error("Error handling tmux command:", error);
 			return Response.json({ error: "Failed to process tmux command" }, { status: 500 });
+		}
+	}
+
+	private async handleTmuxOutput(req: Request, token: string): Promise<Response> {
+		try {
+			if (!token) {
+				return Response.json({ error: "Token is required" }, { status: 400 });
+			}
+
+			// Load session mapping from Claude Code Remote
+			const fs = await import("fs/promises");
+			const path = await import("path");
+
+			// Try to find session-map.json in Claude Code Remote directory
+			const sessionMapPath = "/Users/mac/tools/Claude-Code-Remote/src/data/session-map.json";
+
+			let sessionName: string | null = null;
+
+			try {
+				const sessionMapContent = await fs.readFile(sessionMapPath, 'utf8');
+				const sessionMap = JSON.parse(sessionMapContent);
+
+				// Find session by token
+				// Check if token is directly a key in sessionMap (new format)
+				if (sessionMap[token] && (sessionMap[token] as any).tmuxSession) {
+					sessionName = (sessionMap[token] as any).tmuxSession;
+				} else {
+					// Fallback to old format where token is a value
+					for (const [session, data] of Object.entries(sessionMap)) {
+						if ((data as any).token === token) {
+							sessionName = session;
+							break;
+						}
+					}
+				}
+			} catch (error) {
+				console.warn("Could not load session map:", error);
+				return Response.json({ error: "Session mapping not found" }, { status: 404 });
+			}
+
+			if (!sessionName) {
+				return Response.json({ error: "Invalid token" }, { status: 401 });
+			}
+
+			// Get tmux session output
+			const { exec } = await import("child_process");
+			const { promisify } = await import("util");
+			const execAsync = promisify(exec);
+
+			try {
+				// Check if tmux session exists
+				await execAsync(`tmux has-session -t ${sessionName}`);
+
+				// Capture tmux session output
+				const { stdout } = await execAsync(`tmux capture-pane -t ${sessionName} -p`);
+
+				// Get session info for metadata
+				const sessionInfo = await execAsync(`tmux display-message -t ${sessionName} -p "#{session_name}:#{window_index}.#{pane_index}"`);
+
+				return Response.json({
+					success: true,
+					output: stdout,
+					session: sessionName,
+					sessionInfo: sessionInfo.stdout.trim(),
+					timestamp: new Date().toISOString()
+				});
+
+			} catch (tmuxError) {
+				console.error("Tmux output error:", tmuxError);
+				return Response.json({
+					error: `Failed to get output from tmux session: ${sessionName}`
+				}, { status: 500 });
+			}
+
+		} catch (error) {
+			console.error("Error handling tmux output:", error);
+			return Response.json({ error: "Failed to get tmux output" }, { status: 500 });
 		}
 	}
 }

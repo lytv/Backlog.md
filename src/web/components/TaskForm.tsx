@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { type Task } from '../../types';
 import ChipInput from './ChipInput';
 import DependencyInput from './DependencyInput';
-import TmuxCommand from './TmuxCommand';
+import TmuxTerminal from './TmuxTerminal';
 import { apiClient } from '../lib/api';
 import { useTheme } from '../contexts/ThemeContext';
 // MDEditor will be passed as prop
@@ -296,51 +296,7 @@ const TaskForm: React.FC<TaskFormProps> = ({
 
               {/* Tab Content */}
               <div className="p-4">
-                {activeClaudeTab === 'send' && (
-                  <div>
-                    <TmuxCommand />
-                  </div>
-                )}
-                
-                {activeClaudeTab === 'results' && (
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Command Results
-                      </label>
-                      <button
-                        type="button"
-                        className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors duration-200"
-                      >
-                        Clear Results
-                      </button>
-                    </div>
-                    <div className="relative">
-                      <textarea
-                        readOnly
-                        rows={8}
-                        className="w-full px-3 py-2 text-sm font-mono bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-green-500 dark:focus:ring-green-400 focus:border-transparent transition-colors duration-200 resize-none"
-                        placeholder="Command results will appear here...&#10;&#10;Example output:&#10;$ echo 'Hello from Claude Code'&#10;Hello from Claude Code&#10;&#10;$ pwd&#10;/Users/mac/tools/Backlog.md&#10;&#10;$ date&#10;Mon Aug 11 12:45:30 PDT 2025"
-                        value=""
-                      />
-                      <div className="absolute top-2 right-2">
-                        <button
-                          type="button"
-                          className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors duration-200"
-                          title="Refresh Results"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
-                      <span>Last updated: Not available</span>
-                      <span>Auto-refresh: Off</span>
-                    </div>
-                  </div>
-                )}
+                <TmuxTerminal activeTab={activeClaudeTab} />
               </div>
             </div>
           )}

@@ -443,6 +443,22 @@ export class ApiClient {
 			body: JSON.stringify({ token, command }),
 		});
 	}
+
+	async getTmuxOutput(token: string): Promise<{ 
+		success: boolean; 
+		output: string; 
+		session: string; 
+		sessionInfo: string; 
+		timestamp: string 
+	}> {
+		return this.fetchJson<{ 
+			success: boolean; 
+			output: string; 
+			session: string; 
+			sessionInfo: string; 
+			timestamp: string 
+		}>(`${API_BASE}/tmux/output/${encodeURIComponent(token)}`);
+	}
 }
 
 export const apiClient = new ApiClient();
