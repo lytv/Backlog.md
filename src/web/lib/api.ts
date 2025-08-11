@@ -436,6 +436,13 @@ export class ApiClient {
 			items: Array<{ name: string; path: string; type: "file" | "directory"; isDirectory: boolean }>;
 		}>(`${API_BASE}/files?path=${encodeURIComponent(path)}`);
 	}
+
+	async sendTmuxCommand(token: string, command: string): Promise<{ success: boolean; message: string }> {
+		return this.fetchJson<{ success: boolean; message: string }>(`${API_BASE}/tmux/command`, {
+			method: "POST",
+			body: JSON.stringify({ token, command }),
+		});
+	}
 }
 
 export const apiClient = new ApiClient();

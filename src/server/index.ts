@@ -129,6 +129,9 @@ export class BacklogServer {
 					"/api/files": {
 						GET: async (req) => await this.handleListFiles(req),
 					},
+					"/api/tmux/command": {
+						POST: async (req) => await this.handleTmuxCommand(req),
+					},
 				},
 				fetch: async (req, server) => {
 					return await this.handleRequest(req, server);
@@ -871,6 +874,83 @@ export class BacklogServer {
 		} catch (error) {
 			console.error("Error listing files:", error);
 			return Response.json({ error: "Failed to list files" }, { status: 500 });
+		}
+	}
+
+	private async handleTmuxCommand(req: Request): Promise<Response> {
+		try {
+			const { token, command } = await req.json();
+
+			if (!token || !command) {
+				return Response.json({ error: "Token and command are required" }, { status: 400 });
+			}
+
+			// Load session mapping from Claude Code Remote
+			const fs = await import("fs/promises");
+			const path = await import("path");
+
+			// Try to find session-map.json in Claude Code Remote directory
+			const sessionMapPath = "/Users/mac/tools/Claude-Code-Remote/src/data/session-map.json";
+
+			let sessionName: string | null = null;
+
+			try {
+				const sessionMapContent = await fs.readFile(sessionMapPath, 'utf8');
+				const sessionMap = JSON.parse(sessionMapContent);
+
+				// Find session by token
+				// Check if token is directly a key in sessionMap (new format)
+				if (sessionMap[token] && (sessionMap[token] as any).tmuxSession) {
+					sessionName = (sessionMap[token] as any).tmuxSession;
+				} else {
+					// Fallback to old format where token is a value
+					for (const [session, data] of Object.entries(sessionMap)) {
+						if ((data as any).token === token) {
+							sessionName = session;
+							break;
+						}
+					}
+				}
+			} catch (error) {
+				console.warn("Could not load session map:", error);
+				return Response.json({ error: "Session mapping not found" }, { status: 404 });
+			}
+
+			if (!sessionName) {
+				return Response.json({ error: "Invalid token" }, { status: 401 });
+			}
+
+			// Execute tmux command
+			const { exec } = await import("child_process");
+			const { promisify } = await import("util");
+			const execAsync = promisify(exec);
+
+			try {
+				// Check if tmux session exists
+				await execAsync(`tmux has-session -t ${sessionName}`);
+
+				// Send command to tmux session
+				await execAsync(`tmux send-keys -t ${sessionName} C-u`); // Clear input
+				await new Promise(resolve => setTimeout(resolve, 100)); // Small delay
+
+				const escapedCommand = command.replace(/'/g, "'\"'\"'");
+				await execAsync(`tmux send-keys -t ${sessionName} '${escapedCommand}' Enter`);
+
+				return Response.json({
+					success: true,
+					message: `Command "${command}" sent to session ${sessionName}`
+				});
+
+			} catch (tmuxError) {
+				console.error("Tmux command error:", tmuxError);
+				return Response.json({
+					error: `Failed to send command to tmux session: ${sessionName}`
+				}, { status: 500 });
+			}
+
+		} catch (error) {
+			console.error("Error handling tmux command:", error);
+			return Response.json({ error: "Failed to process tmux command" }, { status: 500 });
 		}
 	}
 }

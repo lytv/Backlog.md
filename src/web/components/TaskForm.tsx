@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { type Task } from '../../types';
 import ChipInput from './ChipInput';
 import DependencyInput from './DependencyInput';
+import TmuxCommand from './TmuxCommand';
 import { apiClient } from '../lib/api';
 import { useTheme } from '../contexts/ThemeContext';
 // MDEditor will be passed as prop
@@ -188,6 +189,16 @@ const TaskForm: React.FC<TaskFormProps> = ({
         availableTasks={availableTasks}
         currentTaskId={task?.id}
       />
+
+      {/* Tmux Command Section - only show when editing existing task */}
+      {task && (
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 transition-colors duration-200">
+            Send Command to Claude Code
+          </label>
+          <TmuxCommand />
+        </div>
+      )}
 
       <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700 transition-colors duration-200">
         <div>
