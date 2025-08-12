@@ -482,6 +482,32 @@ export class ApiClient {
 			body: JSON.stringify({ command }),
 		});
 	}
+
+	async getBashOutput(): Promise<{
+		success: boolean;
+		command: string;
+		output: string;
+		executionTime: number;
+		timestamp: string;
+		workingDirectory: string;
+		runningCommands: string[];
+		commandCount: number;
+		hasOutput: boolean;
+		message: string;
+	}> {
+		return this.fetchJson<{
+			success: boolean;
+			command: string;
+			output: string;
+			executionTime: number;
+			timestamp: string;
+			workingDirectory: string;
+			runningCommands: string[];
+			commandCount: number;
+			hasOutput: boolean;
+			message: string;
+		}>(`${API_BASE}/bash/output`);
+	}
 }
 
 export const apiClient = new ApiClient();

@@ -38,8 +38,8 @@ const TaskForm: React.FC<TaskFormProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [availableTasks, setAvailableTasks] = useState<Task[]>([]);
   const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
-  const [showMetadata, setShowMetadata] = useState(true);
-  const [showClaudeCommand, setShowClaudeCommand] = useState(false);
+  const [showMetadata, setShowMetadata] = useState(false);
+  const [showClaudeCommand, setShowClaudeCommand] = useState(true);
   const [activeClaudeTab, setActiveClaudeTab] = useState<'send' | 'results' | 'bash' | 'bashOutput'>('send');
 
   // Load available tasks for dependency selection

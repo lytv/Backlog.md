@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { apiClient } from '../lib/api';
 import { useTheme } from '../contexts/ThemeContext';
+import SimpleAutocomplete from './SimpleAutocomplete';
 
 interface TmuxTerminalProps {
   className?: string;
@@ -26,15 +27,42 @@ const TmuxTerminal: React.FC<TmuxTerminalProps> = ({ className = '', activeTab }
   const [bashWorkingDir, setBashWorkingDir] = useState<string>('');
   const [bashLastUpdated, setBashLastUpdated] = useState<string>('');
   const [isBashExecuting, setIsBashExecuting] = useState(false);
+  const [autoRefresh, setAutoRefresh] = useState(false);
+  const [extractedToken, setExtractedToken] = useState<string>('');
+  const [refreshInterval, setRefreshInterval] = useState<NodeJS.Timeout | null>(null);
 
-  const handleSendCommand = async () => {
-    if (!token.trim()) {
+  // Function to extract token from bash output
+  const extractTokenFromOutput = (output: string): string => {
+    // Look for patterns like "Current token: L1I04MNZ" or "TOKEN MỚI: L1I04MNZ"
+    const patterns = [
+      /Current token:\s*([A-Z0-9]+)/i,
+      /TOKEN MỚI:\s*([A-Z0-9]+)/i,
+      /📊\s*Current token:\s*([A-Z0-9]+)/i,
+      /🔑\s*TOKEN MỚI:\s*([A-Z0-9]+)/i,
+      /Token:\s*([A-Z0-9]+)/i
+    ];
+    
+    for (const pattern of patterns) {
+      const match = output.match(pattern);
+      if (match && match[1]) {
+        return match[1];
+      }
+    }
+    
+    return '';
+  };
+
+  const handleSendCommand = async (submitToken?: string, submitCommand?: string) => {
+    const finalToken = submitToken || token;
+    const finalCommand = submitCommand || command;
+    
+    if (!finalToken.trim()) {
       setMessage('Please enter a session token');
       setMessageType('error');
       return;
     }
 
-    if (!command.trim()) {
+    if (!finalCommand.trim()) {
       setMessage('Please enter a command');
       setMessageType('error');
       return;
@@ -45,7 +73,7 @@ const TmuxTerminal: React.FC<TmuxTerminalProps> = ({ className = '', activeTab }
     setMessageType('');
 
     try {
-      const result = await apiClient.sendTmuxCommand(token.trim(), command.trim());
+      const result = await apiClient.sendTmuxCommand(finalToken.trim(), finalCommand.trim());
       setMessage(result.message);
       setMessageType('success');
       
@@ -123,23 +151,36 @@ const TmuxTerminal: React.FC<TmuxTerminalProps> = ({ className = '', activeTab }
     }, 2000);
   };
 
-  const handleExecuteBash = async () => {
-    if (!bashCommand.trim()) {
+  const handleExecuteBash = async (submitCommand?: string) => {
+    const finalCommand = submitCommand || bashCommand;
+    
+    if (!finalCommand.trim()) {
       setMessage('Please enter a bash command');
       setMessageType('error');
       return;
     }
 
+    // Prevent double execution
+    if (isBashExecuting) {
+      console.log('[CLIENT] Bash command already executing, skipping:', finalCommand);
+      return;
+    }
+
+    console.log('[CLIENT] Executing bash command:', finalCommand);
     setIsBashExecuting(true);
     setMessage('');
     setMessageType('');
 
     try {
-      const result = await apiClient.executeBashCommand(bashCommand.trim());
+      const result = await apiClient.executeBashCommand(finalCommand.trim());
       setBashOutput(result.output);
       setBashExecutionTime(result.executionTime);
       setBashWorkingDir(result.workingDirectory);
       setBashLastUpdated(new Date(result.timestamp).toLocaleString());
+      
+      // Extract token from output
+      const token = extractTokenFromOutput(result.output);
+      setExtractedToken(token);
       
       if (result.success) {
         setMessage(`Command executed successfully in ${result.executionTime}ms`);
@@ -170,11 +211,97 @@ const TmuxTerminal: React.FC<TmuxTerminalProps> = ({ className = '', activeTab }
     }
   };
 
+  const handleRefreshBashOutput = async () => {
+    setMessage('Refreshing bash output...');
+    setMessageType('');
+    
+    try {
+      const result = await apiClient.getBashOutput();
+      
+      if (result.success && result.hasOutput) {
+        // Update the bash output area with the last execution output
+        setBashOutput(result.output);
+        setBashCommand(result.command);
+        setBashExecutionTime(result.executionTime);
+        setBashWorkingDir(result.workingDirectory);
+        setBashLastUpdated(new Date(result.timestamp).toLocaleString());
+        
+        // Extract token from refreshed output
+        const token = extractTokenFromOutput(result.output);
+        setExtractedToken(token);
+        
+        setMessage(`Refreshed output from: ${result.command}`);
+        setMessageType('success');
+      } else if (result.success && !result.hasOutput) {
+        setMessage('No bash commands executed yet');
+        setMessageType('error');
+      } else {
+        setMessage('Failed to refresh bash output');
+        setMessageType('error');
+      }
+    } catch (error) {
+      console.error('Failed to refresh bash output:', error);
+      setMessage('Failed to refresh bash output');
+      setMessageType('error');
+    }
+    
+    setTimeout(() => {
+      setMessage('');
+      setMessageType('');
+    }, 3000);
+  };
+
+  const toggleAutoRefresh = () => {
+    if (autoRefresh) {
+      // Stop auto refresh
+      if (refreshInterval) {
+        clearInterval(refreshInterval);
+        setRefreshInterval(null);
+      }
+      setAutoRefresh(false);
+      setMessage('Auto-refresh disabled');
+      setMessageType('success');
+    } else {
+      // Start auto refresh
+      if (!bashCommand.trim()) {
+        setMessage('Please enter a bash command first');
+        setMessageType('error');
+        return;
+      }
+      
+      const interval = setInterval(() => {
+        if (!isBashExecuting) {
+          handleExecuteBash(bashCommand);
+        }
+      }, 5000); // Refresh every 5 seconds
+      
+      setRefreshInterval(interval);
+      setAutoRefresh(true);
+      setMessage('Auto-refresh enabled (every 5 seconds)');
+      setMessageType('success');
+    }
+    
+    setTimeout(() => {
+      setMessage('');
+      setMessageType('');
+    }, 3000);
+  };
+
+  // Cleanup interval on unmount
+  React.useEffect(() => {
+    return () => {
+      if (refreshInterval) {
+        clearInterval(refreshInterval);
+      }
+    };
+  }, [refreshInterval]);
+
   const handleClearBashOutput = () => {
     setBashOutput('');
     setBashExecutionTime(0);
     setBashWorkingDir('');
     setBashLastUpdated('');
+    setExtractedToken('');
     setMessage('Bash output cleared');
     setMessageType('success');
     
@@ -199,24 +326,19 @@ const TmuxTerminal: React.FC<TmuxTerminalProps> = ({ className = '', activeTab }
   if (activeTab === 'bash') {
     return (
       <div className={`space-y-2 ${className}`}>
-        <div>
-          <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-            Bash Command
-          </label>
-          <input
-            type="text"
-            value={bashCommand}
-            onChange={(e) => setBashCommand(e.target.value)}
-            onKeyPress={handleBashKeyPress}
-            placeholder="e.g., ls -la, pwd, npm test"
-            className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-stone-500 dark:focus:ring-stone-400 focus:border-transparent transition-colors duration-200"
-            disabled={isBashExecuting}
-          />
-        </div>
+        <SimpleAutocomplete
+          value={bashCommand}
+          onChange={setBashCommand}
+          onKeyPress={handleBashKeyPress}
+          placeholder="e.g., ls -la, pwd, npm test, ccrm"
+          label="Bash Command"
+          historyKey="bash-commands"
+          disabled={isBashExecuting}
+        />
         
         <div className="flex justify-end">
           <button
-            onClick={handleExecuteBash}
+            onClick={() => handleExecuteBash()}
             disabled={isBashExecuting || !bashCommand.trim()}
             className="inline-flex items-center px-4 py-2 bg-orange-500 dark:bg-orange-600 text-white text-sm font-medium rounded-md hover:bg-orange-600 dark:hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-800 focus:ring-orange-400 dark:focus:ring-orange-500 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           >
@@ -259,13 +381,64 @@ const TmuxTerminal: React.FC<TmuxTerminalProps> = ({ className = '', activeTab }
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
             Bash Output
           </label>
-          <button
-            type="button"
-            onClick={handleClearBashOutput}
-            className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors duration-200"
-          >
-            Clear Output
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleClearBashOutput}
+              className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors duration-200"
+            >
+              Clear Output
+            </button>
+            <button
+              type="button"
+              onClick={toggleAutoRefresh}
+              disabled={!bashCommand.trim()}
+              className={`inline-flex items-center px-2 py-1 text-xs rounded transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
+                autoRefresh 
+                  ? 'bg-red-500 dark:bg-red-600 text-white hover:bg-red-600 dark:hover:bg-red-700' 
+                  : 'bg-purple-500 dark:bg-purple-600 text-white hover:bg-purple-600 dark:hover:bg-purple-700'
+              }`}
+            >
+              {autoRefresh ? (
+                <>
+                  <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-6.219-8.56" />
+                  </svg>
+                  Stop Auto
+                </>
+              ) : (
+                <>
+                  <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  Auto Refresh
+                </>
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={handleRefreshBashOutput}
+              disabled={isBashExecuting}
+              className="inline-flex items-center px-2 py-1 text-xs bg-blue-500 dark:bg-blue-600 text-white rounded hover:bg-blue-600 dark:hover:bg-blue-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isBashExecuting ? (
+                <>
+                  <svg className="animate-spin -ml-1 mr-1 h-3 w-3 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Refreshing...
+                </>
+              ) : (
+                <>
+                  <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  Refresh
+                </>
+              )}
+            </button>
+          </div>
         </div>
         
         <div className="relative">
@@ -279,13 +452,29 @@ const TmuxTerminal: React.FC<TmuxTerminalProps> = ({ className = '', activeTab }
         </div>
 
         <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
-          <span>
-            {bashLastUpdated ? `Last executed: ${bashLastUpdated}` : 'No commands executed yet'}
-          </span>
+          <div className="flex items-center gap-2">
+            <span>
+              {bashLastUpdated ? `Last executed: ${bashLastUpdated}` : 'No commands executed yet'}
+            </span>
+            {autoRefresh && (
+              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300">
+                <svg className="animate-spin w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Auto-refreshing
+              </span>
+            )}
+          </div>
           <span>
             {bashExecutionTime > 0 ? `Execution time: ${bashExecutionTime}ms` : ''}
           </span>
         </div>
+
+        {extractedToken && (
+          <div className="text-xs text-blue-600 dark:text-blue-400 font-mono bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded border border-blue-200 dark:border-blue-800">
+            🔑 Current token: {extractedToken}
+          </div>
+        )}
 
         {bashWorkingDir && (
           <div className="text-xs text-gray-500 dark:text-gray-400">
@@ -310,39 +499,29 @@ const TmuxTerminal: React.FC<TmuxTerminalProps> = ({ className = '', activeTab }
     return (
       <div className={`space-y-2 ${className}`}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-          <div>
-            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-              Session Token
-            </label>
-            <input
-              type="text"
-              value={token}
-              onChange={(e) => setToken(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder="e.g., YNBXKLWA"
-              className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-stone-500 dark:focus:ring-stone-400 focus:border-transparent transition-colors duration-200"
-              disabled={isLoading}
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-              Command
-            </label>
-            <input
-              type="text"
-              value={command}
-              onChange={(e) => setCommand(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder="e.g., hello, ls, pwd"
-              className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-stone-500 dark:focus:ring-stone-400 focus:border-transparent transition-colors duration-200"
-              disabled={isLoading}
-            />
-          </div>
+          <SimpleAutocomplete
+            value={token}
+            onChange={setToken}
+            onKeyPress={handleKeyPress}
+            placeholder="e.g., YNBXKLWA, HCZ4OACN"
+            label="Session Token"
+            historyKey="session-tokens"
+            disabled={isLoading}
+          />
+          <SimpleAutocomplete
+            value={command}
+            onChange={setCommand}
+            onKeyPress={handleKeyPress}
+            placeholder="e.g., hello, ls, pwd, whoami"
+            label="Command"
+            historyKey="tmux-commands"
+            disabled={isLoading}
+          />
         </div>
         
         <div className="flex justify-end">
           <button
-            onClick={handleSendCommand}
+            onClick={() => handleSendCommand()}
             disabled={isLoading || !token.trim() || !command.trim()}
             className="inline-flex items-center px-4 py-2 bg-green-500 dark:bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-600 dark:hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-800 focus:ring-green-400 dark:focus:ring-green-500 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           >
@@ -421,18 +600,13 @@ const TmuxTerminal: React.FC<TmuxTerminalProps> = ({ className = '', activeTab }
 
       {/* Session Token Input for Results Tab */}
       {!token.trim() && (
-        <div>
-          <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-            Session Token (required for refresh)
-          </label>
-          <input
-            type="text"
-            value={token}
-            onChange={(e) => setToken(e.target.value)}
-            placeholder="e.g., YNBXKLWA"
-            className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-stone-500 dark:focus:ring-stone-400 focus:border-transparent transition-colors duration-200"
-          />
-        </div>
+        <SimpleAutocomplete
+          value={token}
+          onChange={setToken}
+          placeholder="e.g., YNBXKLWA, HCZ4OACN"
+          label="Session Token (required for refresh)"
+          historyKey="session-tokens"
+        />
       )}
       
       <div className="relative">

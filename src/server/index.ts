@@ -13,6 +13,12 @@ export class BacklogServer {
 	private server: Server | null = null;
 	private projectName = "Untitled Project";
 	private runningCommands = new Set<string>();
+	private commandTimeouts = new Map<string, NodeJS.Timeout>();
+	private lastBashOutput: string = '';
+	private lastBashCommand: string = '';
+	private lastBashTimestamp: string = '';
+	private lastBashExecutionTime: number = 0;
+	private lastBashWorkingDir: string = '';
 
 	constructor(projectPath: string) {
 		this.core = new Core(projectPath);
@@ -138,6 +144,9 @@ export class BacklogServer {
 					},
 					"/api/bash/execute": {
 						POST: async (req) => await this.handleBashExecute(req),
+					},
+					"/api/bash/output": {
+						GET: async (req) => await this.handleGetBashOutput(req),
 					},
 				},
 				fetch: async (req, server) => {
@@ -1060,10 +1069,8 @@ export class BacklogServer {
 			console.log(`[BASH] Executing command: ${command}`);
 
 			// Check if the same command is already running (prevent duplicate executions)
-			// Special handling for ccrm - allow it but with a unique key
-			const commandKey = command.startsWith('ccrm') ? `${command}-${Date.now()}` : command;
-
-			if (this.runningCommands.has(command) && !command.startsWith('ccrm')) {
+			// For ccrm, we allow multiple instances but still track them
+			if (this.runningCommands.has(command)) {
 				console.log(`[BASH] Command already running, skipping: ${command}`);
 				return Response.json({
 					success: false,
@@ -1077,14 +1084,24 @@ export class BacklogServer {
 			}
 
 			// Mark command as running
-			this.runningCommands.add(commandKey);
+			this.runningCommands.add(command);
+
+			// Set a timeout to automatically remove command from running set after 60 seconds
+			const commandTimeout = setTimeout(() => {
+				console.log(`[BASH] Command timeout cleanup: ${command}`);
+				this.runningCommands.delete(command);
+				this.commandTimeouts.delete(command);
+			}, 60000);
+
+			this.commandTimeouts.set(command, commandTimeout);
 
 			try {
 
 				// Detect if command is an alias or needs shell expansion
 				const needsShellExpansion = command.includes('|') || command.includes('&&') ||
-					command.includes('||') || command.includes(';') || command.includes('$') ||
-					command.includes('~') || command.includes('*') || command.includes('?');
+					command.includes('||') || command.includes(';') || command.includes('`') ||
+					command.includes('~') || command.includes('*') || command.includes('?') ||
+					command.trim() === 'alias' || command.startsWith('alias '); $
 
 				let childProcess;
 				let output = '';
@@ -1102,7 +1119,7 @@ export class BacklogServer {
 						console.log(`[BASH] Replaced ccrm with safe script: ${shellCommand}`);
 					}
 
-					childProcess = spawn('/bin/zsh', ['-c', shellCommand], {
+					childProcess = spawn('/bin/zsh', ['-i', '-c', shellCommand], {
 						cwd: this.core.projectPath,
 						env: {
 							...process.env,
@@ -1110,8 +1127,8 @@ export class BacklogServer {
 							HOME: process.env.HOME,
 							// Prevent recursive calls by setting a flag
 							BACKLOG_EXECUTING: '1',
-							// Disable interactive features that might cause issues
-							TERM: 'dumb'
+							// Keep terminal type for better compatibility
+							TERM: process.env.TERM || 'xterm-256color'
 						},
 						stdio: ['pipe', 'pipe', 'pipe'],
 						detached: false
@@ -1131,7 +1148,7 @@ export class BacklogServer {
 					});
 				}
 
-				// Set up timeout with better cleanup
+				// Set up timeout with better cleanup - increased timeout for slow commands
 				let isTimedOut = false;
 				const timeout = setTimeout(() => {
 					isTimedOut = true;
@@ -1149,15 +1166,19 @@ export class BacklogServer {
 							}
 						}, 5000);
 					}
-				}, 30000);
+				}, 60000); // Increased to 60 seconds for slow commands like alias
 
-				// Collect output
+				// Collect output with better encoding handling
 				childProcess.stdout?.on('data', (data) => {
-					output += data.toString();
+					const chunk = data.toString('utf8');
+					output += chunk;
+					console.log(`[BASH] stdout: ${chunk.trim()}`);
 				});
 
 				childProcess.stderr?.on('data', (data) => {
-					errorOutput += data.toString();
+					const chunk = data.toString('utf8');
+					errorOutput += chunk;
+					console.log(`[BASH] stderr: ${chunk.trim()}`);
 				});
 
 				// Wait for process to complete
@@ -1184,7 +1205,14 @@ export class BacklogServer {
 				const executionTime = endTime - startTime;
 
 				// Remove command from running set
-				this.runningCommands.delete(commandKey);
+				this.runningCommands.delete(command);
+
+				// Clear the timeout
+				const cmdTimeout = this.commandTimeouts.get(command);
+				if (cmdTimeout) {
+					clearTimeout(cmdTimeout);
+					this.commandTimeouts.delete(command);
+				}
 
 				// Combine stdout and stderr for complete output
 				let combinedOutput = '';
@@ -1192,6 +1220,14 @@ export class BacklogServer {
 				if (errorOutput) combinedOutput += errorOutput;
 
 				const success = exitCode === 0;
+				const timestamp = new Date().toISOString();
+
+				// Store the last bash execution result for refresh functionality
+				this.lastBashOutput = combinedOutput;
+				this.lastBashCommand = command;
+				this.lastBashTimestamp = timestamp;
+				this.lastBashExecutionTime = executionTime;
+				this.lastBashWorkingDir = this.core.projectPath;
 
 				return Response.json({
 					success: success,
@@ -1200,13 +1236,20 @@ export class BacklogServer {
 					error: success ? undefined : `Command exited with code ${exitCode}`,
 					exitCode: exitCode,
 					executionTime: executionTime,
-					timestamp: new Date().toISOString(),
+					timestamp: timestamp,
 					workingDirectory: this.core.projectPath
 				});
 
 			} catch (execError: any) {
 				// Remove command from running set on error
-				this.runningCommands.delete(commandKey);
+				this.runningCommands.delete(command);
+
+				// Clear the timeout
+				const cmdTimeout2 = this.commandTimeouts.get(command);
+				if (cmdTimeout2) {
+					clearTimeout(cmdTimeout2);
+					this.commandTimeouts.delete(command);
+				}
 
 				// Handle execution errors (command failed, timeout, etc.)
 				return Response.json({
@@ -1223,6 +1266,32 @@ export class BacklogServer {
 		} catch (error) {
 			console.error("Error handling bash execute:", error);
 			return Response.json({ error: "Failed to execute bash command" }, { status: 500 });
+		}
+	}
+
+	private async handleGetBashOutput(req: Request): Promise<Response> {
+		try {
+			// Return the last bash execution output
+			const runningCommandsList = Array.from(this.runningCommands);
+
+			return Response.json({
+				success: true,
+				command: this.lastBashCommand,
+				output: this.lastBashOutput,
+				executionTime: this.lastBashExecutionTime,
+				timestamp: this.lastBashTimestamp,
+				workingDirectory: this.lastBashWorkingDir,
+				runningCommands: runningCommandsList,
+				commandCount: runningCommandsList.length,
+				hasOutput: this.lastBashOutput.length > 0,
+				message: this.lastBashOutput.length > 0
+					? `Last command: ${this.lastBashCommand}`
+					: 'No bash commands executed yet'
+			});
+
+		} catch (error) {
+			console.error("Error getting bash output:", error);
+			return Response.json({ error: "Failed to get bash output" }, { status: 500 });
 		}
 	}
 }
