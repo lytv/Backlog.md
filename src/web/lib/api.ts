@@ -459,6 +459,29 @@ export class ApiClient {
 			timestamp: string 
 		}>(`${API_BASE}/tmux/output/${encodeURIComponent(token)}`);
 	}
+
+	async executeBashCommand(command: string): Promise<{
+		success: boolean;
+		command: string;
+		output: string;
+		error?: string;
+		executionTime: number;
+		timestamp: string;
+		workingDirectory: string;
+	}> {
+		return this.fetchJson<{
+			success: boolean;
+			command: string;
+			output: string;
+			error?: string;
+			executionTime: number;
+			timestamp: string;
+			workingDirectory: string;
+		}>(`${API_BASE}/bash/execute`, {
+			method: "POST",
+			body: JSON.stringify({ command }),
+		});
+	}
 }
 
 export const apiClient = new ApiClient();

@@ -4,7 +4,7 @@ import { useTheme } from '../contexts/ThemeContext';
 
 interface TmuxTerminalProps {
   className?: string;
-  activeTab: 'send' | 'results';
+  activeTab: 'send' | 'results' | 'bash' | 'bashOutput';
 }
 
 const TmuxTerminal: React.FC<TmuxTerminalProps> = ({ className = '', activeTab }) => {
@@ -18,6 +18,14 @@ const TmuxTerminal: React.FC<TmuxTerminalProps> = ({ className = '', activeTab }
   const [terminalOutput, setTerminalOutput] = useState('');
   const [lastUpdated, setLastUpdated] = useState<string>('');
   const [sessionInfo, setSessionInfo] = useState<string>('');
+  
+  // Bash command states
+  const [bashCommand, setBashCommand] = useState('ls -la');
+  const [bashOutput, setBashOutput] = useState('');
+  const [bashExecutionTime, setBashExecutionTime] = useState<number>(0);
+  const [bashWorkingDir, setBashWorkingDir] = useState<string>('');
+  const [bashLastUpdated, setBashLastUpdated] = useState<string>('');
+  const [isBashExecuting, setIsBashExecuting] = useState(false);
 
   const handleSendCommand = async () => {
     if (!token.trim()) {
@@ -115,11 +123,188 @@ const TmuxTerminal: React.FC<TmuxTerminalProps> = ({ className = '', activeTab }
     }, 2000);
   };
 
+  const handleExecuteBash = async () => {
+    if (!bashCommand.trim()) {
+      setMessage('Please enter a bash command');
+      setMessageType('error');
+      return;
+    }
+
+    setIsBashExecuting(true);
+    setMessage('');
+    setMessageType('');
+
+    try {
+      const result = await apiClient.executeBashCommand(bashCommand.trim());
+      setBashOutput(result.output);
+      setBashExecutionTime(result.executionTime);
+      setBashWorkingDir(result.workingDirectory);
+      setBashLastUpdated(new Date(result.timestamp).toLocaleString());
+      
+      if (result.success) {
+        setMessage(`Command executed successfully in ${result.executionTime}ms`);
+        setMessageType('success');
+      } else {
+        setMessage(`Command failed: ${result.error || 'Unknown error'}`);
+        setMessageType('error');
+      }
+
+      // Clear message after 3 seconds
+      setTimeout(() => {
+        setMessage('');
+        setMessageType('');
+      }, 3000);
+
+    } catch (error) {
+      console.error('Failed to execute bash command:', error);
+      setMessage('Failed to execute bash command');
+      setMessageType('error');
+      
+      // Clear error message after 5 seconds
+      setTimeout(() => {
+        setMessage('');
+        setMessageType('');
+      }, 5000);
+    } finally {
+      setIsBashExecuting(false);
+    }
+  };
+
+  const handleClearBashOutput = () => {
+    setBashOutput('');
+    setBashExecutionTime(0);
+    setBashWorkingDir('');
+    setBashLastUpdated('');
+    setMessage('Bash output cleared');
+    setMessageType('success');
+    
+    setTimeout(() => {
+      setMessage('');
+      setMessageType('');
+    }, 2000);
+  };
+
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !isLoading) {
       handleSendCommand();
     }
   };
+
+  const handleBashKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !isBashExecuting) {
+      handleExecuteBash();
+    }
+  };
+
+  if (activeTab === 'bash') {
+    return (
+      <div className={`space-y-2 ${className}`}>
+        <div>
+          <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+            Bash Command
+          </label>
+          <input
+            type="text"
+            value={bashCommand}
+            onChange={(e) => setBashCommand(e.target.value)}
+            onKeyPress={handleBashKeyPress}
+            placeholder="e.g., ls -la, pwd, npm test"
+            className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-stone-500 dark:focus:ring-stone-400 focus:border-transparent transition-colors duration-200"
+            disabled={isBashExecuting}
+          />
+        </div>
+        
+        <div className="flex justify-end">
+          <button
+            onClick={handleExecuteBash}
+            disabled={isBashExecuting || !bashCommand.trim()}
+            className="inline-flex items-center px-4 py-2 bg-orange-500 dark:bg-orange-600 text-white text-sm font-medium rounded-md hover:bg-orange-600 dark:hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-800 focus:ring-orange-400 dark:focus:ring-orange-500 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+          >
+            {isBashExecuting ? (
+              <>
+                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Executing...
+              </>
+            ) : (
+              <>
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                Execute Bash
+              </>
+            )}
+          </button>
+        </div>
+        
+        {message && (
+          <div className={`text-sm p-2 rounded-md transition-colors duration-200 ${
+            messageType === 'success' 
+              ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800' 
+              : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800'
+          }`}>
+            {message}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  if (activeTab === 'bashOutput') {
+    return (
+      <div className={`space-y-3 ${className}`}>
+        <div className="flex items-center justify-between">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            Bash Output
+          </label>
+          <button
+            type="button"
+            onClick={handleClearBashOutput}
+            className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors duration-200"
+          >
+            Clear Output
+          </button>
+        </div>
+        
+        <div className="relative">
+          <textarea
+            readOnly
+            rows={10}
+            className="w-full px-3 py-2 text-sm font-mono bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-orange-500 dark:focus:ring-orange-400 focus:border-transparent transition-colors duration-200 resize-none"
+            placeholder="Bash command output will appear here...&#10;&#10;Example:&#10;$ ls -la&#10;total 64&#10;drwxr-xr-x  12 user  staff   384 Aug 11 10:30 .&#10;-rw-r--r--   1 user  staff  1234 Aug 11 10:29 package.json&#10;&#10;$ pwd&#10;/Users/mac/tools/Backlog.md"
+            value={bashOutput}
+          />
+        </div>
+
+        <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+          <span>
+            {bashLastUpdated ? `Last executed: ${bashLastUpdated}` : 'No commands executed yet'}
+          </span>
+          <span>
+            {bashExecutionTime > 0 ? `Execution time: ${bashExecutionTime}ms` : ''}
+          </span>
+        </div>
+
+        {bashWorkingDir && (
+          <div className="text-xs text-gray-500 dark:text-gray-400">
+            Working directory: {bashWorkingDir}
+          </div>
+        )}
+
+        {message && (
+          <div className={`text-sm p-2 rounded-md transition-colors duration-200 ${
+            messageType === 'success' 
+              ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800' 
+              : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800'
+          }`}>
+            {message}
+          </div>
+        )}
+      </div>
+    );
+  }
 
   if (activeTab === 'send') {
     return (

@@ -12,6 +12,7 @@ export class BacklogServer {
 	private core: Core;
 	private server: Server | null = null;
 	private projectName = "Untitled Project";
+	private runningCommands = new Set<string>();
 
 	constructor(projectPath: string) {
 		this.core = new Core(projectPath);
@@ -134,6 +135,9 @@ export class BacklogServer {
 					},
 					"/api/tmux/output/:token": {
 						GET: async (req) => await this.handleTmuxOutput(req, req.params.token),
+					},
+					"/api/bash/execute": {
+						POST: async (req) => await this.handleBashExecute(req),
 					},
 				},
 				fetch: async (req, server) => {
@@ -934,10 +938,16 @@ export class BacklogServer {
 
 				// Send command to tmux session
 				await execAsync(`tmux send-keys -t ${sessionName} C-u`); // Clear input
-				await new Promise(resolve => setTimeout(resolve, 100)); // Small delay
+				await new Promise(resolve => setTimeout(resolve, 200)); // Increased delay
 
-				const escapedCommand = command.replace(/'/g, "'\"'\"'");
-				await execAsync(`tmux send-keys -t ${sessionName} '${escapedCommand}' Enter`);
+				// Better escaping for tmux send-keys
+				const escapedCommand = command.replace(/'/g, "'\\''");
+				console.log(`Sending command to ${sessionName}: ${command}`);
+
+				// Send command and Enter separately for better reliability
+				await execAsync(`tmux send-keys -t ${sessionName} '${escapedCommand}'`);
+				await new Promise(resolve => setTimeout(resolve, 50)); // Small delay before Enter
+				await execAsync(`tmux send-keys -t ${sessionName} Enter`);
 
 				return Response.json({
 					success: true,
@@ -1031,6 +1041,188 @@ export class BacklogServer {
 		} catch (error) {
 			console.error("Error handling tmux output:", error);
 			return Response.json({ error: "Failed to get tmux output" }, { status: 500 });
+		}
+	}
+
+	private async handleBashExecute(req: Request): Promise<Response> {
+		try {
+			const { command } = await req.json();
+
+			if (!command || typeof command !== 'string') {
+				return Response.json({ error: "Command is required" }, { status: 400 });
+			}
+
+			// Execute bash command in project directory
+			const { spawn } = await import("child_process");
+			const { promisify } = await import("util");
+
+			const startTime = Date.now();
+			console.log(`[BASH] Executing command: ${command}`);
+
+			// Check if the same command is already running (prevent duplicate executions)
+			// Special handling for ccrm - allow it but with a unique key
+			const commandKey = command.startsWith('ccrm') ? `${command}-${Date.now()}` : command;
+
+			if (this.runningCommands.has(command) && !command.startsWith('ccrm')) {
+				console.log(`[BASH] Command already running, skipping: ${command}`);
+				return Response.json({
+					success: false,
+					command: command,
+					output: '',
+					error: 'Command is already running',
+					executionTime: 0,
+					timestamp: new Date().toISOString(),
+					workingDirectory: this.core.projectPath
+				});
+			}
+
+			// Mark command as running
+			this.runningCommands.add(commandKey);
+
+			try {
+
+				// Detect if command is an alias or needs shell expansion
+				const needsShellExpansion = command.includes('|') || command.includes('&&') ||
+					command.includes('||') || command.includes(';') || command.includes('$') ||
+					command.includes('~') || command.includes('*') || command.includes('?');
+
+				let childProcess;
+				let output = '';
+				let errorOutput = '';
+
+				if (needsShellExpansion || command.trim() === 'ccrm' || command.startsWith('ccrm ')) {
+					// For shell expansions and aliases, use spawn with shell
+					// But add safeguards to prevent infinite loops
+					let shellCommand = command;
+
+					// Replace ccrm with safe script path to avoid alias recursion
+					if (command.trim() === 'ccrm' || command.startsWith('ccrm ')) {
+						const scriptPath = '/Users/mac/tools/Claude-Code-Remote/create-new-session-safe.sh';
+						shellCommand = command.replace(/^ccrm/, scriptPath);
+						console.log(`[BASH] Replaced ccrm with safe script: ${shellCommand}`);
+					}
+
+					childProcess = spawn('/bin/zsh', ['-c', shellCommand], {
+						cwd: this.core.projectPath,
+						env: {
+							...process.env,
+							SHELL: '/bin/zsh',
+							HOME: process.env.HOME,
+							// Prevent recursive calls by setting a flag
+							BACKLOG_EXECUTING: '1',
+							// Disable interactive features that might cause issues
+							TERM: 'dumb'
+						},
+						stdio: ['pipe', 'pipe', 'pipe'],
+						detached: false
+					});
+				} else {
+					// For simple commands, execute directly without shell
+					const args = command.split(' ');
+					const cmd = args.shift();
+
+					childProcess = spawn(cmd!, args, {
+						cwd: this.core.projectPath,
+						env: {
+							...process.env,
+							BACKLOG_EXECUTING: '1'
+						},
+						stdio: ['pipe', 'pipe', 'pipe']
+					});
+				}
+
+				// Set up timeout with better cleanup
+				let isTimedOut = false;
+				const timeout = setTimeout(() => {
+					isTimedOut = true;
+					console.log(`[BASH] Command timeout, killing process: ${command}`);
+
+					// Try graceful termination first
+					if (childProcess && !childProcess.killed) {
+						childProcess.kill('SIGTERM');
+
+						// Force kill after 5 seconds if still running
+						setTimeout(() => {
+							if (childProcess && !childProcess.killed) {
+								console.log(`[BASH] Force killing process: ${command}`);
+								childProcess.kill('SIGKILL');
+							}
+						}, 5000);
+					}
+				}, 30000);
+
+				// Collect output
+				childProcess.stdout?.on('data', (data) => {
+					output += data.toString();
+				});
+
+				childProcess.stderr?.on('data', (data) => {
+					errorOutput += data.toString();
+				});
+
+				// Wait for process to complete
+				const exitCode = await new Promise<number>((resolve, reject) => {
+					childProcess.on('close', (code) => {
+						clearTimeout(timeout);
+						console.log(`[BASH] Command completed with exit code: ${code}, command: ${command}`);
+						resolve(code || 0);
+					});
+
+					childProcess.on('error', (error) => {
+						clearTimeout(timeout);
+						console.error(`[BASH] Command error: ${error.message}, command: ${command}`);
+						reject(error);
+					});
+
+					// Handle timeout case
+					if (isTimedOut) {
+						resolve(124); // Standard timeout exit code
+					}
+				});
+
+				const endTime = Date.now();
+				const executionTime = endTime - startTime;
+
+				// Remove command from running set
+				this.runningCommands.delete(commandKey);
+
+				// Combine stdout and stderr for complete output
+				let combinedOutput = '';
+				if (output) combinedOutput += output;
+				if (errorOutput) combinedOutput += errorOutput;
+
+				const success = exitCode === 0;
+
+				return Response.json({
+					success: success,
+					command: command,
+					output: combinedOutput,
+					error: success ? undefined : `Command exited with code ${exitCode}`,
+					exitCode: exitCode,
+					executionTime: executionTime,
+					timestamp: new Date().toISOString(),
+					workingDirectory: this.core.projectPath
+				});
+
+			} catch (execError: any) {
+				// Remove command from running set on error
+				this.runningCommands.delete(commandKey);
+
+				// Handle execution errors (command failed, timeout, etc.)
+				return Response.json({
+					success: false,
+					command: command,
+					output: execError.stdout || '',
+					error: execError.message,
+					executionTime: 30000,
+					timestamp: new Date().toISOString(),
+					workingDirectory: this.core.projectPath
+				});
+			}
+
+		} catch (error) {
+			console.error("Error handling bash execute:", error);
+			return Response.json({ error: "Failed to execute bash command" }, { status: 500 });
 		}
 	}
 }
