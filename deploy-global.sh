@@ -6,7 +6,7 @@
 set -e  # Exit on any error
 
 echo "🔨 Building backlog-md..."
-npm run build
+bun run build
 
 if [ ! -f "dist/backlog" ]; then
     echo "❌ Build failed - dist/backlog not found"
@@ -36,8 +36,16 @@ if backlog --version >/dev/null 2>&1; then
     VERSION=$(backlog --version)
     echo "✅ Global backlog is working - Version: $VERSION"
     echo ""
-    echo "🎉 Deployment complete! Your custom backlog-md with File Explorer is now available globally."
-    echo "💡 You can now run 'backlog browser' from any directory to use the updated version."
+    echo "🎉 Deployment complete! Your custom backlog-md with Sprint Filter is now available globally."
+    echo "💡 New features added:"
+    echo "   • Sprint Filter in Kanban Board (Web UI & CLI)"
+    echo "   • Filter tasks by sprint_source"
+    echo "   • Export boards with sprint filtering"
+    echo ""
+    echo "🚀 Usage examples:"
+    echo "   backlog board --sprint 'S01_M02_Database_Core_Models'"
+    echo "   backlog board export --sprint 'S01_M02_Database_Core_Models' sprint-board.md"
+    echo "   backlog browser  # Web UI with sprint dropdown filter"
 else
     echo "❌ Something went wrong - global backlog is not working"
     exit 1
