@@ -5,7 +5,7 @@ import type { Task } from "./types/index.ts";
 const BOARD_START = "<!-- BOARD_START -->";
 const BOARD_END = "<!-- BOARD_END -->";
 
-export async function updateReadmeWithBoard(tasks: Task[], statuses: string[], projectName: string, version?: string) {
+export async function updateReadmeWithBoard(tasks: Task[], statuses: string[], projectName: string, version?: string, sprintFilter?: string) {
 	const readmePath = join(process.cwd(), "README.md");
 	let readmeContent = "";
 	try {
@@ -17,7 +17,9 @@ export async function updateReadmeWithBoard(tasks: Task[], statuses: string[], p
 	// Use the same high-quality board generation as file export
 	// Create a temporary file to get the properly formatted board
 	const tempPath = join(process.cwd(), ".temp-board.md");
-	await exportKanbanBoardToFile(tasks, statuses, tempPath, projectName);
+	await exportKanbanBoardToFile(tasks, statuses, tempPath, projectName, false, {
+		sprintFilter,
+	});
 	const fullBoardContent = await Bun.file(tempPath).text();
 
 	// Extract timestamp from the board content

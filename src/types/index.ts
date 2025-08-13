@@ -18,6 +18,7 @@ export interface Task {
 	priority?: "high" | "medium" | "low";
 	branch?: string;
 	ordinal?: number;
+	sprint_source?: string;
 	// Metadata fields (previously in TaskWithMetadata)
 	lastModified?: Date;
 	source?: "local" | "remote" | "completed";

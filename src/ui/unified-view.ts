@@ -24,6 +24,7 @@ export interface UnifiedViewOptions {
 		title?: string;
 		filterDescription?: string;
 	};
+	sprintFilter?: string;
 	preloadedKanbanData?: {
 		tasks: Task[];
 		statuses: string[];
@@ -205,6 +206,7 @@ export async function runUnifiedView(options: UnifiedViewOptions): Promise<void>
 						selectedTask = task;
 					},
 					onTabPress,
+					sprintFilter: options.sprintFilter,
 				}).then(() => {
 					// If user wants to exit, do it immediately
 					if (result === "exit") {

@@ -123,6 +123,15 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onDragStart, onDragEn
         </div>
       )}
       
+      {task.sprint_source && (
+        <div className="flex items-center gap-1 mb-2">
+          <span className="text-xs text-gray-500 dark:text-gray-400 transition-colors duration-200">Sprint:</span>
+          <span className="text-xs text-blue-600 dark:text-blue-400 font-medium transition-colors duration-200">
+            {task.sprint_source}
+          </span>
+        </div>
+      )}
+      
       {task.dependencies.length > 0 && (
         <div className="flex items-center gap-1 mb-2">
           <span className="text-xs text-gray-500 dark:text-gray-400 transition-colors duration-200">Depends on:</span>

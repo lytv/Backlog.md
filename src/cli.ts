@@ -1666,12 +1666,13 @@ const boardCmd = program.command("board");
 function addBoardOptions(cmd: Command) {
 	return cmd
 		.option("-l, --layout <layout>", "board layout (horizontal|vertical)", "horizontal")
-		.option("--vertical", "use vertical layout (shortcut for --layout vertical)");
+		.option("--vertical", "use vertical layout (shortcut for --layout vertical)")
+		.option("-s, --sprint <sprint>", "filter tasks by sprint source");
 }
 
 // TaskWithMetadata and resolveTaskConflict are now imported from remote-tasks.ts
 
-async function handleBoardView(options: { layout?: string; vertical?: boolean }) {
+async function handleBoardView(options: { layout?: string; vertical?: boolean; sprint?: string }) {
 	const cwd = process.cwd();
 	const core = new Core(cwd);
 	const config = await core.filesystem.loadConfig();
@@ -1741,6 +1742,7 @@ async function handleBoardView(options: { layout?: string; vertical?: boolean })
 		core,
 		initialView: "kanban",
 		tasks: allTasks.map((t) => ({ ...t, status: t.status || "" })), // Ensure tasks have status
+		sprintFilter: options.sprint,
 		// Pass the already-loaded kanban data to avoid duplicate loading
 		preloadedKanbanData: {
 			tasks: allTasks,
@@ -1759,7 +1761,8 @@ boardCmd
 	.option("--force", "overwrite existing file without confirmation")
 	.option("--readme", "export to README.md with markers")
 	.option("--export-version <version>", "version to include in the export")
-	.action(async (filename, options) => {
+	.option("-s, --sprint <sprint>", "filter tasks by sprint source")
+	.action(async (filename, options: { force?: boolean; readme?: boolean; exportVersion?: string; sprint?: string }) => {
 		const cwd = process.cwd();
 		const core = new Core(cwd);
 		const config = await core.filesystem.loadConfig();
@@ -1818,7 +1821,7 @@ boardCmd
 			if (options.readme) {
 				// Use version from option if provided, otherwise use the CLI version
 				const exportVersion = options.exportVersion || version;
-				await updateReadmeWithBoard(finalTasks, statuses, projectName, exportVersion);
+				await updateReadmeWithBoard(finalTasks, statuses, projectName, exportVersion, options.sprint);
 				console.log("Updated README.md with Kanban board.");
 			} else {
 				// Use filename argument or default to Backlog.md
@@ -1840,7 +1843,9 @@ boardCmd
 					}
 				}
 
-				await exportKanbanBoardToFile(finalTasks, statuses, outputPath, projectName, options.force || !fileExists);
+				await exportKanbanBoardToFile(finalTasks, statuses, outputPath, projectName, options.force || !fileExists, {
+					sprintFilter: options.sprint,
+				});
 				console.log(`Exported board to ${outputPath}`);
 			}
 		} catch (error) {

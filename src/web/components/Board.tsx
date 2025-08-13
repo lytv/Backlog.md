@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { type Task } from '../../types';
 import { apiClient } from '../lib/api';
 import TaskColumn from './TaskColumn';
+import SprintFilter from './SprintFilter';
 
 interface BoardProps {
   onEditTask: (task: Task) => void;
@@ -16,6 +17,7 @@ const Board: React.FC<BoardProps> = ({ onEditTask, onNewTask, highlightTaskId, t
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(false);
+  const [selectedSprint, setSelectedSprint] = useState<string>('');
 
   useEffect(() => {
     loadStatuses();
@@ -88,7 +90,12 @@ const Board: React.FC<BoardProps> = ({ onEditTask, onNewTask, highlightTaskId, t
   };
 
   const getTasksByStatus = (status: string): Task[] => {
-    const filteredTasks = tasks.filter(task => task.status === status);
+    let filteredTasks = tasks.filter(task => task.status === status);
+    
+    // Apply sprint filter if selected
+    if (selectedSprint) {
+      filteredTasks = filteredTasks.filter(task => task.sprint_source === selectedSprint);
+    }
     
     // Sort tasks based on ordinal first, then by priority/date
     return filteredTasks.sort((a, b) => {
@@ -168,14 +175,20 @@ const Board: React.FC<BoardProps> = ({ onEditTask, onNewTask, highlightTaskId, t
 
   return (
     <div className="w-full">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 transition-colors duration-200">Kanban Board</h2>
-        <button 
-          className="inline-flex items-center px-4 py-2 bg-blue-500 dark:bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 dark:focus:ring-blue-500 dark:focus:ring-offset-gray-800 transition-colors duration-200 cursor-pointer" 
-          onClick={onNewTask}
-        >
-          + New Task
-        </button>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
+          <SprintFilter 
+            selectedSprint={selectedSprint}
+            onSprintChange={setSelectedSprint}
+          />
+          <button 
+            className="inline-flex items-center px-4 py-2 bg-blue-500 dark:bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 dark:focus:ring-blue-500 dark:focus:ring-offset-gray-800 transition-colors duration-200 cursor-pointer" 
+            onClick={onNewTask}
+          >
+            + New Task
+          </button>
+        </div>
       </div>
       <div className={statuses.length > 3 ? 'overflow-x-auto pb-4' : ''}>
         <div 

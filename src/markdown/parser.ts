@@ -134,6 +134,7 @@ export function parseTask(content: string): Task {
 		subtasks: Array.isArray(frontmatter.subtasks) ? frontmatter.subtasks.map(String) : undefined,
 		priority: validatedPriority,
 		ordinal: frontmatter.ordinal !== undefined ? Number(frontmatter.ordinal) : undefined,
+		sprint_source: frontmatter.sprint_source ? String(frontmatter.sprint_source) : undefined,
 	};
 }
 

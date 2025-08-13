@@ -188,6 +188,7 @@ async function renderBoardTuiWithSwitching(
 	_options: {
 		viewSwitcher?: ViewSwitcher;
 		onTaskSelect?: (task: Task) => void;
+		sprintFilter?: string;
 	},
 ): Promise<void> {
 	// Get config for layout and column width
@@ -198,7 +199,9 @@ async function renderBoardTuiWithSwitching(
 
 	// For now, use the original function but we'll need to modify it to support Tab switching
 	// This is a placeholder - we'll need to modify the actual board.ts
-	return renderBoardTui(tasks, statuses, layout, maxColumnWidth);
+	return renderBoardTui(tasks, statuses, layout, maxColumnWidth, {
+		sprintFilter: _options.sprintFilter,
+	});
 }
 
 // Re-export for convenience

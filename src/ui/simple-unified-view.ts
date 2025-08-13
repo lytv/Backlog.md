@@ -23,6 +23,7 @@ export interface SimpleUnifiedViewOptions {
 		title?: string;
 		filterDescription?: string;
 	};
+	sprintFilter?: string;
 	preloadedKanbanData?: {
 		tasks: TaskWithMetadata[];
 		statuses: string[];
@@ -137,6 +138,7 @@ export async function runSimpleUnifiedView(options: SimpleUnifiedViewOptions): P
 			onTabPress: async () => {
 				await switchView();
 			},
+			sprintFilter: options.sprintFilter,
 		});
 
 		isRunning = false;

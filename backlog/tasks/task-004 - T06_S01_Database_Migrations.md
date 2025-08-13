@@ -7,6 +7,7 @@ created_date: '2025-08-12 13:24'
 updated_date: '2025-08-13 01:45'
 labels: []
 dependencies: []
+sprint_source: S01_M02_Database_Core_Models
 ---
 
 ## Description

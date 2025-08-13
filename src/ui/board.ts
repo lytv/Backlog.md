@@ -22,19 +22,26 @@ export async function renderBoardTui(
 		viewSwitcher?: import("./view-switcher.ts").ViewSwitcher;
 		onTaskSelect?: (task: Task) => void;
 		onTabPress?: () => Promise<void>;
+		sprintFilter?: string;
 	},
 ): Promise<void> {
 	if (!process.stdout.isTTY) {
-		console.log(generateKanbanBoardWithMetadata(tasks, statuses, "Project"));
+		console.log(generateKanbanBoardWithMetadata(tasks, statuses, "Project", { sprintFilter: options?.sprintFilter }));
 		return;
 	}
 
 	/* ------------------------------------------------------------------
-     Group tasks by status
+     Apply sprint filter and group tasks by status
      ------------------------------------------------------------------ */
+	// Apply sprint filter if specified
+	let filteredTasks = tasks;
+	if (options?.sprintFilter) {
+		filteredTasks = tasks.filter(task => task.sprint_source === options.sprintFilter);
+	}
+
 	const tasksByStatus = new Map<string, Task[]>();
 	for (const s of statuses) tasksByStatus.set(s, []);
-	for (const t of tasks) (tasksByStatus.get(t.status || "") ?? []).push(t);
+	for (const t of filteredTasks) (tasksByStatus.get(t.status || "") ?? []).push(t);
 
 	const nonEmptyStatuses = statuses.filter((s) => (tasksByStatus.get(s) ?? []).length > 0);
 

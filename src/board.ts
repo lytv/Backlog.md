@@ -1,5 +1,6 @@
 export interface BoardOptions {
 	statuses?: string[];
+	sprintFilter?: string;
 }
 
 import { mkdir } from "node:fs/promises";
@@ -9,14 +10,20 @@ import type { Task } from "./types/index.ts";
 export type BoardLayout = "horizontal" | "vertical";
 export type BoardFormat = "terminal" | "markdown";
 
-export function generateKanbanBoardWithMetadata(tasks: Task[], statuses: string[], projectName: string): string {
+export function generateKanbanBoardWithMetadata(tasks: Task[], statuses: string[], projectName: string, options?: BoardOptions): string {
 	// Generate timestamp
 	const now = new Date();
 	const timestamp = now.toISOString().replace("T", " ").substring(0, 19);
 
+	// Apply sprint filter if specified
+	let filteredTasks = tasks;
+	if (options?.sprintFilter) {
+		filteredTasks = tasks.filter(task => task.sprint_source === options.sprintFilter);
+	}
+
 	// Group tasks by status, filtering out tasks without status
 	const groups = new Map<string, Task[]>();
-	for (const task of tasks) {
+	for (const task of filteredTasks) {
 		const status = task.status?.trim();
 		if (status) {
 			// Only include tasks with a valid status
@@ -48,8 +55,8 @@ Project: ${projectName}
 	const headerRow = `| ${ordered.map((status) => status || "No Status").join(" | ")} |`;
 	const separatorRow = `| ${ordered.map(() => "---").join(" | ")} |`;
 
-	// Map for quick lookup by id
-	const byId = new Map<string, Task>(tasks.map((t) => [t.id, t]));
+	// Map for quick lookup by id (use filtered tasks)
+	const byId = new Map<string, Task>(filteredTasks.map((t) => [t.id, t]));
 
 	// Group tasks by status and handle parent-child relationships
 	const columns: Task[][] = ordered.map((status) => {
@@ -139,8 +146,9 @@ export async function exportKanbanBoardToFile(
 	filePath: string,
 	projectName: string,
 	_overwrite = false,
+	options?: BoardOptions,
 ): Promise<void> {
-	const board = generateKanbanBoardWithMetadata(tasks, statuses, projectName);
+	const board = generateKanbanBoardWithMetadata(tasks, statuses, projectName, options);
 
 	// Ensure directory exists
 	try {
