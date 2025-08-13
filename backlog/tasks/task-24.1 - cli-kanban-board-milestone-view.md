@@ -1,9 +1,11 @@
 ---
 id: task-24.1
 title: 'CLI: Kanban board milestone view'
-status: In Progress
-assignee: @codex
+status: To Do
+assignee:
+  - '@codex'
 created_date: '2025-06-09'
+updated_date: '2025-08-12 10:10'
 labels: []
 dependencies: []
 parent_task_id: task-24
