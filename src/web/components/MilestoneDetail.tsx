@@ -7,6 +7,7 @@ import ErrorBoundary from '../components/ErrorBoundary';
 import {SuccessToast} from './SuccessToast';
 import { useTheme } from '../contexts/ThemeContext';
 import { sanitizeUrlTitle } from '../utils/urlHelpers';
+import MarkdownWithMermaid from './MarkdownWithMermaid';
 
 // Custom MDEditor wrapper for proper height handling
 const MarkdownEditor = memo(function MarkdownEditor({
@@ -21,12 +22,15 @@ const MarkdownEditor = memo(function MarkdownEditor({
 }) {
     const { theme } = useTheme();
     if (!isEditing) {
-        // Preview mode - just show the rendered markdown without editor UI
+        // Preview mode - show the rendered markdown with Mermaid support
         return (
             <div
-                className="prose prose-sm !max-w-none w-full p-6 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden"
+                className="w-full p-6 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden"
                 data-color-mode={theme}>
-                <MDEditor.Markdown source={value}/>
+                <MarkdownWithMermaid 
+                    source={value} 
+                    className="prose prose-sm !max-w-none"
+                />
             </div>
         );
     }
