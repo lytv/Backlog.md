@@ -29,10 +29,11 @@ if command -v backlog >/dev/null 2>&1; then
         echo "🍺 Detected Homebrew installation (symlink)"
         echo "💡 Installing as 'bl' to avoid conflicts"
         
-        # Install as bl
-        INSTALL_PATH="/usr/local/bin/bl"
-        sudo cp dist/backlog "$INSTALL_PATH"
-        sudo chmod +x "$INSTALL_PATH"
+        # Install as bl using wrapper script
+        CURRENT_DIR=$(pwd)
+        WRAPPER_SCRIPT="#!/bin/bash\nexec \"$CURRENT_DIR/dist/backlog\" \"\$@\""
+        echo -e "$WRAPPER_SCRIPT" | sudo tee /usr/local/bin/bl > /dev/null
+        sudo chmod +x /usr/local/bin/bl
         
         echo "✅ Installed as 'bl'"
         echo ""
@@ -52,11 +53,14 @@ if command -v backlog >/dev/null 2>&1; then
         echo "📦 Regular installation detected"
         echo "⚠️  Replacing existing installation..."
         
+        # Replace with wrapper script
+        CURRENT_DIR=$(pwd)
+        WRAPPER_SCRIPT="#!/bin/bash\nexec \"$CURRENT_DIR/dist/backlog\" \"\$@\""
         if [ -w "$(dirname "$BACKLOG_PATH")" ]; then
-            cp dist/backlog "$BACKLOG_PATH"
+            echo -e "$WRAPPER_SCRIPT" > "$BACKLOG_PATH"
             chmod +x "$BACKLOG_PATH"
         else
-            sudo cp dist/backlog "$BACKLOG_PATH"
+            echo -e "$WRAPPER_SCRIPT" | sudo tee "$BACKLOG_PATH" > /dev/null
             sudo chmod +x "$BACKLOG_PATH"
         fi
         
@@ -74,9 +78,11 @@ else
     echo "❌ No existing backlog installation found"
     echo "💡 Installing as 'bl'"
     
-    INSTALL_PATH="/usr/local/bin/bl"
-    sudo cp dist/backlog "$INSTALL_PATH"
-    sudo chmod +x "$INSTALL_PATH"
+    # Install as bl using wrapper script
+    CURRENT_DIR=$(pwd)
+    WRAPPER_SCRIPT="#!/bin/bash\nexec \"$CURRENT_DIR/dist/backlog\" \"\$@\""
+    echo -e "$WRAPPER_SCRIPT" | sudo tee /usr/local/bin/bl > /dev/null
+    sudo chmod +x /usr/local/bin/bl
     
     echo "✅ Installed as 'bl'"
     echo ""
