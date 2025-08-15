@@ -3,7 +3,7 @@ import { Outlet } from 'react-router-dom';
 import SideNavigation from './SideNavigation';
 import Navigation from './Navigation';
 import { HealthIndicator, HealthSuccessToast } from './HealthIndicator';
-import { type Task, type Document, type Decision, type Milestone, type Sprint } from '../../types';
+import { type Task, type Document, type Decision, type Milestone, type Sprint, type Worktree } from '../../types';
 
 interface LayoutProps {
 	projectName: string;
@@ -14,6 +14,7 @@ interface LayoutProps {
 	milestones: Milestone[];
 	sprints: Sprint[];
 	decisions: Decision[];
+	worktrees: Worktree[];
 	isLoading: boolean;
 	onRefreshData: () => Promise<void>;
 }
@@ -27,6 +28,7 @@ export default function Layout({
 	milestones, 
 	sprints, 
 	decisions, 
+	worktrees,
 	isLoading, 
 	onRefreshData 
 }: LayoutProps) {
@@ -39,6 +41,7 @@ export default function Layout({
 				milestones={milestones}
 				sprints={sprints}
 				decisions={decisions}
+				worktrees={worktrees}
 				isLoading={isLoading}
 				onRefreshData={onRefreshData}
 			/>

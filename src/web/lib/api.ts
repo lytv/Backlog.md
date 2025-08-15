@@ -1,5 +1,17 @@
 import type { TaskStatistics } from "../../core/statistics.ts";
-import type { BacklogConfig, Decision, Document, Milestone, Sprint, Task, TaskStatus } from "../../types/index.ts";
+import type { 
+	BacklogConfig, 
+	Decision, 
+	Document, 
+	Milestone, 
+	Sprint, 
+	Task, 
+	TaskStatus,
+	Worktree,
+	WorktreeStatus,
+	CreateWorktreeDto,
+	MergeResult
+} from "../../types/index.ts";
 
 const API_BASE = "/api";
 
@@ -108,6 +120,11 @@ export class ApiClient {
 	private async fetchJson<T>(url: string, options: RequestInit = {}): Promise<T> {
 		const response = await this.fetchWithRetry(url, options);
 		return response.json();
+	}
+
+	// Alias for fetchJson to maintain compatibility with worktree methods
+	private async request<T>(url: string, options: RequestInit = {}): Promise<T> {
+		return this.fetchJson<T>(url, options);
 	}
 	async fetchTasks(options?: { status?: string; assignee?: string; parent?: string }): Promise<Task[]> {
 		const params = new URLSearchParams();
@@ -507,6 +524,83 @@ export class ApiClient {
 			hasOutput: boolean;
 			message: string;
 		}>(`${API_BASE}/bash/output`);
+	}
+	// Worktree operations
+	async fetchWorktrees(): Promise<Worktree[]> {
+		return this.request<Worktree[]>(`${API_BASE}/worktrees`);
+	}
+
+	async fetchWorktree(id: string): Promise<Worktree> {
+		return this.request<Worktree>(`${API_BASE}/worktrees/${id}`);
+	}
+
+	async createWorktree(dto: CreateWorktreeDto): Promise<Worktree> {
+		return this.request<Worktree>(`${API_BASE}/worktrees`, {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify(dto),
+		});
+	}
+
+	async updateWorktree(id: string, updates: Partial<Worktree>): Promise<Worktree> {
+		return this.request<Worktree>(`${API_BASE}/worktrees/${id}`, {
+			method: "PUT",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify(updates),
+		});
+	}
+
+	async deleteWorktree(id: string, force = false): Promise<{ success: boolean }> {
+		const url = force ? `${API_BASE}/worktrees/${id}?force=true` : `${API_BASE}/worktrees/${id}`;
+		return this.request<{ success: boolean }>(url, {
+			method: "DELETE",
+		});
+	}
+
+	async linkWorktreeToTask(worktreeId: string, taskId: string): Promise<{ success: boolean }> {
+		return this.request<{ success: boolean }>(`${API_BASE}/worktrees/${worktreeId}/link-task`, {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ taskId }),
+		});
+	}
+
+	async unlinkWorktreeFromTask(worktreeId: string, taskId: string): Promise<{ success: boolean }> {
+		return this.request<{ success: boolean }>(`${API_BASE}/worktrees/${worktreeId}/unlink-task`, {
+			method: "DELETE",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ taskId }),
+		});
+	}
+
+	async getWorktreeStatus(id: string): Promise<WorktreeStatus> {
+		return this.request<WorktreeStatus>(`${API_BASE}/worktrees/${id}/status`);
+	}
+
+	async mergeWorktree(id: string, targetBranch: string): Promise<MergeResult> {
+		return this.request<MergeResult>(`${API_BASE}/worktrees/${id}/merge`, {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ targetBranch }),
+		});
+	}
+
+	async pushWorktree(id: string): Promise<{ success: boolean }> {
+		return this.request<{ success: boolean }>(`${API_BASE}/worktrees/${id}/push`, {
+			method: "POST",
+		});
+	}
+
+	async pullWorktree(id: string): Promise<{ success: boolean }> {
+		return this.request<{ success: boolean }>(`${API_BASE}/worktrees/${id}/pull`, {
+			method: "POST",
+		});
+	}
+
+	async cleanupWorktrees(): Promise<{ cleaned: number; errors: string[] }> {
+		return this.request<{ cleaned: number; errors: string[] }>(`${API_BASE}/worktrees/cleanup`, {
+			method: "POST",
+		});
 	}
 }
 

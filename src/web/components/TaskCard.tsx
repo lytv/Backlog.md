@@ -1,5 +1,6 @@
 import React from 'react';
 import { type Task } from '../../types';
+import WorktreeButton from './WorktreeButton';
 
 interface TaskCardProps {
   task: Task;
@@ -140,6 +141,11 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onDragStart, onDragEn
           </span>
         </div>
       )}
+      
+      {/* Worktree Button */}
+      <div className="mt-2 mb-2">
+        <WorktreeButton task={task} size="sm" />
+      </div>
       
       <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mt-3 pt-2 border-t border-gray-100 dark:border-gray-600 transition-colors duration-200">
         <span>Created: {formatDate(task.createdDate)}</span>

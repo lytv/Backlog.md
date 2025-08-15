@@ -1,0 +1,31 @@
+{
+  "id": "wt-T06_S01_Database_Migrations-mece1pav",
+  "name": "T06_S01_Database_Migrations",
+  "path": "/Users/mac/tools/Backlog.md/.tree/T06_S01_Database_Migrations",
+  "branch": "feature/t06_s01_database_migrations",
+  "baseBranch": "main",
+  "taskIds": [
+    "task-004"
+  ],
+  "status": {
+    "isClean": true,
+    "modifiedFiles": 0,
+    "stagedFiles": 0,
+    "untrackedFiles": 0,
+    "aheadCount": 0,
+    "behindCount": 0,
+    "hasConflicts": false,
+    "lastStatusCheck": "2025-08-15T05:31:00.246Z"
+  },
+  "createdDate": "2025-08-15T05:29:11.051Z",
+  "lastAccessedDate": "2025-08-15T05:31:00.111Z",
+  "isActive": true,
+  "metadata": {
+    "description": "Worktree for task: T06_S01_Database_Migrations",
+    "tags": [
+      "task",
+      "normal"
+    ],
+    "autoCleanup": false
+  }
+}

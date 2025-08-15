@@ -4,12 +4,14 @@ import { Core } from "../core/backlog.ts";
 import { getTaskStatistics } from "../core/statistics.ts";
 import type { Task } from "../types/index.ts";
 import { getVersion } from "../utils/version.ts";
+import { WorktreeRepository } from "../core/worktree-repository.ts";
 // @ts-ignore
 import favicon from "../web/favicon.png" with { type: "file" };
 import indexHtml from "../web/index.html";
 
 export class BacklogServer {
 	private core: Core;
+	private worktreeRepo: WorktreeRepository;
 	private server: Server | null = null;
 	private projectName = "Untitled Project";
 	private runningCommands = new Set<string>();
@@ -22,6 +24,7 @@ export class BacklogServer {
 
 	constructor(projectPath: string) {
 		this.core = new Core(projectPath);
+		this.worktreeRepo = new WorktreeRepository(projectPath);
 	}
 
 	async start(port?: number, openBrowser = true): Promise<void> {
@@ -147,6 +150,36 @@ export class BacklogServer {
 					},
 					"/api/bash/output": {
 						GET: async (req) => await this.handleGetBashOutput(req),
+					},
+					"/api/worktrees": {
+						GET: async () => await this.handleListWorktrees(),
+						POST: async (req) => await this.handleCreateWorktree(req),
+					},
+					"/api/worktrees/:id": {
+						GET: async (req) => await this.handleGetWorktree(req.params.id),
+						PUT: async (req) => await this.handleUpdateWorktree(req, req.params.id),
+						DELETE: async (req) => await this.handleDeleteWorktree(req.params.id, req),
+					},
+					"/api/worktrees/:id/link-task": {
+						POST: async (req) => await this.handleLinkWorktreeToTask(req, req.params.id),
+					},
+					"/api/worktrees/:id/unlink-task": {
+						DELETE: async (req) => await this.handleUnlinkWorktreeFromTask(req, req.params.id),
+					},
+					"/api/worktrees/:id/status": {
+						GET: async (req) => await this.handleGetWorktreeStatus(req.params.id),
+					},
+					"/api/worktrees/:id/merge": {
+						POST: async (req) => await this.handleMergeWorktree(req, req.params.id),
+					},
+					"/api/worktrees/:id/push": {
+						POST: async (req) => await this.handlePushWorktree(req.params.id),
+					},
+					"/api/worktrees/:id/pull": {
+						POST: async (req) => await this.handlePullWorktree(req.params.id),
+					},
+					"/api/worktrees/cleanup": {
+						POST: async () => await this.handleCleanupWorktrees(),
 					},
 				},
 				fetch: async (req, server) => {
@@ -1292,6 +1325,246 @@ export class BacklogServer {
 		} catch (error) {
 			console.error("Error getting bash output:", error);
 			return Response.json({ error: "Failed to get bash output" }, { status: 500 });
+		}
+	}
+
+	// Worktree handlers
+	private async handleListWorktrees(): Promise<Response> {
+		try {
+			const worktrees = await this.worktreeRepo.findAll();
+			return Response.json(worktrees);
+		} catch (error) {
+			console.error("Error listing worktrees:", error);
+			return Response.json({ error: "Failed to list worktrees" }, { status: 500 });
+		}
+	}
+
+	private async handleCreateWorktree(req: Request): Promise<Response> {
+		try {
+			const dto = await req.json();
+			
+			// Validate required fields
+			if (!dto.name || !dto.branch || !dto.baseBranch) {
+				return Response.json({ 
+					error: "Missing required fields: name, branch, baseBranch" 
+				}, { status: 400 });
+			}
+
+			const worktree = await this.worktreeRepo.create(dto);
+			return Response.json(worktree, { status: 201 });
+		} catch (error: any) {
+			console.error("Error creating worktree:", error);
+			
+			// Handle specific worktree errors
+			if (error.code) {
+				return Response.json({ 
+					error: error.message,
+					code: error.code,
+					suggestions: error.suggestions 
+				}, { status: 400 });
+			}
+			
+			return Response.json({ error: "Failed to create worktree" }, { status: 500 });
+		}
+	}
+
+	private async handleGetWorktree(worktreeId: string): Promise<Response> {
+		try {
+			const worktree = await this.worktreeRepo.findById(worktreeId);
+			if (!worktree) {
+				return Response.json({ error: "Worktree not found" }, { status: 404 });
+			}
+			return Response.json(worktree);
+		} catch (error) {
+			console.error("Error getting worktree:", error);
+			return Response.json({ error: "Failed to get worktree" }, { status: 500 });
+		}
+	}
+
+	private async handleUpdateWorktree(req: Request, worktreeId: string): Promise<Response> {
+		try {
+			const updates = await req.json();
+			const worktree = await this.worktreeRepo.update(worktreeId, updates);
+			
+			if (!worktree) {
+				return Response.json({ error: "Worktree not found" }, { status: 404 });
+			}
+			
+			return Response.json(worktree);
+		} catch (error) {
+			console.error("Error updating worktree:", error);
+			return Response.json({ error: "Failed to update worktree" }, { status: 500 });
+		}
+	}
+
+	private async handleDeleteWorktree(worktreeId: string, req?: Request): Promise<Response> {
+		try {
+			let force = false;
+			if (req) {
+				const url = new URL(req.url);
+				force = url.searchParams.get("force") === "true";
+			}
+			
+			await this.worktreeRepo.delete(worktreeId, force);
+			return Response.json({ success: true });
+		} catch (error: any) {
+			console.error("Error deleting worktree:", error);
+			
+			if (error.message.includes("not found")) {
+				return Response.json({ error: "Worktree not found" }, { status: 404 });
+			}
+			
+			// Handle specific worktree errors
+			if (error.code) {
+				return Response.json({ 
+					error: error.message,
+					code: error.code,
+					suggestions: error.suggestions 
+				}, { status: 400 });
+			}
+			
+			return Response.json({ error: "Failed to delete worktree" }, { status: 500 });
+		}
+	}
+
+	private async handleLinkWorktreeToTask(req: Request, worktreeId: string): Promise<Response> {
+		try {
+			const { taskId } = await req.json();
+			
+			if (!taskId) {
+				return Response.json({ error: "taskId is required" }, { status: 400 });
+			}
+			
+			await this.worktreeRepo.linkToTask(worktreeId, taskId);
+			return Response.json({ success: true });
+		} catch (error: any) {
+			console.error("Error linking worktree to task:", error);
+			
+			if (error.message.includes("not found")) {
+				return Response.json({ error: "Worktree not found" }, { status: 404 });
+			}
+			
+			return Response.json({ error: "Failed to link worktree to task" }, { status: 500 });
+		}
+	}
+
+	private async handleUnlinkWorktreeFromTask(req: Request, worktreeId: string): Promise<Response> {
+		try {
+			const { taskId } = await req.json();
+			
+			if (!taskId) {
+				return Response.json({ error: "taskId is required" }, { status: 400 });
+			}
+			
+			await this.worktreeRepo.unlinkFromTask(worktreeId, taskId);
+			return Response.json({ success: true });
+		} catch (error: any) {
+			console.error("Error unlinking worktree from task:", error);
+			
+			if (error.message.includes("not found")) {
+				return Response.json({ error: "Worktree not found" }, { status: 404 });
+			}
+			
+			return Response.json({ error: "Failed to unlink worktree from task" }, { status: 500 });
+		}
+	}
+
+	private async handleGetWorktreeStatus(worktreeId: string): Promise<Response> {
+		try {
+			const worktree = await this.worktreeRepo.getWorktreeStatus(worktreeId);
+			if (!worktree) {
+				return Response.json({ error: "Worktree not found" }, { status: 404 });
+			}
+			return Response.json(worktree.status);
+		} catch (error) {
+			console.error("Error getting worktree status:", error);
+			return Response.json({ error: "Failed to get worktree status" }, { status: 500 });
+		}
+	}
+
+	private async handleMergeWorktree(req: Request, worktreeId: string): Promise<Response> {
+		try {
+			const { targetBranch } = await req.json();
+			
+			if (!targetBranch) {
+				return Response.json({ error: "targetBranch is required" }, { status: 400 });
+			}
+			
+			const result = await this.worktreeRepo.mergeWorktree(worktreeId, targetBranch);
+			return Response.json(result);
+		} catch (error: any) {
+			console.error("Error merging worktree:", error);
+			
+			if (error.message.includes("not found")) {
+				return Response.json({ error: "Worktree not found" }, { status: 404 });
+			}
+			
+			return Response.json({ error: "Failed to merge worktree" }, { status: 500 });
+		}
+	}
+
+	private async handlePushWorktree(worktreeId: string): Promise<Response> {
+		try {
+			const result = await this.worktreeRepo.pushWorktree(worktreeId);
+			return Response.json(result);
+		} catch (error: any) {
+			console.error("Error pushing worktree:", error);
+			
+			if (error.message.includes("not found")) {
+				return Response.json({ error: "Worktree not found" }, { status: 404 });
+			}
+			
+			// Handle specific git errors
+			if (error.code) {
+				return Response.json({ 
+					error: error.message,
+					code: error.code,
+					suggestions: error.suggestions 
+				}, { status: 400 });
+			}
+			
+			return Response.json({ 
+				success: false, 
+				message: error.message || "Failed to push worktree" 
+			}, { status: 500 });
+		}
+	}
+
+	private async handlePullWorktree(worktreeId: string): Promise<Response> {
+		try {
+			const result = await this.worktreeRepo.pullWorktree(worktreeId);
+			return Response.json(result);
+		} catch (error: any) {
+			console.error("Error pulling worktree:", error);
+			
+			if (error.message.includes("not found")) {
+				return Response.json({ error: "Worktree not found" }, { status: 404 });
+			}
+			
+			// Handle specific git errors
+			if (error.code) {
+				return Response.json({ 
+					error: error.message,
+					code: error.code,
+					suggestions: error.suggestions 
+				}, { status: 400 });
+			}
+			
+			return Response.json({ 
+				success: false, 
+				message: error.message || "Failed to pull worktree",
+				suggestions: ["Check network connectivity", "Verify repository access"]
+			}, { status: 500 });
+		}
+	}
+
+	private async handleCleanupWorktrees(): Promise<Response> {
+		try {
+			const result = await this.worktreeRepo.cleanupStaleWorktrees();
+			return Response.json(result);
+		} catch (error) {
+			console.error("Error cleaning up worktrees:", error);
+			return Response.json({ error: "Failed to cleanup worktrees" }, { status: 500 });
 		}
 	}
 }

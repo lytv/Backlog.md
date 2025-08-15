@@ -1,0 +1,31 @@
+{
+  "id": "wt-CLI_Kanban_board_milestone_view-mece33cd",
+  "name": "CLI_Kanban_board_milestone_view",
+  "path": "/Users/mac/tools/Backlog.md/.tree/CLI_Kanban_board_milestone_view",
+  "branch": "feature/cli_kanban_board_milestone_view",
+  "baseBranch": "main",
+  "taskIds": [
+    "task-24.1"
+  ],
+  "status": {
+    "isClean": true,
+    "modifiedFiles": 0,
+    "stagedFiles": 0,
+    "untrackedFiles": 0,
+    "aheadCount": 0,
+    "behindCount": 0,
+    "hasConflicts": false,
+    "lastStatusCheck": "2025-08-15T05:31:00.260Z"
+  },
+  "createdDate": "2025-08-15T05:30:15.940Z",
+  "lastAccessedDate": "2025-08-15T05:30:15.940Z",
+  "isActive": true,
+  "metadata": {
+    "description": "Worktree for task: CLI: Kanban board milestone view",
+    "tags": [
+      "task",
+      "normal"
+    ],
+    "autoCleanup": false
+  }
+}

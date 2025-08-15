@@ -14,7 +14,7 @@ import Modal from './components/Modal';
 import TaskForm from './components/TaskForm';
 import { SuccessToast } from './components/SuccessToast';
 import { ThemeProvider } from './contexts/ThemeContext';
-import { type Task, type Document, type Decision, type Milestone, type Sprint } from '../types';
+import { type Task, type Document, type Decision, type Milestone, type Sprint, type Worktree } from '../types';
 import { apiClient } from './lib/api';
 import { useHealthCheckContext } from './contexts/HealthCheckContext';
 import { getWebVersion } from './utils/version';
@@ -35,6 +35,7 @@ function App() {
   const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [sprints, setSprints] = useState<Sprint[]>([]);
   const [decisions, setDecisions] = useState<Decision[]>([]);
+  const [worktrees, setWorktrees] = useState<Worktree[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
   const { isOnline } = useHealthCheckContext();
@@ -71,6 +72,15 @@ function App() {
         setMilestones(milestonesData);
         setSprints(sprintsData);
         setDecisions(decisionsData);
+
+        // Load worktrees separately with error handling
+        try {
+          const worktreesData = await apiClient.fetchWorktrees();
+          setWorktrees(worktreesData);
+        } catch (error) {
+          console.warn('Failed to load worktrees:', error);
+          setWorktrees([]); // Set empty array as fallback
+        }
       } catch (error) {
         console.error('Failed to load data:', error);
       } finally {
@@ -99,6 +109,15 @@ function App() {
           setMilestones(milestonesData);
           setSprints(sprintsData);
           setDecisions(decisionsData);
+
+          // Load worktrees separately with error handling
+          try {
+            const worktreesData = await apiClient.fetchWorktrees();
+            setWorktrees(worktreesData);
+          } catch (error) {
+            console.warn('Failed to reload worktrees:', error);
+            // Keep existing worktrees data on reload failure
+          }
         } catch (error) {
           console.error('Failed to reload data:', error);
         }
@@ -179,6 +198,15 @@ function App() {
       setMilestones(milestonesData);
       setSprints(sprintsData);
       setDecisions(decisionsData);
+
+      // Load worktrees separately with error handling
+      try {
+        const worktreesData = await apiClient.fetchWorktrees();
+        setWorktrees(worktreesData);
+      } catch (error) {
+        console.warn('Failed to refresh worktrees:', error);
+        // Keep existing worktrees data on refresh failure
+      }
     } catch (error) {
       console.error('Failed to refresh data:', error);
     }
@@ -242,6 +270,7 @@ function App() {
                 milestones={milestones}
                 sprints={sprints}
                 decisions={decisions}
+                worktrees={worktrees}
                 isLoading={isLoading}
                 onRefreshData={refreshData}
               />

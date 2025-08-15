@@ -106,3 +106,6 @@ export interface ParsedMarkdown {
 	frontmatter: Record<string, unknown>;
 	content: string;
 }
+
+// Re-export worktree types
+export * from './worktree.ts';
