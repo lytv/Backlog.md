@@ -210,21 +210,21 @@ const WorktreesPage: React.FC<WorktreesPageProps> = ({
     }
 
     // Apply search filter
-    if (debouncedSearchQuery.trim()) {
+    if (debouncedSearchQuery && debouncedSearchQuery.trim()) {
       const query = debouncedSearchQuery.toLowerCase().trim();
       filtered = filtered.filter(wt => {
         // Search in worktree name
-        if (wt.name.toLowerCase().includes(query)) return true;
+        if (wt.name && wt.name.toLowerCase().includes(query)) return true;
         
         // Search in branch name
-        if (wt.branch.toLowerCase().includes(query)) return true;
+        if (wt.branch && wt.branch.toLowerCase().includes(query)) return true;
         
         // Search in linked task titles
-        const hasMatchingTask = wt.taskIds.some(taskId => {
+        const hasMatchingTask = wt.taskIds && wt.taskIds.some(taskId => {
           const task = tasks.find(t => t.id === taskId);
           return task && (
-            task.title.toLowerCase().includes(query) ||
-            taskId.toLowerCase().includes(query)
+            (task.title && task.title.toLowerCase().includes(query)) ||
+            (taskId && taskId.toLowerCase().includes(query))
           );
         });
         

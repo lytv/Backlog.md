@@ -22,7 +22,7 @@ const WorktreeOverview: React.FC<WorktreeOverviewProps> = ({
 }) => {
   const getTaskTitle = (taskId: string): string => {
     const task = tasks.find(t => t.id === taskId);
-    return task ? task.title : taskId;
+    return task && task.title ? task.title : taskId;
   };
 
   const getStatusIcon = (worktree: Worktree) => {
@@ -39,18 +39,22 @@ const WorktreeOverview: React.FC<WorktreeOverviewProps> = ({
   };
 
   const getStatusText = (worktree: Worktree): string => {
-    if (!worktree.isActive) return 'Inactive';
-    if (!worktree.status.isClean) {
-      const changes = worktree.status.modifiedFiles + worktree.status.stagedFiles;
+    if (!worktree || !worktree.isActive) return 'Inactive';
+    if (!worktree.status || !worktree.status.isClean) {
+      const modifiedFiles = worktree.status?.modifiedFiles || 0;
+      const stagedFiles = worktree.status?.stagedFiles || 0;
+      const changes = modifiedFiles + stagedFiles;
       return `${changes} changes`;
     }
-    if (worktree.status.aheadCount > 0) return `+${worktree.status.aheadCount} ahead`;
-    if (worktree.status.behindCount > 0) return `-${worktree.status.behindCount} behind`;
+    const aheadCount = worktree.status?.aheadCount || 0;
+    const behindCount = worktree.status?.behindCount || 0;
+    if (aheadCount > 0) return `+${aheadCount} ahead`;
+    if (behindCount > 0) return `-${behindCount} behind`;
     return 'Clean';
   };
 
-  const activeWorktrees = worktrees.filter(wt => wt.isActive);
-  const inactiveWorktrees = worktrees.filter(wt => !wt.isActive);
+  const activeWorktrees = worktrees.filter(wt => wt && wt.isActive);
+  const inactiveWorktrees = worktrees.filter(wt => wt && !wt.isActive);
 
   return (
     <div className={`space-y-6 transition-opacity duration-200 ${isOperating ? 'opacity-75 pointer-events-none' : ''}`}>

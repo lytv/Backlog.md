@@ -22,7 +22,7 @@ const WorktreeDetailPanel: React.FC<WorktreeDetailPanelProps> = ({
 
   const getTaskTitle = (taskId: string): string => {
     const task = tasks.find(t => t.id === taskId);
-    return task ? task.title : taskId;
+    return task && task.title ? task.title : taskId;
   };
 
   const handleOperation = async (operation: () => Promise<any>) => {
@@ -66,23 +66,29 @@ const WorktreeDetailPanel: React.FC<WorktreeDetailPanelProps> = ({
   };
 
   const getStatusColor = (worktree: Worktree) => {
-    if (!worktree.isActive) return 'text-gray-500 dark:text-gray-400';
-    if (!worktree.status.isClean) return 'text-yellow-600 dark:text-yellow-400';
-    if (worktree.status.aheadCount > 0 || worktree.status.behindCount > 0) return 'text-blue-600 dark:text-blue-400';
+    if (!worktree || !worktree.isActive) return 'text-gray-500 dark:text-gray-400';
+    if (!worktree.status || !worktree.status.isClean) return 'text-yellow-600 dark:text-yellow-400';
+    const aheadCount = worktree.status?.aheadCount || 0;
+    const behindCount = worktree.status?.behindCount || 0;
+    if (aheadCount > 0 || behindCount > 0) return 'text-blue-600 dark:text-blue-400';
     return 'text-green-600 dark:text-green-400';
   };
 
   const getStatusText = (worktree: Worktree): string => {
-    if (!worktree.isActive) return 'Inactive';
-    if (!worktree.status.isClean) {
-      const changes = worktree.status.modifiedFiles + worktree.status.stagedFiles;
+    if (!worktree || !worktree.isActive) return 'Inactive';
+    if (!worktree.status || !worktree.status.isClean) {
+      const modifiedFiles = worktree.status?.modifiedFiles || 0;
+      const stagedFiles = worktree.status?.stagedFiles || 0;
+      const changes = modifiedFiles + stagedFiles;
       return `${changes} uncommitted changes`;
     }
-    if (worktree.status.aheadCount > 0 && worktree.status.behindCount > 0) {
-      return `${worktree.status.aheadCount} ahead, ${worktree.status.behindCount} behind`;
+    const aheadCount = worktree.status?.aheadCount || 0;
+    const behindCount = worktree.status?.behindCount || 0;
+    if (aheadCount > 0 && behindCount > 0) {
+      return `${aheadCount} ahead, ${behindCount} behind`;
     }
-    if (worktree.status.aheadCount > 0) return `${worktree.status.aheadCount} commits ahead`;
-    if (worktree.status.behindCount > 0) return `${worktree.status.behindCount} commits behind`;
+    if (aheadCount > 0) return `${aheadCount} commits ahead`;
+    if (behindCount > 0) return `${behindCount} commits behind`;
     return 'Up to date';
   };
 
