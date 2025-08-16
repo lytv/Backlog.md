@@ -15,10 +15,10 @@
     "aheadCount": 0,
     "behindCount": 0,
     "hasConflicts": false,
-    "lastStatusCheck": "2025-08-15T05:31:00.260Z"
+    "lastStatusCheck": "2025-08-16T07:26:30.314Z"
   },
   "createdDate": "2025-08-15T05:30:15.940Z",
-  "lastAccessedDate": "2025-08-15T05:30:15.940Z",
+  "lastAccessedDate": "2025-08-16T07:26:00.241Z",
   "isActive": true,
   "metadata": {
     "description": "Worktree for task: CLI: Kanban board milestone view",

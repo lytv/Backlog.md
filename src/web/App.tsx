@@ -10,6 +10,8 @@ import TaskList from './components/TaskList';
 import DraftsList from './components/DraftsList';
 import Settings from './components/Settings';
 import Statistics from './components/Statistics';
+import WorktreesPage from './components/WorktreesPage';
+import WorktreeErrorBoundary from './components/WorktreeErrorBoundary';
 import Modal from './components/Modal';
 import TaskForm from './components/TaskForm';
 import { SuccessToast } from './components/SuccessToast';
@@ -292,6 +294,11 @@ function App() {
             <Route path="decisions/:id" element={<DecisionDetail decisions={decisions} onRefreshData={refreshData} />} />
             <Route path="decisions/:id/:title" element={<DecisionDetail decisions={decisions} onRefreshData={refreshData} />} />
             <Route path="statistics" element={<Statistics tasks={tasks} isLoading={isLoading} onEditTask={handleEditTask} projectName={projectName} />} />
+            <Route path="worktrees" element={
+              <WorktreeErrorBoundary>
+                <WorktreesPage tasks={tasks} worktrees={worktrees} isLoading={isLoading} onRefreshData={refreshData} />
+              </WorktreeErrorBoundary>
+            } />
             <Route path="settings" element={<Settings />} />
           </Route>
         </Routes>

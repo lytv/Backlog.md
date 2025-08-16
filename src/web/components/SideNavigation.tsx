@@ -8,8 +8,7 @@ import { SidebarSkeleton } from './LoadingSpinner';
 import { sanitizeUrlTitle } from '../utils/urlHelpers';
 import { getWebVersion } from '../utils/version';
 import FileExplorer from './FileExplorer';
-import WorktreeSidebar from './WorktreeSidebar';
-import WorktreeManager from './WorktreeManager';
+
 
 // Utility functions for ID transformations
 const stripIdPrefix = (id: string): string => {
@@ -230,17 +229,8 @@ const SideNavigation = memo(function SideNavigation({
 		// Default to collapsed
 		return true;
 	});
-	const [isWorktreesCollapsed, setIsWorktreesCollapsed] = useState(() => {
-		const saved = localStorage.getItem('worktreesCollapsed');
-		if (saved !== null) {
-			return JSON.parse(saved);
-		}
-		// Default to expanded if there are active worktrees
-		return worktrees.filter(wt => wt.isActive).length === 0;
-	});
 	const [version, setVersion] = useState<string>('');
-	const [showWorktreeManager, setShowWorktreeManager] = useState(false);
-	const [selectedWorktreeId, setSelectedWorktreeId] = useState<string | undefined>();
+
 	const location = useLocation();
 	const navigate = useNavigate();
 
@@ -295,10 +285,6 @@ const SideNavigation = memo(function SideNavigation({
 		localStorage.setItem('fileExplorerCollapsed', JSON.stringify(isFileExplorerCollapsed));
 	}, [isFileExplorerCollapsed]);
 
-	// Save worktrees collapse state to localStorage
-	useEffect(() => {
-		localStorage.setItem('worktreesCollapsed', JSON.stringify(isWorktreesCollapsed));
-	}, [isWorktreesCollapsed]);
 
 	// Auto-collapse when data loads/changes if no saved preference exists
 	useEffect(() => {
@@ -648,41 +634,26 @@ const SideNavigation = memo(function SideNavigation({
 							<Icons.Statistics />
 							<span className="ml-3 text-sm font-medium">Statistics</span>
 						</NavLink>
+
+						{/* Worktrees Navigation */}
+						<NavLink
+							to="/worktrees"
+							className={({ isActive }) =>
+								`flex items-center px-3 py-2 rounded-lg transition-colors duration-200 ${
+									isActive
+										? 'bg-blue-50 dark:bg-blue-600/20 text-blue-600 dark:text-blue-400 font-medium'
+										: 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100'
+								}`
+							}
+						>
+							<Icons.Worktree />
+							<span className="ml-3 text-sm font-medium">Worktrees</span>
+						</NavLink>
 					</div>
 				)}
 
 				{!isCollapsed && !isLoading && (
 					<>
-						{/* Worktrees Section */}
-						<div className="px-4 py-4">
-							<div className="flex items-center justify-between mb-4">
-								<div className="flex items-center space-x-3">
-									<button
-										onClick={() => setIsWorktreesCollapsed(!isWorktreesCollapsed)}
-										className="p-1 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 rounded transition-colors duration-200 cursor-pointer"
-										title={isWorktreesCollapsed ? "Expand worktrees" : "Collapse worktrees"}
-									>
-										{isWorktreesCollapsed ? <Icons.ChevronRight /> : <Icons.ChevronDown />}
-									</button>
-									<span className="text-gray-500 dark:text-gray-400"><Icons.Worktree /></span>
-									<span className="text-sm font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-400 whitespace-nowrap">
-										Worktrees ({worktrees.filter(wt => wt.isActive).length})
-									</span>
-								</div>
-							</div>
-
-							{!isWorktreesCollapsed && (
-								<WorktreeSidebar
-									worktrees={worktrees}
-									onWorktreeSelect={(worktree) => {
-										setSelectedWorktreeId(worktree.id);
-										setShowWorktreeManager(true);
-									}}
-									onRefresh={onRefreshData}
-								/>
-							)}
-						</div>
-
 						{/* Divider between Tasks and Milestones */}
 						<div className="mx-4 my-2 border-t border-gray-200 dark:border-gray-700"></div>
 						
@@ -1013,24 +984,22 @@ const SideNavigation = memo(function SideNavigation({
 						</NavLink>
 						
 						{/* Worktrees Navigation */}
-						<button
-							onClick={() => {
-								setIsCollapsed(false);
-								setIsWorktreesCollapsed(false);
-							}}
+						<NavLink
+							to="/worktrees"
 							data-tooltip-id="sidebar-tooltip"
-							data-tooltip-content={`Worktrees (${worktrees.filter(wt => wt.isActive).length})`}
-							className="flex items-center justify-center p-3 rounded-md transition-colors duration-200 cursor-pointer w-full text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100 relative"
+							data-tooltip-content="Worktrees"
+							className={({ isActive }) =>
+								`flex items-center justify-center p-3 rounded-md transition-colors duration-200 ${
+									isActive
+										? 'bg-blue-50 dark:bg-blue-600/20 text-blue-700 dark:text-blue-400'
+										: 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100'
+								}`
+							}
 						>
 							<div className="w-6 h-6 flex items-center justify-center">
 								<Icons.Worktree />
 							</div>
-							{worktrees.filter(wt => wt.isActive).length > 0 && (
-								<div className="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 text-white text-xs rounded-full flex items-center justify-center">
-									{worktrees.filter(wt => wt.isActive).length}
-								</div>
-							)}
-						</button>
+						</NavLink>
 						<button
 							onClick={() => {
 								setIsCollapsed(false);
@@ -1127,16 +1096,7 @@ const SideNavigation = memo(function SideNavigation({
 			
 			<Tooltip id="sidebar-tooltip" place="right" />
 			
-			{/* Worktree Manager Modal */}
-			<WorktreeManager
-				isOpen={showWorktreeManager}
-				onClose={() => {
-					setShowWorktreeManager(false);
-					setSelectedWorktreeId(undefined);
-				}}
-				initialWorktreeId={selectedWorktreeId}
-				onRefreshData={onRefreshData}
-			/>
+
 		</div>
 	</ErrorBoundary>
 	);

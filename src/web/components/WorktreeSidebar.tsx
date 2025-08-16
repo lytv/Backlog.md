@@ -1,22 +1,22 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import type { Worktree, Task } from '../../types';
 import { apiClient } from '../lib/api';
 
 interface WorktreeSidebarProps {
   worktrees: Worktree[];
-  onWorktreeSelect: (worktree: Worktree) => void;
   onRefresh: () => Promise<void>;
   isCollapsed?: boolean;
 }
 
 const WorktreeSidebar: React.FC<WorktreeSidebarProps> = ({ 
   worktrees, 
-  onWorktreeSelect, 
   onRefresh,
   isCollapsed = false 
 }) => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     loadTasks();
@@ -91,7 +91,7 @@ const WorktreeSidebar: React.FC<WorktreeSidebarProps> = ({
         {activeWorktrees.slice(0, 3).map((worktree) => (
           <button
             key={worktree.id}
-            onClick={() => onWorktreeSelect(worktree)}
+            onClick={() => navigate('/worktrees')}
             className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors duration-200 cursor-pointer relative"
             title={`${worktree.name} - ${getStatusText(worktree)}`}
           >
@@ -137,7 +137,7 @@ const WorktreeSidebar: React.FC<WorktreeSidebarProps> = ({
               <div
                 key={worktree.id}
                 className="group p-2 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-200 cursor-pointer"
-                onClick={() => onWorktreeSelect(worktree)}
+                onClick={() => navigate('/worktrees')}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2 min-w-0 flex-1">
@@ -190,7 +190,7 @@ const WorktreeSidebar: React.FC<WorktreeSidebarProps> = ({
               <div
                 key={worktree.id}
                 className="group p-2 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-200 cursor-pointer opacity-60"
-                onClick={() => onWorktreeSelect(worktree)}
+                onClick={() => navigate('/worktrees')}
               >
                 <div className="flex items-center space-x-2">
                   {getStatusIcon(worktree)}
