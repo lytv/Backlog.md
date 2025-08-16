@@ -4,6 +4,7 @@ import { apiClient } from '../lib/api';
 import LoadingSpinner from './LoadingSpinner';
 import WorktreeStatsCards from './WorktreeStatsCards';
 import WorktreeOverview from './WorktreeOverview';
+import WorktreeListView from './WorktreeListView';
 const WorktreeDetailPanel = React.lazy(() => import('./WorktreeDetailPanel'));
 import WorktreeCommandsPanel from './WorktreeCommandsPanel';
 import WorktreeToast from './WorktreeToast';
@@ -16,11 +17,13 @@ interface WorktreesPageProps {
 }
 
 type ViewMode = 'overview' | 'detail' | 'commands';
+type DisplayMode = 'grid' | 'list';
 type FilterMode = 'all' | 'active' | 'inactive' | 'modified';
 
 interface WorktreeViewState {
   selectedWorktree: Worktree | null;
   viewMode: ViewMode;
+  displayMode: DisplayMode;
   searchQuery: string;
   statusFilter: FilterMode;
 }
@@ -40,6 +43,7 @@ const WorktreesPage: React.FC<WorktreesPageProps> = ({
   const [viewState, setViewState] = useState<WorktreeViewState>({
     selectedWorktree: null,
     viewMode: 'overview',
+    displayMode: 'grid',
     searchQuery: '',
     statusFilter: 'all'
   });
@@ -140,6 +144,13 @@ const WorktreesPage: React.FC<WorktreesPageProps> = ({
       ...prev,
       searchQuery: '',
       statusFilter: 'all'
+    }));
+  }, []);
+
+  const handleDisplayModeChange = useCallback((mode: DisplayMode) => {
+    setViewState(prev => ({
+      ...prev,
+      displayMode: mode
     }));
   }, []);
 
@@ -351,6 +362,36 @@ const WorktreesPage: React.FC<WorktreesPageProps> = ({
             </select>
           </div>
 
+          {/* View Toggle */}
+          <div className="flex items-center space-x-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+            <button
+              onClick={() => handleDisplayModeChange('grid')}
+              className={`px-3 py-1.5 text-sm rounded-md transition-colors duration-200 flex items-center space-x-1 ${
+                viewState.displayMode === 'grid'
+                  ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 shadow-sm'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'
+              }`}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+              </svg>
+              <span>Grid</span>
+            </button>
+            <button
+              onClick={() => handleDisplayModeChange('list')}
+              className={`px-3 py-1.5 text-sm rounded-md transition-colors duration-200 flex items-center space-x-1 ${
+                viewState.displayMode === 'list'
+                  ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 shadow-sm'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'
+              }`}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+              </svg>
+              <span>List</span>
+            </button>
+          </div>
+
           {/* Clear Filters */}
           {(viewState.searchQuery || viewState.statusFilter !== 'all') && (
             <button
@@ -414,15 +455,29 @@ const WorktreesPage: React.FC<WorktreesPageProps> = ({
 
       {/* Tab Content */}
       {activeTab === 'overview' && (
-        <WorktreeOverview
-          worktrees={filteredWorktrees}
-          tasks={tasks}
-          onWorktreeSelect={handleWorktreeSelect}
-          onDeleteWorktree={handleDeleteWorktree}
-          onSwitchToCommands={() => setActiveTab('commands')}
-          isFiltered={viewState.searchQuery !== '' || viewState.statusFilter !== 'all'}
-          isOperating={isOperating}
-        />
+        <>
+          {viewState.displayMode === 'grid' ? (
+            <WorktreeOverview
+              worktrees={filteredWorktrees}
+              tasks={tasks}
+              onWorktreeSelect={handleWorktreeSelect}
+              onDeleteWorktree={handleDeleteWorktree}
+              onSwitchToCommands={() => setActiveTab('commands')}
+              isFiltered={viewState.searchQuery !== '' || viewState.statusFilter !== 'all'}
+              isOperating={isOperating}
+            />
+          ) : (
+            <WorktreeListView
+              worktrees={filteredWorktrees}
+              tasks={tasks}
+              onWorktreeSelect={handleWorktreeSelect}
+              onDeleteWorktree={handleDeleteWorktree}
+              onSwitchToCommands={() => setActiveTab('commands')}
+              isFiltered={viewState.searchQuery !== '' || viewState.statusFilter !== 'all'}
+              isOperating={isOperating}
+            />
+          )}
+        </>
       )}
 
       {activeTab === 'commands' && (
