@@ -1,0 +1,31 @@
+{
+  "id": "wt-T10_S01_Database_Seeding-mefnhyiq",
+  "name": "T10_S01_Database_Seeding",
+  "path": "/Users/mac/tools/Backlog.md/.tree/T10_S01_Database_Seeding",
+  "branch": "feature/t10_s01_database_seeding",
+  "baseBranch": "main",
+  "taskIds": [
+    "task-008"
+  ],
+  "status": {
+    "isClean": true,
+    "modifiedFiles": 0,
+    "stagedFiles": 0,
+    "untrackedFiles": 0,
+    "aheadCount": 0,
+    "behindCount": 0,
+    "hasConflicts": false,
+    "lastStatusCheck": "2025-08-17T13:49:35.508Z"
+  },
+  "createdDate": "2025-08-17T12:17:04.615Z",
+  "lastAccessedDate": "2025-08-17T12:17:04.615Z",
+  "isActive": true,
+  "metadata": {
+    "description": "Worktree for task: T10_S01_Database_Seeding",
+    "tags": [
+      "task",
+      "normal"
+    ],
+    "autoCleanup": false
+  }
+}

@@ -5,7 +5,13 @@ import type { Task } from "./types/index.ts";
 const BOARD_START = "<!-- BOARD_START -->";
 const BOARD_END = "<!-- BOARD_END -->";
 
-export async function updateReadmeWithBoard(tasks: Task[], statuses: string[], projectName: string, version?: string, sprintFilter?: string) {
+export async function updateReadmeWithBoard(
+	tasks: Task[],
+	statuses: string[],
+	projectName: string,
+	version?: string,
+	sprintFilter?: string,
+) {
 	const readmePath = join(process.cwd(), "README.md");
 	let readmeContent = "";
 	try {

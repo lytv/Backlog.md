@@ -156,6 +156,11 @@ const Icons = {
 			<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
 		</svg>
 	),
+	Terminal: () => (
+		<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+			<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+		</svg>
+	),
 };
 
 interface SideNavigationProps {
@@ -649,6 +654,21 @@ const SideNavigation = memo(function SideNavigation({
 							<Icons.Worktree />
 							<span className="ml-3 text-sm font-medium">Worktrees</span>
 						</NavLink>
+
+						{/* Terminal Navigation */}
+						<NavLink
+							to="/terminal"
+							className={({ isActive }) =>
+								`flex items-center px-3 py-2 rounded-lg transition-colors duration-200 ${
+									isActive
+										? 'bg-blue-50 dark:bg-blue-600/20 text-blue-600 dark:text-blue-400 font-medium'
+										: 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100'
+								}`
+							}
+						>
+							<Icons.Terminal />
+							<span className="ml-3 text-sm font-medium">Terminal</span>
+						</NavLink>
 					</div>
 				)}
 
@@ -998,6 +1018,24 @@ const SideNavigation = memo(function SideNavigation({
 						>
 							<div className="w-6 h-6 flex items-center justify-center">
 								<Icons.Worktree />
+							</div>
+						</NavLink>
+						
+						{/* Terminal Navigation */}
+						<NavLink
+							to="/terminal"
+							data-tooltip-id="sidebar-tooltip"
+							data-tooltip-content="Terminal"
+							className={({ isActive }) =>
+								`flex items-center justify-center p-3 rounded-md transition-colors duration-200 ${
+									isActive
+										? 'bg-blue-50 dark:bg-blue-600/20 text-blue-700 dark:text-blue-400'
+										: 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100'
+								}`
+							}
+						>
+							<div className="w-6 h-6 flex items-center justify-center">
+								<Icons.Terminal />
 							</div>
 						</NavLink>
 						<button

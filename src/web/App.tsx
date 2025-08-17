@@ -12,6 +12,7 @@ import Settings from './components/Settings';
 import Statistics from './components/Statistics';
 import WorktreesPage from './components/WorktreesPage';
 import WorktreeErrorBoundary from './components/WorktreeErrorBoundary';
+import TerminalPage from './components/TerminalPage';
 import Modal from './components/Modal';
 import TaskForm from './components/TaskForm';
 import { SuccessToast } from './components/SuccessToast';
@@ -299,6 +300,7 @@ function App() {
                 <WorktreesPage tasks={tasks} worktrees={worktrees} isLoading={isLoading} onRefreshData={refreshData} />
               </WorktreeErrorBoundary>
             } />
+            <Route path="terminal" element={<TerminalPage tasks={tasks} />} />
             <Route path="settings" element={<Settings />} />
           </Route>
         </Routes>

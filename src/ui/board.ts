@@ -36,7 +36,7 @@ export async function renderBoardTui(
 	// Apply sprint filter if specified
 	let filteredTasks = tasks;
 	if (options?.sprintFilter) {
-		filteredTasks = tasks.filter(task => task.sprint_source === options.sprintFilter);
+		filteredTasks = tasks.filter((task) => task.sprint_source === options.sprintFilter);
 	}
 
 	const tasksByStatus = new Map<string, Task[]>();

@@ -10,7 +10,12 @@ import type { Task } from "./types/index.ts";
 export type BoardLayout = "horizontal" | "vertical";
 export type BoardFormat = "terminal" | "markdown";
 
-export function generateKanbanBoardWithMetadata(tasks: Task[], statuses: string[], projectName: string, options?: BoardOptions): string {
+export function generateKanbanBoardWithMetadata(
+	tasks: Task[],
+	statuses: string[],
+	projectName: string,
+	options?: BoardOptions,
+): string {
 	// Generate timestamp
 	const now = new Date();
 	const timestamp = now.toISOString().replace("T", " ").substring(0, 19);
@@ -18,7 +23,7 @@ export function generateKanbanBoardWithMetadata(tasks: Task[], statuses: string[
 	// Apply sprint filter if specified
 	let filteredTasks = tasks;
 	if (options?.sprintFilter) {
-		filteredTasks = tasks.filter(task => task.sprint_source === options.sprintFilter);
+		filteredTasks = tasks.filter((task) => task.sprint_source === options.sprintFilter);
 	}
 
 	// Group tasks by status, filtering out tasks without status

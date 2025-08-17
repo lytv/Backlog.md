@@ -16,7 +16,7 @@ describe("Sprint Filter", () => {
 			sprint_source: "S01_M01_Sprint_One",
 		},
 		{
-			id: "task-002", 
+			id: "task-002",
 			title: "Task 2",
 			status: "In Progress",
 			assignee: [],
@@ -28,7 +28,7 @@ describe("Sprint Filter", () => {
 		},
 		{
 			id: "task-003",
-			title: "Task 3", 
+			title: "Task 3",
 			status: "Done",
 			assignee: [],
 			createdDate: "2025-01-03",
@@ -40,7 +40,7 @@ describe("Sprint Filter", () => {
 		{
 			id: "task-004",
 			title: "Task 4",
-			status: "To Do", 
+			status: "To Do",
 			assignee: [],
 			createdDate: "2025-01-04",
 			labels: [],

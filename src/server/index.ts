@@ -2,29 +2,36 @@ import type { Server } from "bun";
 import { $ } from "bun";
 import { Core } from "../core/backlog.ts";
 import { getTaskStatistics } from "../core/statistics.ts";
-import type { Task } from "../types/index.ts";
-import { getVersion } from "../utils/version.ts";
 import { WorktreeRepository } from "../core/worktree-repository.ts";
+import type { Task } from "../types/index.ts";
+import type { CreateTerminalRequest, TerminalInput } from "../types/terminal.ts";
+import { getVersion } from "../utils/version.ts";
 // @ts-ignore
 import favicon from "../web/favicon.png" with { type: "file" };
 import indexHtml from "../web/index.html";
+import { TerminalManager } from "./terminal/terminal-manager.ts";
 
 export class BacklogServer {
 	private core: Core;
 	private worktreeRepo: WorktreeRepository;
+	private terminalManager: TerminalManager;
 	private server: Server | null = null;
 	private projectName = "Untitled Project";
 	private runningCommands = new Set<string>();
 	private commandTimeouts = new Map<string, NodeJS.Timeout>();
-	private lastBashOutput: string = '';
-	private lastBashCommand: string = '';
-	private lastBashTimestamp: string = '';
-	private lastBashExecutionTime: number = 0;
-	private lastBashWorkingDir: string = '';
+	private lastBashOutput = "";
+	private lastBashCommand = "";
+	private lastBashTimestamp = "";
+	private lastBashExecutionTime = 0;
+	private lastBashWorkingDir = "";
 
 	constructor(projectPath: string) {
 		this.core = new Core(projectPath);
 		this.worktreeRepo = new WorktreeRepository(projectPath);
+		this.terminalManager = new TerminalManager(projectPath);
+
+		// Start periodic cleanup of old terminal sessions
+		this.terminalManager.startPeriodicCleanup(6, 24); // Every 6 hours, delete sessions older than 24 hours
 	}
 
 	async start(port?: number, openBrowser = true): Promise<void> {
@@ -53,6 +60,7 @@ export class BacklogServer {
 					"/decisions/*": indexHtml,
 					"/statistics": indexHtml,
 					"/settings": indexHtml,
+					"/terminal": indexHtml,
 
 					// API Routes using Bun's native route syntax
 					"/api/tasks": {
@@ -181,21 +189,107 @@ export class BacklogServer {
 					"/api/worktrees/cleanup": {
 						POST: async () => await this.handleCleanupWorktrees(),
 					},
+
+					// Terminal API Routes
+					"/api/terminals": {
+						GET: async () => await this.handleListTerminals(),
+						POST: async (req) => await this.handleCreateTerminal(req),
+					},
+					"/api/terminals/:id": {
+						GET: async (req) => await this.handleGetTerminal(req.params.id),
+						DELETE: async (req) => await this.handleKillTerminal(req.params.id),
+					},
+					"/api/terminals/:id/input": {
+						POST: async (req) => await this.handleTerminalInput(req, req.params.id),
+					},
+					"/api/terminals/:id/resize": {
+						POST: async (req) => await this.handleTerminalResize(req, req.params.id),
+					},
+					"/api/terminals/:id/output": {
+						GET: async (req) => await this.handleTerminalOutput(req.params.id),
+					},
 				},
 				fetch: async (req, server) => {
 					return await this.handleRequest(req, server);
 				},
 				error: this.handleError.bind(this),
 				websocket: {
-					open() {
-						// Client connected
+					open: (ws) => {
+						console.log("[WebSocket] Client connected");
+						// Store client connection for terminal sessions
+						(ws as any).isTerminalConnection = false;
 					},
-					message(ws) {
-						// Echo back for health check
-						ws.send("pong");
+					message: (ws, message) => {
+						try {
+							const data = JSON.parse(message.toString());
+
+							// Terminal WebSocket protocol
+							if (data.type === "terminal_connect" && data.sessionId) {
+								console.log(`[WebSocket] Terminal connection for session ${data.sessionId}`);
+								(ws as any).isTerminalConnection = true;
+								(ws as any).terminalSessionId = data.sessionId;
+
+								// Add listener for this session
+								this.terminalManager.addSessionListener(data.sessionId, (terminalMessage) => {
+									try {
+										ws.send(JSON.stringify(terminalMessage));
+									} catch (error) {
+										console.error("[WebSocket] Error sending terminal message:", error);
+									}
+								});
+
+								// Send connection confirmation
+								ws.send(
+									JSON.stringify({
+										type: "terminal_connected",
+										sessionId: data.sessionId,
+									}),
+								);
+							} else if (data.type === "terminal_input" && data.sessionId && data.input) {
+								// Handle terminal input via WebSocket
+								console.log(`[WebSocket] Received terminal input for session ${data.sessionId}:`, data.input);
+								this.terminalManager.sendInput(data.sessionId, data.input).catch((error) => {
+									console.error("[WebSocket] Error sending terminal input:", error);
+									ws.send(
+										JSON.stringify({
+											type: "error",
+											message: error.message,
+										}),
+									);
+								});
+							} else if (data.type === "terminal_resize" && data.sessionId && data.cols && data.rows) {
+								// Handle terminal resize via WebSocket
+								this.terminalManager.resizeSession(data.sessionId, data.cols, data.rows).catch((error) => {
+									console.error("[WebSocket] Error resizing terminal:", error);
+									ws.send(
+										JSON.stringify({
+											type: "error",
+											message: error.message,
+										}),
+									);
+								});
+							} else {
+								// Health check ping/pong
+								ws.send("pong");
+							}
+						} catch (error) {
+							console.error("[WebSocket] Error parsing message:", error);
+							ws.send(
+								JSON.stringify({
+									type: "error",
+									message: "Invalid message format",
+								}),
+							);
+						}
 					},
-					close() {
-						// Client disconnected
+					close: (ws) => {
+						console.log("[WebSocket] Client disconnected");
+						if ((ws as any).isTerminalConnection && (ws as any).terminalSessionId) {
+							// Remove terminal listeners when client disconnects
+							const sessionId = (ws as any).terminalSessionId;
+							console.log(`[WebSocket] Removing terminal listeners for session ${sessionId}`);
+							// Note: We'll need to track listeners to remove them properly
+						}
 					},
 				},
 			});
@@ -238,6 +332,9 @@ export class BacklogServer {
 
 	async stop(): Promise<void> {
 		if (this.server) {
+			// Cleanup terminal sessions before stopping server
+			await this.terminalManager.cleanup();
+
 			await this.server.stop();
 			this.server = null;
 			console.log("Server stopped");
@@ -274,6 +371,11 @@ export class BacklogServer {
 
 		// Handle WebSocket upgrade
 		if (req.headers.get("upgrade") === "websocket") {
+			// Check if this is a terminal WebSocket connection
+			if (pathname.startsWith("/api/terminals/") && pathname.endsWith("/ws")) {
+				console.log(`[WebSocket] Terminal WebSocket upgrade request: ${pathname}`);
+			}
+
 			const success = server.upgrade(req);
 			if (success) {
 				return new Response(null, { status: 101 }); // WebSocket upgrade response
@@ -944,7 +1046,7 @@ export class BacklogServer {
 			let sessionName: string | null = null;
 
 			try {
-				const sessionMapContent = await fs.readFile(sessionMapPath, 'utf8');
+				const sessionMapContent = await fs.readFile(sessionMapPath, "utf8");
 				const sessionMap = JSON.parse(sessionMapContent);
 
 				// Find session by token
@@ -980,7 +1082,7 @@ export class BacklogServer {
 
 				// Send command to tmux session
 				await execAsync(`tmux send-keys -t ${sessionName} C-u`); // Clear input
-				await new Promise(resolve => setTimeout(resolve, 200)); // Increased delay
+				await new Promise((resolve) => setTimeout(resolve, 200)); // Increased delay
 
 				// Better escaping for tmux send-keys
 				const escapedCommand = command.replace(/'/g, "'\\''");
@@ -988,21 +1090,22 @@ export class BacklogServer {
 
 				// Send command and Enter separately for better reliability
 				await execAsync(`tmux send-keys -t ${sessionName} '${escapedCommand}'`);
-				await new Promise(resolve => setTimeout(resolve, 50)); // Small delay before Enter
+				await new Promise((resolve) => setTimeout(resolve, 50)); // Small delay before Enter
 				await execAsync(`tmux send-keys -t ${sessionName} Enter`);
 
 				return Response.json({
 					success: true,
-					message: `Command "${command}" sent to session ${sessionName}`
+					message: `Command "${command}" sent to session ${sessionName}`,
 				});
-
 			} catch (tmuxError) {
 				console.error("Tmux command error:", tmuxError);
-				return Response.json({
-					error: `Failed to send command to tmux session: ${sessionName}`
-				}, { status: 500 });
+				return Response.json(
+					{
+						error: `Failed to send command to tmux session: ${sessionName}`,
+					},
+					{ status: 500 },
+				);
 			}
-
 		} catch (error) {
 			console.error("Error handling tmux command:", error);
 			return Response.json({ error: "Failed to process tmux command" }, { status: 500 });
@@ -1025,7 +1128,7 @@ export class BacklogServer {
 			let sessionName: string | null = null;
 
 			try {
-				const sessionMapContent = await fs.readFile(sessionMapPath, 'utf8');
+				const sessionMapContent = await fs.readFile(sessionMapPath, "utf8");
 				const sessionMap = JSON.parse(sessionMapContent);
 
 				// Find session by token
@@ -1063,23 +1166,26 @@ export class BacklogServer {
 				const { stdout } = await execAsync(`tmux capture-pane -t ${sessionName} -p`);
 
 				// Get session info for metadata
-				const sessionInfo = await execAsync(`tmux display-message -t ${sessionName} -p "#{session_name}:#{window_index}.#{pane_index}"`);
+				const sessionInfo = await execAsync(
+					`tmux display-message -t ${sessionName} -p "#{session_name}:#{window_index}.#{pane_index}"`,
+				);
 
 				return Response.json({
 					success: true,
 					output: stdout,
 					session: sessionName,
 					sessionInfo: sessionInfo.stdout.trim(),
-					timestamp: new Date().toISOString()
+					timestamp: new Date().toISOString(),
 				});
-
 			} catch (tmuxError) {
 				console.error("Tmux output error:", tmuxError);
-				return Response.json({
-					error: `Failed to get output from tmux session: ${sessionName}`
-				}, { status: 500 });
+				return Response.json(
+					{
+						error: `Failed to get output from tmux session: ${sessionName}`,
+					},
+					{ status: 500 },
+				);
 			}
-
 		} catch (error) {
 			console.error("Error handling tmux output:", error);
 			return Response.json({ error: "Failed to get tmux output" }, { status: 500 });
@@ -1090,7 +1196,7 @@ export class BacklogServer {
 		try {
 			const { command } = await req.json();
 
-			if (!command || typeof command !== 'string') {
+			if (!command || typeof command !== "string") {
 				return Response.json({ error: "Command is required" }, { status: 400 });
 			}
 
@@ -1108,11 +1214,11 @@ export class BacklogServer {
 				return Response.json({
 					success: false,
 					command: command,
-					output: '',
-					error: 'Command is already running',
+					output: "",
+					error: "Command is already running",
 					executionTime: 0,
 					timestamp: new Date().toISOString(),
-					workingDirectory: this.core.projectPath
+					workingDirectory: this.core.projectPath,
 				});
 			}
 
@@ -1129,55 +1235,61 @@ export class BacklogServer {
 			this.commandTimeouts.set(command, commandTimeout);
 
 			try {
-
 				// Detect if command is an alias or needs shell expansion
-				const needsShellExpansion = command.includes('|') || command.includes('&&') ||
-					command.includes('||') || command.includes(';') || command.includes('`') ||
-					command.includes('~') || command.includes('*') || command.includes('?') ||
-					command.trim() === 'alias' || command.startsWith('alias '); $
+				const needsShellExpansion =
+					command.includes("|") ||
+					command.includes("&&") ||
+					command.includes("||") ||
+					command.includes(";") ||
+					command.includes("`") ||
+					command.includes("~") ||
+					command.includes("*") ||
+					command.includes("?") ||
+					command.trim() === "alias" ||
+					command.startsWith("alias ");
 
 				let childProcess;
-				let output = '';
-				let errorOutput = '';
+				let output = "";
+				let errorOutput = "";
 
-				if (needsShellExpansion || command.trim() === 'ccrm' || command.startsWith('ccrm ')) {
+				if (needsShellExpansion || command.trim() === "ccrm" || command.startsWith("ccrm ")) {
 					// For shell expansions and aliases, use spawn with shell
 					// But add safeguards to prevent infinite loops
 					let shellCommand = command;
 
 					// Replace ccrm with safe script path to avoid alias recursion
-					if (command.trim() === 'ccrm' || command.startsWith('ccrm ')) {
-						const scriptPath = '/Users/mac/tools/Claude-Code-Remote/create-new-session-safe.sh';
+					if (command.trim() === "ccrm" || command.startsWith("ccrm ")) {
+						const scriptPath = "/Users/mac/tools/Claude-Code-Remote/create-new-session-safe.sh";
 						shellCommand = command.replace(/^ccrm/, scriptPath);
 						console.log(`[BASH] Replaced ccrm with safe script: ${shellCommand}`);
 					}
 
-					childProcess = spawn('/bin/zsh', ['-i', '-c', shellCommand], {
+					childProcess = spawn("/bin/zsh", ["-i", "-c", shellCommand], {
 						cwd: this.core.projectPath,
 						env: {
 							...process.env,
-							SHELL: '/bin/zsh',
+							SHELL: "/bin/zsh",
 							HOME: process.env.HOME,
 							// Prevent recursive calls by setting a flag
-							BACKLOG_EXECUTING: '1',
+							BACKLOG_EXECUTING: "1",
 							// Keep terminal type for better compatibility
-							TERM: process.env.TERM || 'xterm-256color'
+							TERM: process.env.TERM || "xterm-256color",
 						},
-						stdio: ['pipe', 'pipe', 'pipe'],
-						detached: false
+						stdio: ["pipe", "pipe", "pipe"],
+						detached: false,
 					});
 				} else {
 					// For simple commands, execute directly without shell
-					const args = command.split(' ');
+					const args = command.split(" ");
 					const cmd = args.shift();
 
 					childProcess = spawn(cmd!, args, {
 						cwd: this.core.projectPath,
 						env: {
 							...process.env,
-							BACKLOG_EXECUTING: '1'
+							BACKLOG_EXECUTING: "1",
 						},
-						stdio: ['pipe', 'pipe', 'pipe']
+						stdio: ["pipe", "pipe", "pipe"],
 					});
 				}
 
@@ -1189,40 +1301,40 @@ export class BacklogServer {
 
 					// Try graceful termination first
 					if (childProcess && !childProcess.killed) {
-						childProcess.kill('SIGTERM');
+						childProcess.kill("SIGTERM");
 
 						// Force kill after 5 seconds if still running
 						setTimeout(() => {
 							if (childProcess && !childProcess.killed) {
 								console.log(`[BASH] Force killing process: ${command}`);
-								childProcess.kill('SIGKILL');
+								childProcess.kill("SIGKILL");
 							}
 						}, 5000);
 					}
 				}, 60000); // Increased to 60 seconds for slow commands like alias
 
 				// Collect output with better encoding handling
-				childProcess.stdout?.on('data', (data) => {
-					const chunk = data.toString('utf8');
+				childProcess.stdout?.on("data", (data) => {
+					const chunk = data.toString("utf8");
 					output += chunk;
 					console.log(`[BASH] stdout: ${chunk.trim()}`);
 				});
 
-				childProcess.stderr?.on('data', (data) => {
-					const chunk = data.toString('utf8');
+				childProcess.stderr?.on("data", (data) => {
+					const chunk = data.toString("utf8");
 					errorOutput += chunk;
 					console.log(`[BASH] stderr: ${chunk.trim()}`);
 				});
 
 				// Wait for process to complete
 				const exitCode = await new Promise<number>((resolve, reject) => {
-					childProcess.on('close', (code) => {
+					childProcess.on("close", (code) => {
 						clearTimeout(timeout);
 						console.log(`[BASH] Command completed with exit code: ${code}, command: ${command}`);
 						resolve(code || 0);
 					});
 
-					childProcess.on('error', (error) => {
+					childProcess.on("error", (error) => {
 						clearTimeout(timeout);
 						console.error(`[BASH] Command error: ${error.message}, command: ${command}`);
 						reject(error);
@@ -1248,7 +1360,7 @@ export class BacklogServer {
 				}
 
 				// Combine stdout and stderr for complete output
-				let combinedOutput = '';
+				let combinedOutput = "";
 				if (output) combinedOutput += output;
 				if (errorOutput) combinedOutput += errorOutput;
 
@@ -1270,9 +1382,8 @@ export class BacklogServer {
 					exitCode: exitCode,
 					executionTime: executionTime,
 					timestamp: timestamp,
-					workingDirectory: this.core.projectPath
+					workingDirectory: this.core.projectPath,
 				});
-
 			} catch (execError: any) {
 				// Remove command from running set on error
 				this.runningCommands.delete(command);
@@ -1288,14 +1399,13 @@ export class BacklogServer {
 				return Response.json({
 					success: false,
 					command: command,
-					output: execError.stdout || '',
+					output: execError.stdout || "",
 					error: execError.message,
 					executionTime: 30000,
 					timestamp: new Date().toISOString(),
-					workingDirectory: this.core.projectPath
+					workingDirectory: this.core.projectPath,
 				});
 			}
-
 		} catch (error) {
 			console.error("Error handling bash execute:", error);
 			return Response.json({ error: "Failed to execute bash command" }, { status: 500 });
@@ -1317,11 +1427,9 @@ export class BacklogServer {
 				runningCommands: runningCommandsList,
 				commandCount: runningCommandsList.length,
 				hasOutput: this.lastBashOutput.length > 0,
-				message: this.lastBashOutput.length > 0
-					? `Last command: ${this.lastBashCommand}`
-					: 'No bash commands executed yet'
+				message:
+					this.lastBashOutput.length > 0 ? `Last command: ${this.lastBashCommand}` : "No bash commands executed yet",
 			});
-
 		} catch (error) {
 			console.error("Error getting bash output:", error);
 			return Response.json({ error: "Failed to get bash output" }, { status: 500 });
@@ -1342,28 +1450,34 @@ export class BacklogServer {
 	private async handleCreateWorktree(req: Request): Promise<Response> {
 		try {
 			const dto = await req.json();
-			
+
 			// Validate required fields
 			if (!dto.name || !dto.branch || !dto.baseBranch) {
-				return Response.json({ 
-					error: "Missing required fields: name, branch, baseBranch" 
-				}, { status: 400 });
+				return Response.json(
+					{
+						error: "Missing required fields: name, branch, baseBranch",
+					},
+					{ status: 400 },
+				);
 			}
 
 			const worktree = await this.worktreeRepo.create(dto);
 			return Response.json(worktree, { status: 201 });
 		} catch (error: any) {
 			console.error("Error creating worktree:", error);
-			
+
 			// Handle specific worktree errors
 			if (error.code) {
-				return Response.json({ 
-					error: error.message,
-					code: error.code,
-					suggestions: error.suggestions 
-				}, { status: 400 });
+				return Response.json(
+					{
+						error: error.message,
+						code: error.code,
+						suggestions: error.suggestions,
+					},
+					{ status: 400 },
+				);
 			}
-			
+
 			return Response.json({ error: "Failed to create worktree" }, { status: 500 });
 		}
 	}
@@ -1385,11 +1499,11 @@ export class BacklogServer {
 		try {
 			const updates = await req.json();
 			const worktree = await this.worktreeRepo.update(worktreeId, updates);
-			
+
 			if (!worktree) {
 				return Response.json({ error: "Worktree not found" }, { status: 404 });
 			}
-			
+
 			return Response.json(worktree);
 		} catch (error) {
 			console.error("Error updating worktree:", error);
@@ -1404,25 +1518,28 @@ export class BacklogServer {
 				const url = new URL(req.url);
 				force = url.searchParams.get("force") === "true";
 			}
-			
+
 			await this.worktreeRepo.delete(worktreeId, force);
 			return Response.json({ success: true });
 		} catch (error: any) {
 			console.error("Error deleting worktree:", error);
-			
+
 			if (error.message.includes("not found")) {
 				return Response.json({ error: "Worktree not found" }, { status: 404 });
 			}
-			
+
 			// Handle specific worktree errors
 			if (error.code) {
-				return Response.json({ 
-					error: error.message,
-					code: error.code,
-					suggestions: error.suggestions 
-				}, { status: 400 });
+				return Response.json(
+					{
+						error: error.message,
+						code: error.code,
+						suggestions: error.suggestions,
+					},
+					{ status: 400 },
+				);
 			}
-			
+
 			return Response.json({ error: "Failed to delete worktree" }, { status: 500 });
 		}
 	}
@@ -1430,20 +1547,20 @@ export class BacklogServer {
 	private async handleLinkWorktreeToTask(req: Request, worktreeId: string): Promise<Response> {
 		try {
 			const { taskId } = await req.json();
-			
+
 			if (!taskId) {
 				return Response.json({ error: "taskId is required" }, { status: 400 });
 			}
-			
+
 			await this.worktreeRepo.linkToTask(worktreeId, taskId);
 			return Response.json({ success: true });
 		} catch (error: any) {
 			console.error("Error linking worktree to task:", error);
-			
+
 			if (error.message.includes("not found")) {
 				return Response.json({ error: "Worktree not found" }, { status: 404 });
 			}
-			
+
 			return Response.json({ error: "Failed to link worktree to task" }, { status: 500 });
 		}
 	}
@@ -1451,20 +1568,20 @@ export class BacklogServer {
 	private async handleUnlinkWorktreeFromTask(req: Request, worktreeId: string): Promise<Response> {
 		try {
 			const { taskId } = await req.json();
-			
+
 			if (!taskId) {
 				return Response.json({ error: "taskId is required" }, { status: 400 });
 			}
-			
+
 			await this.worktreeRepo.unlinkFromTask(worktreeId, taskId);
 			return Response.json({ success: true });
 		} catch (error: any) {
 			console.error("Error unlinking worktree from task:", error);
-			
+
 			if (error.message.includes("not found")) {
 				return Response.json({ error: "Worktree not found" }, { status: 404 });
 			}
-			
+
 			return Response.json({ error: "Failed to unlink worktree from task" }, { status: 500 });
 		}
 	}
@@ -1485,20 +1602,20 @@ export class BacklogServer {
 	private async handleMergeWorktree(req: Request, worktreeId: string): Promise<Response> {
 		try {
 			const { targetBranch } = await req.json();
-			
+
 			if (!targetBranch) {
 				return Response.json({ error: "targetBranch is required" }, { status: 400 });
 			}
-			
+
 			const result = await this.worktreeRepo.mergeWorktree(worktreeId, targetBranch);
 			return Response.json(result);
 		} catch (error: any) {
 			console.error("Error merging worktree:", error);
-			
+
 			if (error.message.includes("not found")) {
 				return Response.json({ error: "Worktree not found" }, { status: 404 });
 			}
-			
+
 			return Response.json({ error: "Failed to merge worktree" }, { status: 500 });
 		}
 	}
@@ -1509,24 +1626,30 @@ export class BacklogServer {
 			return Response.json(result);
 		} catch (error: any) {
 			console.error("Error pushing worktree:", error);
-			
+
 			if (error.message.includes("not found")) {
 				return Response.json({ error: "Worktree not found" }, { status: 404 });
 			}
-			
+
 			// Handle specific git errors
 			if (error.code) {
-				return Response.json({ 
-					error: error.message,
-					code: error.code,
-					suggestions: error.suggestions 
-				}, { status: 400 });
+				return Response.json(
+					{
+						error: error.message,
+						code: error.code,
+						suggestions: error.suggestions,
+					},
+					{ status: 400 },
+				);
 			}
-			
-			return Response.json({ 
-				success: false, 
-				message: error.message || "Failed to push worktree" 
-			}, { status: 500 });
+
+			return Response.json(
+				{
+					success: false,
+					message: error.message || "Failed to push worktree",
+				},
+				{ status: 500 },
+			);
 		}
 	}
 
@@ -1536,25 +1659,31 @@ export class BacklogServer {
 			return Response.json(result);
 		} catch (error: any) {
 			console.error("Error pulling worktree:", error);
-			
+
 			if (error.message.includes("not found")) {
 				return Response.json({ error: "Worktree not found" }, { status: 404 });
 			}
-			
+
 			// Handle specific git errors
 			if (error.code) {
-				return Response.json({ 
-					error: error.message,
-					code: error.code,
-					suggestions: error.suggestions 
-				}, { status: 400 });
+				return Response.json(
+					{
+						error: error.message,
+						code: error.code,
+						suggestions: error.suggestions,
+					},
+					{ status: 400 },
+				);
 			}
-			
-			return Response.json({ 
-				success: false, 
-				message: error.message || "Failed to pull worktree",
-				suggestions: ["Check network connectivity", "Verify repository access"]
-			}, { status: 500 });
+
+			return Response.json(
+				{
+					success: false,
+					message: error.message || "Failed to pull worktree",
+					suggestions: ["Check network connectivity", "Verify repository access"],
+				},
+				{ status: 500 },
+			);
 		}
 	}
 
@@ -1565,6 +1694,151 @@ export class BacklogServer {
 		} catch (error) {
 			console.error("Error cleaning up worktrees:", error);
 			return Response.json({ error: "Failed to cleanup worktrees" }, { status: 500 });
+		}
+	}
+
+	// Terminal handlers
+	private async handleListTerminals(): Promise<Response> {
+		try {
+			const terminals = await this.terminalManager.listSessions();
+			return Response.json(terminals);
+		} catch (error) {
+			console.error("Error listing terminals:", error);
+			return Response.json({ error: "Failed to list terminals" }, { status: 500 });
+		}
+	}
+
+	private async handleCreateTerminal(req: Request): Promise<Response> {
+		try {
+			const createRequest: CreateTerminalRequest = await req.json();
+
+			// If taskId is provided, try to set working directory from task worktree
+			if (createRequest.taskId && !createRequest.workingDir) {
+				try {
+					const task = await this.core.filesystem.loadTask(createRequest.taskId);
+					if (task) {
+						// Default name based on task
+						if (!createRequest.name) {
+							createRequest.name = `Terminal (${task.id.replace("task-", "TASK-")})`;
+						}
+
+						// Find worktree for this task
+						const worktrees = await this.worktreeRepo.findByTaskId(createRequest.taskId);
+						if (worktrees.length > 0) {
+							// Use the first worktree's path as working directory
+							const worktree = worktrees[0];
+							console.log(`[BacklogServer] Found worktree for task ${createRequest.taskId}:`, JSON.stringify(worktree, null, 2));
+							
+							if (worktree.path && worktree.path !== 'undefined') {
+								createRequest.workingDir = worktree.path;
+								console.log(`[BacklogServer] Setting terminal working directory to worktree: ${worktree.path} for task ${createRequest.taskId}`);
+							} else {
+								console.warn(`[BacklogServer] Worktree found but path is invalid (${worktree.path}) for task ${createRequest.taskId}, using default directory`);
+							}
+						} else {
+							console.log(`[BacklogServer] No worktree found for task ${createRequest.taskId}, using default directory`);
+						}
+					}
+				} catch (error) {
+					console.warn(`Failed to load task ${createRequest.taskId}:`, error);
+				}
+			}
+
+			const terminal = await this.terminalManager.createSession(createRequest);
+			return Response.json(terminal, { status: 201 });
+		} catch (error) {
+			console.error("Error creating terminal:", error);
+			return Response.json(
+				{
+					error: error instanceof Error ? error.message : "Failed to create terminal",
+				},
+				{ status: 500 },
+			);
+		}
+	}
+
+	private async handleGetTerminal(terminalId: string): Promise<Response> {
+		try {
+			const terminal = await this.terminalManager.getSession(terminalId);
+			if (!terminal) {
+				return Response.json({ error: "Terminal not found" }, { status: 404 });
+			}
+			return Response.json(terminal);
+		} catch (error) {
+			console.error("Error getting terminal:", error);
+			return Response.json({ error: "Failed to get terminal" }, { status: 500 });
+		}
+	}
+
+	private async handleKillTerminal(terminalId: string): Promise<Response> {
+		try {
+			await this.terminalManager.killSession(terminalId);
+			return Response.json({ success: true });
+		} catch (error) {
+			console.error("Error killing terminal:", error);
+			return Response.json({ error: "Failed to kill terminal" }, { status: 500 });
+		}
+	}
+
+	private async handleTerminalInput(req: Request, terminalId: string): Promise<Response> {
+		try {
+			const input: TerminalInput = await req.json();
+
+			// Validate input
+			if (!input.text && !input.key) {
+				return Response.json({ error: "Either text or key must be provided" }, { status: 400 });
+			}
+
+			if (input.text && input.key) {
+				return Response.json({ error: "Only text or key can be provided, not both" }, { status: 400 });
+			}
+
+			await this.terminalManager.sendInput(terminalId, input);
+			return Response.json({ success: true });
+		} catch (error) {
+			console.error("Error sending terminal input:", error);
+			if (error instanceof Error && error.message.includes("not found")) {
+				return Response.json({ error: "Terminal not found" }, { status: 404 });
+			}
+			return Response.json({ error: "Failed to send input" }, { status: 500 });
+		}
+	}
+
+	private async handleTerminalResize(req: Request, terminalId: string): Promise<Response> {
+		try {
+			const { cols, rows } = await req.json();
+
+			if (typeof cols !== "number" || typeof rows !== "number") {
+				return Response.json({ error: "Cols and rows must be numbers" }, { status: 400 });
+			}
+
+			if (cols < 1 || rows < 1 || cols > 1000 || rows > 1000) {
+				return Response.json(
+					{
+						error: "Cols and rows must be between 1 and 1000",
+					},
+					{ status: 400 },
+				);
+			}
+
+			await this.terminalManager.resizeSession(terminalId, cols, rows);
+			return Response.json({ success: true });
+		} catch (error) {
+			console.error("Error resizing terminal:", error);
+			if (error instanceof Error && error.message.includes("not found")) {
+				return Response.json({ error: "Terminal not found" }, { status: 404 });
+			}
+			return Response.json({ error: "Failed to resize terminal" }, { status: 500 });
+		}
+	}
+
+	private async handleTerminalOutput(terminalId: string): Promise<Response> {
+		try {
+			const output = await this.terminalManager.getSessionOutput(terminalId);
+			return Response.json({ output });
+		} catch (error) {
+			console.error("Error getting terminal output:", error);
+			return Response.json({ error: "Failed to get terminal output" }, { status: 500 });
 		}
 	}
 }

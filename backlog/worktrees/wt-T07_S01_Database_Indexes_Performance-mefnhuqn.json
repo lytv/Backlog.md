@@ -1,0 +1,31 @@
+{
+  "id": "wt-T07_S01_Database_Indexes_Performance-mefnhuqn",
+  "name": "T07_S01_Database_Indexes_Performance",
+  "path": "/Users/mac/tools/Backlog.md/.tree/T07_S01_Database_Indexes_Performance",
+  "branch": "feature/t07_s01_database_indexes_performance",
+  "baseBranch": "main",
+  "taskIds": [
+    "task-005"
+  ],
+  "status": {
+    "isClean": true,
+    "modifiedFiles": 0,
+    "stagedFiles": 0,
+    "untrackedFiles": 0,
+    "aheadCount": 0,
+    "behindCount": 0,
+    "hasConflicts": false,
+    "lastStatusCheck": "2025-08-17T13:49:35.437Z"
+  },
+  "createdDate": "2025-08-17T12:16:59.710Z",
+  "lastAccessedDate": "2025-08-17T12:16:59.710Z",
+  "isActive": true,
+  "metadata": {
+    "description": "Worktree for task: T07_S01_Database_Indexes_Performance",
+    "tags": [
+      "task",
+      "normal"
+    ],
+    "autoCleanup": false
+  }
+}

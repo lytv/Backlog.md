@@ -1,16 +1,16 @@
 import type { TaskStatistics } from "../../core/statistics.ts";
-import type { 
-	BacklogConfig, 
-	Decision, 
-	Document, 
-	Milestone, 
-	Sprint, 
-	Task, 
+import type {
+	BacklogConfig,
+	CreateWorktreeDto,
+	Decision,
+	Document,
+	MergeResult,
+	Milestone,
+	Sprint,
+	Task,
 	TaskStatus,
 	Worktree,
 	WorktreeStatus,
-	CreateWorktreeDto,
-	MergeResult
 } from "../../types/index.ts";
 
 const API_BASE = "/api";
@@ -461,19 +461,19 @@ export class ApiClient {
 		});
 	}
 
-	async getTmuxOutput(token: string): Promise<{ 
-		success: boolean; 
-		output: string; 
-		session: string; 
-		sessionInfo: string; 
-		timestamp: string 
+	async getTmuxOutput(token: string): Promise<{
+		success: boolean;
+		output: string;
+		session: string;
+		sessionInfo: string;
+		timestamp: string;
 	}> {
-		return this.fetchJson<{ 
-			success: boolean; 
-			output: string; 
-			session: string; 
-			sessionInfo: string; 
-			timestamp: string 
+		return this.fetchJson<{
+			success: boolean;
+			output: string;
+			session: string;
+			sessionInfo: string;
+			timestamp: string;
 		}>(`${API_BASE}/tmux/output/${encodeURIComponent(token)}`);
 	}
 
