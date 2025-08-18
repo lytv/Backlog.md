@@ -1,0 +1,7 @@
+pwd   ls -la   whoami
+pwd
+alias
+ls
+whoami
+ps aux | grep claude
+cl

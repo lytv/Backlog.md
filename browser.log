@@ -1,0 +1,16 @@
+$ bun run build:css && bun src/cli.ts browser --port "6424"
+$ bun ./node_modules/@tailwindcss/cli/dist/index.mjs -i src/web/styles/source.css -o src/web/styles/style.css --minify
+≈ tailwindcss v4.1.11
+
+Done in 240ms
+[TerminalManager] PTY functionality disabled to prevent ENXIO errors
+[TerminalManager] Started periodic cleanup (every 6h, max age 24h)
+[TerminalSessionManager] Control directory ensured: /Users/mac/tools/Backlog.md/.backlog/terminal
+🚀 Backlog.md browser interface running at http://localhost:6424
+📊 Project: test
+⏹️  Press Cmd+C to stop the server
+🌐 Opening browser...
+[TerminalSessionManager] Found 5 sessions
+[TerminalManager] Found 5 persisted sessions
+[WebSocket] Client connected
+error: script "cli" was terminated by signal SIGTERM (Polite quit request)

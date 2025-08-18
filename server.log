@@ -1,0 +1,7 @@
+$ bun run build:css && bun src/cli.ts server --port "6423"
+$ bun ./node_modules/@tailwindcss/cli/dist/index.mjs -i src/web/styles/source.css -o src/web/styles/style.css --minify
+≈ tailwindcss v4.1.11
+
+Done in 279ms
+error: unknown command 'server'
+error: script "cli" exited with code 1

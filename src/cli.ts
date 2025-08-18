@@ -2489,6 +2489,44 @@ program
 		}
 	});
 
+program
+	.command("progress")
+	.description("display project progress dashboard with milestones and sprints")
+	.option("--milestone <id>", "show progress for specific milestone (e.g., M01)")
+	.option("--sprint <id>", "show progress for specific sprint (e.g., S01_M01)")
+	.option("--health", "show project health analysis")
+	.option("--export", "export progress data to file")
+	.option("--format <format>", "export format: json, csv, pdf (default: json)")
+	.option("--milestones-only", "show only milestones, hide sprints")
+	.option("--sprints-only", "show only sprints, hide milestones")
+	.action(async (options: {
+		milestone?: string;
+		sprint?: string;
+		health?: boolean;
+		export?: boolean;
+		format?: "json" | "csv" | "pdf";
+		milestonesOnly?: boolean;
+		sprintsOnly?: boolean;
+	}) => {
+		try {
+			const cwd = process.cwd();
+			const core = new Core(cwd);
+			const config = await core.filesystem.loadConfig();
+
+			if (!config) {
+				console.error("No backlog project found. Initialize one first with: backlog init");
+				process.exit(1);
+			}
+
+			// Import and run the progress command
+			const { runProgressCommand } = await import("./commands/progress.ts");
+			await runProgressCommand(core, options);
+		} catch (err) {
+			console.error("Failed to display project progress", err);
+			process.exitCode = 1;
+		}
+	});
+
 program.parseAsync(process.argv).finally(() => {
 	// Restore BUN_OPTIONS after CLI parsing completes so it's available for subsequent commands
 	if (originalBunOptions) {

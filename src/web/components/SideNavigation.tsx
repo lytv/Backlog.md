@@ -151,6 +151,11 @@ const Icons = {
 			<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
 		</svg>
 	),
+	Progress: () => (
+		<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+			<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+		</svg>
+	),
 	Worktree: () => (
 		<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 			<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
@@ -580,6 +585,21 @@ const SideNavigation = memo(function SideNavigation({
 				{/* Navigation items only show when expanded and not loading */}
 				{!isCollapsed && !isLoading && (
 					<div className="px-4 space-y-1">
+						{/* Progress Navigation - First position */}
+						<NavLink
+							to="/progress"
+							className={({ isActive }) =>
+								`flex items-center px-3 py-2 rounded-lg transition-colors duration-200 ${
+									isActive
+										? 'bg-blue-50 dark:bg-blue-600/20 text-blue-600 dark:text-blue-400 font-medium'
+										: 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100'
+								}`
+							}
+						>
+							<Icons.Progress />
+							<span className="ml-3 text-sm font-medium">Progress</span>
+						</NavLink>
+
 						{/* Board Navigation */}
 						<NavLink
 							to="/"
@@ -936,6 +956,23 @@ const SideNavigation = memo(function SideNavigation({
 
 				{isCollapsed && (
 					<div className="px-2 py-2 space-y-2">
+						{/* Progress Navigation - First position */}
+						<NavLink
+							to="/progress"
+							data-tooltip-id="sidebar-tooltip"
+							data-tooltip-content="Progress"
+							className={({ isActive }) =>
+								`flex items-center justify-center p-3 rounded-md transition-colors duration-200 ${
+									isActive
+										? 'bg-blue-50 dark:bg-blue-600/20 text-blue-700 dark:text-blue-400'
+										: 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100'
+								}`
+							}
+						>
+							<div className="w-6 h-6 flex items-center justify-center">
+								<Icons.Progress />
+							</div>
+						</NavLink>
 						<NavLink
 							to="/"
 							data-tooltip-id="sidebar-tooltip"

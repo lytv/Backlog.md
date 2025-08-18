@@ -1,0 +1,1037 @@
+import { EventEmitter } from "node:events";
+import { appendFile, readFile, writeFile } from "node:fs/promises";
+import { resolve } from "node:path";
+import { spawn } from "node:child_process";
+import { v4 as uuidv4 } from "uuid";
+
+// Import node-pty dynamically to handle different environments
+let pty: any;
+try {
+	// Temporarily disable node-pty to avoid ENXIO errors
+	// TODO: Re-enable once the PTY issue is resolved
+	if (process.env.ENABLE_PTY === "true") {
+		pty = await import("node-pty");
+	} else {
+		console.warn("[TerminalManager] PTY functionality disabled to prevent ENXIO errors");
+		pty = null;
+	}
+} catch (error) {
+	console.warn("[TerminalManager] node-pty not available, terminal functionality will be limited");
+}
+
+import type { CreateTerminalRequest, TerminalInput, TerminalMessage, TerminalSession } from "../../types/terminal.ts";
+import { TerminalSessionManager } from "./session-manager.ts";
+
+interface ActiveSession {
+	session: TerminalSession;
+	ptyProcess?: any; // IPty from node-pty
+	persistentShell?: any; // For mock terminal persistent shell
+	eventListeners: Set<(message: TerminalMessage) => void>;
+}
+
+export class TerminalManager extends EventEmitter {
+	private sessions = new Map<string, ActiveSession>();
+	private sessionManager: TerminalSessionManager;
+	private projectPath: string;
+
+	/**
+	 * Clean terminal output by removing unwanted ANSI escape sequences
+	 */
+	private cleanTerminalOutput(output: string): string {
+		// Remove OSC (Operating System Command) sequences like ]633;D;0, ]633;A, etc.
+		// These are used by modern terminals for integration but clutter the output
+		let cleaned = output
+			// Remove OSC sequences: \033]...\007 or \033]...\033\\
+			.replace(/\x1b\]633;[^\\]*(\x07|\x1b\\)/g, '')
+			.replace(/\x1b\]133;[^\\]*(\x07|\x1b\\)/g, '')
+			.replace(/\x1b\]7;[^\\]*(\x07|\x1b\\)/g, '')
+			.replace(/\x1b\]P;[^\\]*(\x07|\x1b\\)/g, '')
+			.replace(/\x1b\]E;[^\\]*(\x07|\x1b\\)/g, '')
+			.replace(/\x1b\]C[^\\]*(\x07|\x1b\\)/g, '')
+			.replace(/\x1b\]D[^\\]*(\x07|\x1b\\)/g, '')
+			// Remove other common problematic sequences
+			.replace(/\x1b\[\?2004[hl]/g, '') // Bracketed paste mode
+			.replace(/\x1b\[>[0-9;]*c/g, '') // Device attributes
+			// Clean up extra whitespace but preserve intentional formatting
+			.replace(/\r\n/g, '\n')
+			.replace(/\r/g, '\n');
+		
+		return cleaned;
+	}
+
+	constructor(projectPath: string) {
+		super();
+		this.projectPath = projectPath;
+		this.sessionManager = new TerminalSessionManager(projectPath);
+
+		// Initialize and restore sessions
+		this.init();
+	}
+
+	/**
+	 * Initialize terminal manager and restore persisted sessions
+	 */
+	private async init(): Promise<void> {
+		try {
+			await this.restorePersistedSessions();
+		} catch (error) {
+			console.error("[TerminalManager] Failed to restore persisted sessions:", error);
+		}
+	}
+
+	/**
+	 * Restore persisted sessions from filesystem
+	 */
+	private async restorePersistedSessions(): Promise<void> {
+		try {
+			const persistedSessions = await this.sessionManager.listSessions();
+			console.log(`[TerminalManager] Found ${persistedSessions.length} persisted sessions`);
+
+			for (const sessionInfo of persistedSessions) {
+				// Only restore running sessions, mark others as exited
+				if (sessionInfo.status === "running") {
+					try {
+						// Check if process is still alive
+						if (sessionInfo.pid && this.isProcessAlive(sessionInfo.pid)) {
+							console.log(`[TerminalManager] Restoring active session ${sessionInfo.id} (pid: ${sessionInfo.pid})`);
+							// TODO: Reconnect to existing PTY process if possible
+							// For now, mark as exited since we can't easily reconnect to existing PTY
+							await this.sessionManager.updateSessionStatus(sessionInfo.id, "exited", sessionInfo.pid, 1);
+						} else {
+							console.log(
+								`[TerminalManager] Process for session ${sessionInfo.id} no longer exists, marking as exited`,
+							);
+							await this.sessionManager.updateSessionStatus(sessionInfo.id, "exited", sessionInfo.pid, 1);
+						}
+					} catch (error) {
+						console.warn(`[TerminalManager] Error checking session ${sessionInfo.id}:`, error);
+						await this.sessionManager.updateSessionStatus(sessionInfo.id, "exited", sessionInfo.pid, 1);
+					}
+				}
+			}
+		} catch (error) {
+			console.error("[TerminalManager] Error restoring persisted sessions:", error);
+		}
+	}
+
+	/**
+	 * Check if a process is still alive
+	 */
+	private isProcessAlive(pid: number): boolean {
+		try {
+			// Sending signal 0 checks if process exists without killing it
+			process.kill(pid, 0);
+			return true;
+		} catch (error) {
+			return false;
+		}
+	}
+
+	/**
+	 * Create a new terminal session
+	 */
+	async createSession(request: CreateTerminalRequest): Promise<TerminalSession> {
+		const sessionId = uuidv4().replace(/-/g, "").substring(0, 16);
+
+		// Set defaults
+		const workingDir = request.workingDir ? resolve(this.projectPath, request.workingDir) : this.projectPath;
+
+		// Use simpler shell command to avoid PTY initialization issues
+		const command = request.command || (process.platform === "win32" ? ["cmd.exe"] : ["/bin/sh"]);
+		const name = request.name || `Terminal ${new Date().toLocaleTimeString()}`;
+		const cols = request.cols || 80;
+		const rows = request.rows || 24;
+
+		// Create session metadata
+		const session: TerminalSession = {
+			id: sessionId,
+			taskId: request.taskId,
+			name,
+			status: "starting",
+			workingDir,
+			startedAt: new Date().toISOString(),
+			command,
+			cols,
+			rows,
+		};
+
+		// Create session directory structure
+		const paths = await this.sessionManager.createSessionDirectory(sessionId);
+
+		// Save initial session info
+		await this.sessionManager.saveSessionInfo(sessionId, session);
+
+		try {
+			// Create PTY process if node-pty is available
+			let ptyProcess: any = null;
+
+			if (pty) {
+				const ptyOptions = {
+					name: "xterm-256color",
+					cols,
+					rows,
+					cwd: workingDir,
+					env: {
+						...process.env,
+						TERM: "xterm-256color",
+						COLORTERM: "truecolor",
+					},
+					// Add options to help prevent ENXIO errors
+					useConpty: false, // Disable ConPTY on Windows
+					handleFlowControl: false, // Disable flow control to prevent read issues
+				};
+
+				try {
+					ptyProcess = pty.spawn(command[0], command.slice(1), ptyOptions);
+					
+					// Wait a bit for PTY to initialize properly
+					await new Promise(resolve => setTimeout(resolve, 100));
+					
+					// Verify PTY process is valid
+					if (!ptyProcess || !ptyProcess.pid) {
+						throw new Error("PTY process failed to initialize properly");
+					}
+
+					// Update session with PID
+					session.pid = ptyProcess.pid;
+					session.status = "running";
+					await this.sessionManager.saveSessionInfo(sessionId, session);
+
+					// Set up PTY event handlers
+					this.setupPtyHandlers(sessionId, ptyProcess, paths.stdoutPath);
+					
+					console.log(`[TerminalManager] PTY created successfully for session ${sessionId} with PID ${session.pid}`);
+				} catch (ptyError) {
+					console.error(`[TerminalManager] PTY creation failed, trying fallback mode:`, ptyError);
+					
+					// Clean up any partial PTY process
+					if (ptyProcess && ptyProcess.kill) {
+						try {
+							ptyProcess.kill();
+						} catch (killError) {
+							console.warn(`[TerminalManager] Failed to cleanup PTY process:`, killError);
+						}
+					}
+					
+					// Try with a simpler shell command as fallback
+					if (command[0] !== "/bin/sh" && process.platform !== "win32") {
+						console.log(`[TerminalManager] Retrying with /bin/sh for session ${sessionId}`);
+						try {
+							ptyProcess = pty.spawn("/bin/sh", [], {
+								...ptyOptions,
+								cwd: workingDir,
+							});
+							
+							await new Promise(resolve => setTimeout(resolve, 100));
+							
+							if (ptyProcess && ptyProcess.pid) {
+								session.pid = ptyProcess.pid;
+								session.status = "running";
+								await this.sessionManager.saveSessionInfo(sessionId, session);
+								this.setupPtyHandlers(sessionId, ptyProcess, paths.stdoutPath);
+								console.log(`[TerminalManager] Fallback PTY created for session ${sessionId} with PID ${session.pid}`);
+							} else {
+								throw new Error("Fallback PTY also failed");
+							}
+						} catch (fallbackError) {
+							console.error(`[TerminalManager] Fallback PTY creation also failed:`, fallbackError);
+							throw new Error(`PTY creation failed: ${ptyError instanceof Error ? ptyError.message : String(ptyError)}`);
+						}
+					} else {
+						throw new Error(`PTY creation failed: ${ptyError instanceof Error ? ptyError.message : String(ptyError)}`);
+					}
+				}
+			} else {
+				// Fallback for environments without node-pty - create a persistent shell mock terminal
+				console.log(`[TerminalManager] Creating persistent shell mock terminal session ${sessionId}`);
+				
+				try {
+					// Create persistent shell process with better configuration for command execution
+					const persistentShell = spawn('/bin/zsh', ['-l', '-i'], {
+						cwd: workingDir,
+						stdio: ['pipe', 'pipe', 'pipe'],
+						env: {
+							...process.env,
+							SHELL: '/bin/zsh',
+							HOME: process.env.HOME,
+							TERM: 'xterm-256color',
+							// Force simple prompt for better parsing
+							PS1: '$ ',
+							// Ensure unbuffered output
+							PYTHONUNBUFFERED: '1',
+							// Force line buffering
+							_JAVA_OPTIONS: '-Djava.awt.headless=true',
+							// Disable shell auto-correction that might interfere
+							DISABLE_AUTO_TITLE: 'true',
+						}
+					});
+
+					if (persistentShell.pid) {
+						session.pid = persistentShell.pid;
+						session.status = "running";
+						await this.sessionManager.saveSessionInfo(sessionId, session);
+
+						// Set up shell handlers
+						this.setupPersistentShellHandlers(sessionId, persistentShell, paths.stdoutPath);
+						
+						// Wait a bit for shell to initialize, then send source command to ensure profile is loaded
+						setTimeout(() => {
+							try {
+								// Source the user's shell profile to ensure all aliases are loaded
+								persistentShell.stdin.write('source ~/.zshrc\n');
+								console.log(`[TerminalManager] Sourced .zshrc for session ${sessionId}`);
+							} catch (error) {
+								console.warn(`[TerminalManager] Could not source .zshrc for session ${sessionId}:`, error);
+							}
+						}, 500);
+						
+						// Write initial prompt
+						const initialMessage = `Mock Terminal Session (Persistent Shell)\nWorking Directory: ${workingDir}\n$ `;
+						await writeFile(paths.stdoutPath, initialMessage);
+						
+						// Emit initial output
+						this.emitToSession(sessionId, {
+							type: "output",
+							sessionId,
+							data: initialMessage,
+						});
+
+						// Store persistent shell in session
+						ptyProcess = persistentShell;
+					} else {
+						throw new Error("Failed to create persistent shell");
+					}
+				} catch (error) {
+					console.error(`[TerminalManager] Failed to create persistent shell:`, error);
+					throw error;
+				}
+			}
+
+			// Store active session
+			this.sessions.set(sessionId, {
+				session,
+				ptyProcess,
+				eventListeners: new Set(),
+			});
+
+			console.log(`[TerminalManager] Created terminal session ${sessionId} with PID ${session.pid}`);
+
+			return session;
+		} catch (error) {
+			// Cleanup on failure
+			await this.sessionManager.cleanupSession(sessionId);
+			throw new Error(`Failed to create terminal session: ${error instanceof Error ? error.message : String(error)}`);
+		}
+	}
+
+	/**
+	 * Set up persistent shell handlers for mock terminal
+	 */
+	private setupPersistentShellHandlers(sessionId: string, shellProcess: any, stdoutPath: string): void {
+		try {
+			console.log(`[TerminalManager] Setting up persistent shell handlers for session ${sessionId}`);
+
+			// Handle stdout output
+			shellProcess.stdout.on('data', async (data: Buffer) => {
+				try {
+					const rawOutput = data.toString();
+					const cleanedOutput = this.cleanTerminalOutput(rawOutput);
+					console.log(`[TerminalManager] Shell output for ${sessionId}:`, JSON.stringify(cleanedOutput));
+					
+					// Write cleaned output to stdout file
+					await appendFile(stdoutPath, cleanedOutput).catch((error) => {
+						console.error(`[TerminalManager] Error writing stdout for session ${sessionId}:`, error);
+					});
+
+					// Emit cleaned output to listeners
+					this.emitToSession(sessionId, {
+						type: "output",
+						sessionId,
+						data: cleanedOutput,
+					});
+				} catch (error) {
+					console.error(`[TerminalManager] Error in shell stdout handler for session ${sessionId}:`, error);
+				}
+			});
+
+			// Handle stderr output
+			shellProcess.stderr.on('data', async (data: Buffer) => {
+				try {
+					const rawOutput = data.toString();
+					const cleanedOutput = this.cleanTerminalOutput(rawOutput);
+					console.log(`[TerminalManager] Shell stderr for ${sessionId}:`, JSON.stringify(cleanedOutput));
+					
+					// Write cleaned output to stdout file (combine stderr with stdout)
+					await appendFile(stdoutPath, cleanedOutput).catch((error) => {
+						console.error(`[TerminalManager] Error writing stderr for session ${sessionId}:`, error);
+					});
+
+					// Emit cleaned output to listeners
+					this.emitToSession(sessionId, {
+						type: "output",
+						sessionId,
+						data: cleanedOutput,
+					});
+				} catch (error) {
+					console.error(`[TerminalManager] Error in shell stderr handler for session ${sessionId}:`, error);
+				}
+			});
+
+			// Handle process exit
+			shellProcess.on('exit', async (code: number) => {
+				try {
+					console.log(`[TerminalManager] Persistent shell ${sessionId} exited with code ${code}`);
+
+					// Update session status
+					await this.sessionManager.updateSessionStatus(sessionId, "exited", undefined, code);
+
+					// Emit exit event
+					this.emitToSession(sessionId, {
+						type: "exit",
+						sessionId,
+						exitCode: code,
+					});
+
+					// Remove from active sessions
+					this.sessions.delete(sessionId);
+				} catch (error) {
+					console.error(`[TerminalManager] Error in shell exit handler for session ${sessionId}:`, error);
+				}
+			});
+
+			// Handle process errors
+			shellProcess.on('error', (error: Error) => {
+				console.error(`[TerminalManager] Persistent shell error for session ${sessionId}:`, error);
+				this.emitToSession(sessionId, {
+					type: "error",
+					sessionId,
+					data: error.message,
+				});
+			});
+
+		} catch (error) {
+			console.error(`[TerminalManager] Error setting up persistent shell handlers for session ${sessionId}:`, error);
+			throw error;
+		}
+	}
+
+	/**
+	 * Set up PTY process event handlers
+	 */
+	private setupPtyHandlers(sessionId: string, ptyProcess: any, stdoutPath: string): void {
+		try {
+			// Handle data output with error protection
+			ptyProcess.onData((data: string) => {
+				try {
+					// Write to stdout file
+					appendFile(stdoutPath, data).catch((error) => {
+						console.error(`[TerminalManager] Error writing stdout for session ${sessionId}:`, error);
+					});
+
+					// Emit to listeners
+					this.emitToSession(sessionId, {
+						type: "output",
+						sessionId,
+						data,
+					});
+				} catch (error) {
+					console.error(`[TerminalManager] Error in onData handler for session ${sessionId}:`, error);
+				}
+			});
+
+			// Handle process exit with error protection
+			ptyProcess.onExit(async (event: { exitCode: number; signal?: number }) => {
+				try {
+					console.log(`[TerminalManager] Session ${sessionId} exited with code ${event.exitCode}`);
+
+					// Update session status
+					await this.sessionManager.updateSessionStatus(sessionId, "exited", undefined, event.exitCode);
+
+					// Emit exit event
+					this.emitToSession(sessionId, {
+						type: "exit",
+						sessionId,
+						exitCode: event.exitCode,
+					});
+
+					// Remove from active sessions
+					this.sessions.delete(sessionId);
+				} catch (error) {
+					console.error(`[TerminalManager] Error in onExit handler for session ${sessionId}:`, error);
+				}
+			});
+
+			// Handle PTY errors
+			if (ptyProcess.onError) {
+				ptyProcess.onError((error: Error) => {
+					console.error(`[TerminalManager] PTY error for session ${sessionId}:`, error);
+					this.emitToSession(sessionId, {
+						type: "error",
+						sessionId,
+						data: error.message,
+					});
+				});
+			}
+		} catch (error) {
+			console.error(`[TerminalManager] Error setting up PTY handlers for session ${sessionId}:`, error);
+			throw error;
+		}
+	}
+
+	/**
+	 * Send input to a terminal session
+	 */
+	async sendInput(sessionId: string, input: TerminalInput): Promise<void> {
+		const activeSession = this.sessions.get(sessionId);
+		if (!activeSession) {
+			throw new Error(`Session ${sessionId} not found or not active`);
+		}
+
+		let inputData: string;
+
+		if (input.text !== undefined) {
+			inputData = input.text;
+		} else if (input.key !== undefined) {
+			inputData = this.mapSpecialKey(input.key);
+		} else {
+			throw new Error("Either text or key must be provided");
+		}
+
+		// Special handling for clear command
+		if (input.text && (input.text.trim() === 'clear' || input.text.includes('clear\n'))) {
+			console.log(`[TerminalManager] Handling clear command for session ${sessionId}`);
+			await this.handleClearCommand(sessionId);
+			return;
+		}
+
+		// Handle PTY or persistent shell
+		if (activeSession.ptyProcess) {
+			console.log(`[TerminalManager] Sending input to shell for session ${sessionId}: ${JSON.stringify(inputData)}`);
+			
+			try {
+				// Check if this is real PTY or persistent shell
+				if (activeSession.ptyProcess.write) {
+					// Real PTY
+					activeSession.ptyProcess.write(inputData);
+				} else if (activeSession.ptyProcess.stdin) {
+					// For persistent shell, we'll execute commands directly instead of interactive mode
+					const command = inputData.replace(/\n$/, '').trim();
+					if (command) {
+						// Execute command and capture output
+						await this.executeCommandInSession(sessionId, command);
+						return; // Don't write to stdin since we're executing directly
+					}
+				} else {
+					console.warn(`[TerminalManager] Unknown process type for session ${sessionId}`);
+				}
+			} catch (error) {
+				console.error(`[TerminalManager] Error writing to process:`, error);
+			}
+		} else {
+			console.warn(`[TerminalManager] No active process found for session ${sessionId}`);
+		}
+
+		// Also write to stdin file for persistence
+		await this.sessionManager.writeToStdin(sessionId, inputData);
+
+		console.log(`[TerminalManager] Sent input to session ${sessionId}: ${inputData.length} bytes`);
+	}
+
+	/**
+	 * Handle clear command - clears terminal output and resets display
+	 */
+	private async handleClearCommand(sessionId: string): Promise<void> {
+		try {
+			const paths = this.sessionManager.getSessionPaths(sessionId);
+			
+			// Clear the stdout file content but keep the file
+			await writeFile(paths.stdoutPath, "");
+			
+			// Send ANSI clear screen sequence to frontend
+			const clearSequence = "\x1b[2J\x1b[H$ ";
+			
+			// Also write clear sequence to stdout file
+			await writeFile(paths.stdoutPath, clearSequence);
+			
+			// Emit clear event to frontend
+			this.emitToSession(sessionId, {
+				type: "clear",
+				sessionId,
+				data: clearSequence,
+			});
+			
+			console.log(`[TerminalManager] Cleared terminal output for session ${sessionId}`);
+		} catch (error) {
+			console.error(`[TerminalManager] Error clearing terminal for session ${sessionId}:`, error);
+			
+			// If clear fails, still show prompt
+			const errorOutput = "Error clearing terminal\n$ ";
+			const paths = this.sessionManager.getSessionPaths(sessionId);
+			await writeFile(paths.stdoutPath, errorOutput);
+			
+			this.emitToSession(sessionId, {
+				type: "output",
+				sessionId,
+				data: errorOutput,
+			});
+		}
+	}
+
+	/**
+	 * Map special keys to terminal sequences
+	 */
+	private mapSpecialKey(key: string): string {
+		const keyMap: Record<string, string> = {
+			Enter: "\r",
+			Tab: "\t",
+			Backspace: "\x7f",
+			Delete: "\x1b[3~",
+			ArrowUp: "\x1b[A",
+			ArrowDown: "\x1b[B",
+			ArrowLeft: "\x1b[D",
+			ArrowRight: "\x1b[C",
+			Home: "\x1b[H",
+			End: "\x1b[F",
+			PageUp: "\x1b[5~",
+			PageDown: "\x1b[6~",
+			Escape: "\x1b",
+			F1: "\x1bOP",
+			F2: "\x1bOQ",
+			F3: "\x1bOR",
+			F4: "\x1bOS",
+			F5: "\x1b[15~",
+			F6: "\x1b[17~",
+			F7: "\x1b[18~",
+			F8: "\x1b[19~",
+			F9: "\x1b[20~",
+			F10: "\x1b[21~",
+			F11: "\x1b[23~",
+			F12: "\x1b[24~",
+			"Ctrl+A": "\x01",
+			"Ctrl+C": "\x03",
+			"Ctrl+D": "\x04",
+			"Ctrl+Z": "\x1a",
+			"Ctrl+L": "\x0c",
+			"Ctrl+U": "\x15",
+			"Ctrl+K": "\x0b",
+		};
+
+		return keyMap[key] || key;
+	}
+
+	/**
+	 * Resize a terminal session
+	 */
+	async resizeSession(sessionId: string, cols: number, rows: number): Promise<void> {
+		const activeSession = this.sessions.get(sessionId);
+		if (!activeSession) {
+			throw new Error(`Session ${sessionId} not found or not active`);
+		}
+
+		if (activeSession.ptyProcess) {
+			activeSession.ptyProcess.resize(cols, rows);
+		}
+
+		// Update session metadata
+		activeSession.session.cols = cols;
+		activeSession.session.rows = rows;
+		await this.sessionManager.saveSessionInfo(sessionId, activeSession.session);
+
+		// Emit resize event
+		this.emitToSession(sessionId, {
+			type: "resize",
+			sessionId,
+			cols,
+			rows,
+		});
+
+		console.log(`[TerminalManager] Resized session ${sessionId} to ${cols}x${rows}`);
+	}
+
+	/**
+	 * Kill a terminal session
+	 */
+	async killSession(sessionId: string): Promise<void> {
+		const activeSession = this.sessions.get(sessionId);
+
+		if (activeSession?.ptyProcess) {
+			try {
+				activeSession.ptyProcess.kill();
+			} catch (error) {
+				console.warn(`[TerminalManager] Error killing process for session ${sessionId}:`, error);
+			}
+		}
+
+		// Update session status to exited
+		try {
+			await this.sessionManager.updateSessionStatus(sessionId, "exited", undefined, 1);
+		} catch (error) {
+			console.warn(`[TerminalManager] Error updating session status for ${sessionId}:`, error);
+		}
+
+		// Clean up session files and directories
+		try {
+			await this.sessionManager.cleanupSession(sessionId);
+		} catch (error) {
+			console.warn(`[TerminalManager] Error cleaning up session ${sessionId}:`, error);
+		}
+
+		// Remove from active sessions
+		this.sessions.delete(sessionId);
+
+		console.log(`[TerminalManager] Killed and cleaned up session ${sessionId}`);
+	}
+
+	/**
+	 * Get session info
+	 */
+	async getSession(sessionId: string): Promise<TerminalSession | null> {
+		// Try active sessions first
+		const activeSession = this.sessions.get(sessionId);
+		if (activeSession) {
+			return activeSession.session;
+		}
+
+		// Fallback to stored sessions
+		return await this.sessionManager.loadSessionInfo(sessionId);
+	}
+
+	/**
+	 * List all sessions (active and stored)
+	 */
+	async listSessions(): Promise<TerminalSession[]> {
+		return await this.sessionManager.listSessions();
+	}
+
+	/**
+	 * Get session output
+	 */
+	async getSessionOutput(sessionId: string): Promise<string> {
+		const paths = this.sessionManager.getSessionPaths(sessionId);
+
+		try {
+			return await readFile(paths.stdoutPath, "utf8");
+		} catch (error) {
+			return "";
+		}
+	}
+
+	/**
+	 * Add event listener for a session
+	 */
+	addSessionListener(sessionId: string, listener: (message: TerminalMessage) => void): void {
+		const activeSession = this.sessions.get(sessionId);
+		if (activeSession) {
+			activeSession.eventListeners.add(listener);
+		}
+	}
+
+	/**
+	 * Remove event listener for a session
+	 */
+	removeSessionListener(sessionId: string, listener: (message: TerminalMessage) => void): void {
+		const activeSession = this.sessions.get(sessionId);
+		if (activeSession) {
+			activeSession.eventListeners.delete(listener);
+		}
+	}
+
+	/**
+	 * Emit message to session listeners
+	 */
+	private emitToSession(sessionId: string, message: TerminalMessage): void {
+		const activeSession = this.sessions.get(sessionId);
+		if (activeSession) {
+			activeSession.eventListeners.forEach((listener) => {
+				try {
+					listener(message);
+				} catch (error) {
+					console.error("[TerminalManager] Error in session listener:", error);
+				}
+			});
+		}
+
+		// Also emit globally
+		this.emit("message", message);
+	}
+
+	/**
+	 * Clean up all sessions
+	 */
+	async cleanup(): Promise<void> {
+		console.log(`[TerminalManager] Cleaning up ${this.sessions.size} active sessions`);
+
+		for (const [sessionId, activeSession] of this.sessions) {
+			if (activeSession.ptyProcess) {
+				activeSession.ptyProcess.kill();
+			}
+		}
+
+		this.sessions.clear();
+	}
+
+	/**
+	 * Get active session count
+	 */
+	getActiveSessionCount(): number {
+		return this.sessions.size;
+	}
+
+	/**
+	 * Cleanup old exited sessions
+	 */
+	async cleanupOldSessions(maxAgeHours = 24): Promise<number> {
+		try {
+			const allSessions = await this.sessionManager.listSessions();
+			const now = new Date();
+			let cleanedCount = 0;
+
+			for (const session of allSessions) {
+				if (session.status === "exited") {
+					const sessionAge = now.getTime() - new Date(session.startedAt).getTime();
+					const ageHours = sessionAge / (1000 * 60 * 60);
+
+					if (ageHours > maxAgeHours) {
+						try {
+							await this.sessionManager.cleanupSession(session.id);
+							cleanedCount++;
+							console.log(`[TerminalManager] Cleaned up old session ${session.id} (${ageHours.toFixed(1)}h old)`);
+						} catch (error) {
+							console.warn(`[TerminalManager] Failed to cleanup session ${session.id}:`, error);
+						}
+					}
+				}
+			}
+
+			console.log(`[TerminalManager] Cleaned up ${cleanedCount} old sessions`);
+			return cleanedCount;
+		} catch (error) {
+			console.error("[TerminalManager] Error cleaning up old sessions:", error);
+			return 0;
+		}
+	}
+
+	/**
+	 * Start periodic cleanup of old sessions
+	 */
+	startPeriodicCleanup(intervalHours = 6, maxAgeHours = 24): void {
+		const intervalMs = intervalHours * 60 * 60 * 1000;
+
+		setInterval(async () => {
+			try {
+				await this.cleanupOldSessions(maxAgeHours);
+			} catch (error) {
+				console.error("[TerminalManager] Error in periodic cleanup:", error);
+			}
+		}, intervalMs);
+
+		console.log(`[TerminalManager] Started periodic cleanup (every ${intervalHours}h, max age ${maxAgeHours}h)`);
+	}
+
+	/**
+	 * Execute command directly in mock terminal (improved version)
+	 */
+	private async executeMockCommandDirect(sessionId: string, paths: any, command: string): Promise<void> {
+		try {
+			console.log(`[TerminalManager] Executing mock command: "${command}"`);
+			
+			// Output newline and execute command
+			let output = '\n';
+			
+			if (command) {
+				try {
+					// Execute the command using spawn
+					const result = await this.executeShellCommand(command, this.projectPath);
+					if (result.trim()) {
+						output += result;
+					} else {
+						// For commands with no output (like alias when no aliases exist)
+						output += `(no output)\n`;
+					}
+				} catch (error) {
+					output += `bash: ${command}: ${error instanceof Error ? error.message : 'command failed'}\n`;
+				}
+			}
+			
+			// Add prompt for next command
+			output += '$ ';
+			
+			// Write to stdout file
+			await appendFile(paths.stdoutPath, output);
+			
+			// Emit to listeners
+			this.emitToSession(sessionId, {
+				type: "output",
+				sessionId,
+				data: output,
+			});
+			
+		} catch (error) {
+			console.error(`[TerminalManager] Error executing mock command:`, error);
+			const errorOutput = '\nError executing command\n$ ';
+			await appendFile(paths.stdoutPath, errorOutput);
+			this.emitToSession(sessionId, {
+				type: "output",
+				sessionId,
+				data: errorOutput,
+			});
+		}
+	}
+
+	/**
+	 * Execute command in mock terminal (legacy version)
+	 */
+	private async executeMockCommand(sessionId: string, paths: any): Promise<void> {
+		try {
+			// Read current stdin to get the command
+			const stdinContent = await readFile(paths.stdinPath, "utf8");
+			
+			// Get the last command line - split by newlines and get the latest non-empty line
+			const lines = stdinContent.split(/[\r\n]+/).filter(line => line.trim());
+			const lastLine = lines[lines.length - 1] || "";
+			
+			// Extract command (remove control characters)
+			const command = lastLine.replace(/[\r\n\x00-\x1F\x7F]/g, '').trim();
+			
+			console.log(`[TerminalManager] Executing mock command: "${command}"`);
+			
+			// Output newline and execute command
+			let output = '\n';
+			
+			if (command) {
+				try {
+					// Execute the command using spawn
+					const result = await this.executeShellCommand(command, this.projectPath);
+					output += result;
+				} catch (error) {
+					output += `bash: ${command}: command not found\n`;
+				}
+			}
+			
+			// Add prompt for next command
+			output += '$ ';
+			
+			// Write to stdout file
+			await appendFile(paths.stdoutPath, output);
+			
+			// Emit to listeners
+			this.emitToSession(sessionId, {
+				type: "output",
+				sessionId,
+				data: output,
+			});
+			
+		} catch (error) {
+			console.error(`[TerminalManager] Error executing mock command:`, error);
+			const errorOutput = '\nError executing command\n$ ';
+			await appendFile(paths.stdoutPath, errorOutput);
+			this.emitToSession(sessionId, {
+				type: "output",
+				sessionId,
+				data: errorOutput,
+			});
+		}
+	}
+
+	/**
+	 * Execute command in a specific session context
+	 */
+	private async executeCommandInSession(sessionId: string, command: string): Promise<void> {
+		const activeSession = this.sessions.get(sessionId);
+		if (!activeSession) {
+			console.warn(`[TerminalManager] Session ${sessionId} not found for command execution`);
+			return;
+		}
+
+		const paths = this.sessionManager.getSessionPaths(sessionId);
+		const workingDir = activeSession.session.workingDir;
+
+		try {
+			console.log(`[TerminalManager] Executing command in session ${sessionId}: "${command}" in ${workingDir}`);
+			
+			// Execute the command
+			const result = await this.executeShellCommand(command, workingDir);
+			
+			// Format output with command echo and result
+			const output = `\n$ ${command}\n${result}$ `;
+			
+			// Write to stdout file
+			await appendFile(paths.stdoutPath, output);
+			
+			// Emit to listeners
+			this.emitToSession(sessionId, {
+				type: "output",
+				sessionId,
+				data: output,
+			});
+			
+			console.log(`[TerminalManager] Command executed successfully in session ${sessionId}`);
+		} catch (error) {
+			console.error(`[TerminalManager] Error executing command in session ${sessionId}:`, error);
+			
+			const errorOutput = `\n$ ${command}\nbash: ${command}: ${error instanceof Error ? error.message : 'command failed'}\n$ `;
+			
+			// Write error to stdout file
+			await appendFile(paths.stdoutPath, errorOutput);
+			
+			// Emit error to listeners
+			this.emitToSession(sessionId, {
+				type: "output",
+				sessionId,
+				data: errorOutput,
+			});
+		}
+	}
+
+	/**
+	 * Execute shell command and return output
+	 */
+	private async executeShellCommand(command: string, cwd: string): Promise<string> {
+		return new Promise((resolve, reject) => {
+			// Use zsh with login and interactive flags to load aliases properly
+			// We need to source .zshrc explicitly to get all aliases
+			const fullCommand = `source ~/.zshrc 2>/dev/null || true; ${command}`;
+			const proc = spawn('/bin/zsh', ['-l', '-i', '-c', fullCommand], {
+				cwd,
+				stdio: ['pipe', 'pipe', 'pipe'],
+				env: {
+					...process.env,
+					SHELL: '/bin/zsh',
+					HOME: process.env.HOME,
+					TERM: 'xterm-256color',
+					// Force interactive mode for aliases
+					FORCE_INTERACTIVE: '1',
+				}
+			});
+
+			let stdout = '';
+			let stderr = '';
+
+			proc.stdout?.on('data', (data) => {
+				stdout += data.toString();
+			});
+
+			proc.stderr?.on('data', (data) => {
+				stderr += data.toString();
+			});
+
+			proc.on('close', (code) => {
+				if (code === 0) {
+					resolve(stdout || ''); // Return empty string if no output
+				} else {
+					resolve(stderr || `Command exited with code ${code}`);
+				}
+			});
+
+			proc.on('error', (error) => {
+				reject(error);
+			});
+
+			// Increased timeout for commands that need to load aliases
+			setTimeout(() => {
+				proc.kill();
+				reject(new Error('Command timeout after 10s'));
+			}, 10000);
+		});
+	}
+}

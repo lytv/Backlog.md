@@ -2,6 +2,7 @@ import type { Server } from "bun";
 import { $ } from "bun";
 import { Core } from "../core/backlog.ts";
 import { getTaskStatistics } from "../core/statistics.ts";
+import { ProjectProgressService } from "../core/project-progress.ts";
 import { WorktreeRepository } from "../core/worktree-repository.ts";
 import type { Task } from "../types/index.ts";
 import type { CreateTerminalRequest, TerminalInput } from "../types/terminal.ts";
@@ -59,6 +60,7 @@ export class BacklogServer {
 					"/decisions": indexHtml,
 					"/decisions/*": indexHtml,
 					"/statistics": indexHtml,
+					"/progress": indexHtml,
 					"/settings": indexHtml,
 					"/terminal": indexHtml,
 
@@ -143,6 +145,15 @@ export class BacklogServer {
 					},
 					"/api/statistics": {
 						GET: async () => await this.handleGetStatistics(),
+					},
+					"/api/progress": {
+						GET: async (req) => await this.handleGetProgress(req),
+					},
+					"/api/progress/milestone/:id": {
+						GET: async (req) => await this.handleGetMilestoneProgress(req.params.id),
+					},
+					"/api/progress/sprint/:id": {
+						GET: async (req) => await this.handleGetSprintProgress(req.params.id),
 					},
 					"/api/files": {
 						GET: async (req) => await this.handleListFiles(req),
@@ -956,6 +967,73 @@ export class BacklogServer {
 		} catch (error) {
 			console.error("Error getting statistics:", error);
 			return Response.json({ error: "Failed to get statistics" }, { status: 500 });
+		}
+	}
+
+	private async handleGetProgress(req: Request): Promise<Response> {
+		try {
+			const progressService = new ProjectProgressService(this.core.projectPath);
+			const progress = await progressService.getProjectProgress();
+
+			const response = {
+				success: true,
+				data: progress,
+				timestamp: new Date().toISOString(),
+				version: "1.0.0",
+			};
+
+			return Response.json(response);
+		} catch (error) {
+			console.error("Error getting project progress:", error);
+			return Response.json({ 
+				success: false, 
+				error: "Failed to get project progress",
+				message: error instanceof Error ? error.message : "Unknown error" 
+			}, { status: 500 });
+		}
+	}
+
+	private async handleGetMilestoneProgress(milestoneId: string): Promise<Response> {
+		try {
+			const progressService = new ProjectProgressService(this.core.projectPath);
+			const milestoneProgress = await progressService.getMilestoneProgress(milestoneId);
+
+			const response = {
+				success: true,
+				data: milestoneProgress,
+				timestamp: new Date().toISOString(),
+			};
+
+			return Response.json(response);
+		} catch (error) {
+			console.error(`Error getting milestone progress for ${milestoneId}:`, error);
+			return Response.json({ 
+				success: false, 
+				error: "Failed to get milestone progress",
+				message: error instanceof Error ? error.message : "Unknown error" 
+			}, { status: 500 });
+		}
+	}
+
+	private async handleGetSprintProgress(sprintId: string): Promise<Response> {
+		try {
+			const progressService = new ProjectProgressService(this.core.projectPath);
+			const sprintProgress = await progressService.getSprintProgress(sprintId);
+
+			const response = {
+				success: true,
+				data: sprintProgress,
+				timestamp: new Date().toISOString(),
+			};
+
+			return Response.json(response);
+		} catch (error) {
+			console.error(`Error getting sprint progress for ${sprintId}:`, error);
+			return Response.json({ 
+				success: false, 
+				error: "Failed to get sprint progress",
+				message: error instanceof Error ? error.message : "Unknown error" 
+			}, { status: 500 });
 		}
 	}
 

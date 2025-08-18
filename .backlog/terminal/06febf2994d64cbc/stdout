@@ -1,0 +1,50 @@
+Mock Terminal Session (Persistent Shell)
+Working Directory: /Users/mac/tools/Backlog.md
+$ ✅ Claude Code Remote aliases loaded!
+💡 'ccr-examples' for usage examples
+✅ Claude Code Remote aliases loaded!
+💡 'ccr-examples' for usage examples
+[1m[7m%[27m[1m[0m 
+ 
+]633;D]633;P;Cwd=/Users/mac/tools/Backlog.md]633;Amac@MacBook-Air-cua-Mac Backlog.md % ]633;B]633;E;source ~/.zshrc;]633;C✅ Claude Code Remote aliases loaded!
+💡 'ccr-examples' for usage examples
+]633;D;0[1m[7m%[27m[1m[0m 
+ 
+]633;P;Cwd=/Users/mac/tools/Backlog.md]633;Amac@MacBook-Air-cua-Mac Backlog.md % ]633;B]633;E;alias;]633;Cccr-api='ccr-new $1 api'
+ccr-attach='tmux attach-session -t'
+ccr-capture='tmux capture-pane -t $1 -p'
+ccr-config='cd /Users/mac/tools/Claude-Code-Remote && nano .env'
+ccr-demo='cd /Users/mac/tools/Claude-Code-Remote && ./demo-workdir-scripts.sh'
+ccr-diagnose='cd /Users/mac/tools/Claude-Code-Remote && node claude-remote.js diagnose'
+ccr-docs='cd /Users/mac/tools/Claude-Code-Remote && open HUONG-DAN-WORKING-DIRECTORY.md'
+ccr-email='cd /Users/mac/tools/Claude-Code-Remote && npm run daemon:start'
+ccr-help='cd /Users/mac/tools/Claude-Code-Remote && cat README-WORKDIR-SCRIPTS.md'
+ccr-hooks='nano ~/.claude/settings.json'
+ccr-kill-all='tmux list-sessions | grep claude | cut -d: -f1 | xargs -I {} tmux kill-session -t {}'
+ccr-logs='cd /Users/mac/tools/Claude-Code-Remote && tail -f logs/claude-remote.log'
+ccr-mobile='ccr-new $1 mobile'
+ccr-new=/Users/mac/tools/Claude-Code-Remote/create-project-with-claude.sh
+ccr-project=/Users/mac/tools/Claude-Code-Remote/start-claude-in-project.sh
+ccr-python='ccr-new $1 python'
+ccr-quick='cd /Users/mac/tools/Claude-Code-Remote && open QUICK-REFERENCE-WORKDIR.md'
+ccr-start='cd /Users/mac/tools/Claude-Code-Remote && npm run webhooks'
+ccr-status='cd /Users/mac/tools/Claude-Code-Remote && node claude-remote.js status'
+ccr-stop='cd /Users/mac/tools/Claude-Code-Remote && npm run daemon:stop'
+ccr-telegram='cd /Users/mac/tools/Claude-Code-Remote && npm run telegram'
+ccr-test='cd /Users/mac/tools/Claude-Code-Remote && node claude-hook-notify.js completed'
+ccr-test-telegram='cd /Users/mac/tools/Claude-Code-Remote && node test-telegram-notification.js'
+ccr-web='ccr-new $1 web'
+ccr-workdir=/Users/mac/tools/Claude-Code-Remote/create-new-session-with-workdir.sh
+ccrm=/Users/mac/tools/Claude-Code-Remote/create-new-session.sh
+ccrm-advanced=/Users/mac/tools/Claude-Code-Remote/create-new-session-advanced.sh
+ccrm-sessions='tmux list-sessions | grep claude'
+cl='claude --dangerously-skip-permissions'
+clc='cl --continue'
+clr='cl --resume'
+run-help=man
+which-command=whence
+]633;D;0[1m[7m%[27m[1m[0m 
+ 
+]633;P;Cwd=/Users/mac/tools/Backlog.md]633;Amac@MacBook-Air-cua-Mac Backlog.md % ]633;B]633;E;claude;]633;C[1m[7m%[27m[1m[0m 
+ 
+]633;D;143]633;P;Cwd=/Users/mac/tools/Backlog.md]633;Amac@MacBook-Air-cua-Mac Backlog.md % ]633;B

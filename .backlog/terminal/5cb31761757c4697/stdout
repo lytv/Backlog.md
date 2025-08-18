@@ -1,0 +1,130 @@
+Mock Terminal Session (Persistent Shell)
+Working Directory: /Users/mac/tools/Backlog.md
+$ ✅ Claude Code Remote aliases loaded!
+💡 'ccr-examples' for usage examples
+✅ Claude Code Remote aliases loaded!
+💡 'ccr-examples' for usage examples
+[1m[7m%[27m[1m[0m 
+ 
+]633;D]633;P;Cwd=/Users/mac/tools/Backlog.md]633;Amac@MacBook-Air-cua-Mac Backlog.md % ]633;B]633;E;source ~/.zshrc;]633;C✅ Claude Code Remote aliases loaded!
+💡 'ccr-examples' for usage examples
+]633;D;0[1m[7m%[27m[1m[0m 
+ 
+]633;P;Cwd=/Users/mac/tools/Backlog.md]633;Amac@MacBook-Air-cua-Mac Backlog.md % ]633;B]633;E;pwd   ls -la   whoami;]633;C]633;D;1pwd: too many arguments
+[1m[7m%[27m[1m[0m 
+ 
+]633;P;Cwd=/Users/mac/tools/Backlog.md]633;Amac@MacBook-Air-cua-Mac Backlog.md % ]633;B]633;D;0]633;E;pwd;[1m[7m%[27m[1m[0m 
+ 
+]633;C/Users/mac/tools/Backlog.md
+]633;P;Cwd=/Users/mac/tools/Backlog.md]633;Amac@MacBook-Air-cua-Mac Backlog.md % ]633;B]633;E;alias;]633;C[1m[7m%[27m[1m[0m 
+ 
+ccr-api='ccr-new $1 api'
+ccr-attach='tmux attach-session -t'
+ccr-capture='tmux capture-pane -t $1 -p'
+ccr-config='cd /Users/mac/tools/Claude-Code-Remote && nano .env'
+ccr-demo='cd /Users/mac/tools/Claude-Code-Remote && ./demo-workdir-scripts.sh'
+ccr-diagnose='cd /Users/mac/tools/Claude-Code-Remote && node claude-remote.js diagnose'
+ccr-docs='cd /Users/mac/tools/Claude-Code-Remote && open HUONG-DAN-WORKING-DIRECTORY.md'
+ccr-email='cd /Users/mac/tools/Claude-Code-Remote && npm run daemon:start'
+ccr-help='cd /Users/mac/tools/Claude-Code-Remote && cat README-WORKDIR-SCRIPTS.md'
+ccr-hooks='nano ~/.claude/settings.json'
+ccr-kill-all='tmux list-sessions | grep claude | cut -d: -f1 | xargs -I {} tmux kill-session -t {}'
+ccr-logs='cd /Users/mac/tools/Claude-Code-Remote && tail -f logs/claude-remote.log'
+ccr-mobile='ccr-new $1 mobile'
+ccr-new=/Users/mac/tools/Claude-Code-Remote/create-project-with-claude.sh
+ccr-project=/Users/mac/tools/Claude-Code-Remote/start-claude-in-project.sh
+ccr-python='ccr-new $1 python'
+ccr-quick='cd /Users/mac/tools/Claude-Code-Remote && open QUICK-REFERENCE-WORKDIR.md'
+ccr-start='cd /Users/mac/tools/Claude-Code-Remote && npm run webhooks'
+ccr-status='cd /Users/mac/tools/Claude-Code-Remote && node claude-remote.js status'
+ccr-stop='cd /Users/mac/tools/Claude-Code-Remote && npm run daemon:stop'
+ccr-telegram='cd /Users/mac/tools/Claude-Code-Remote && npm run telegram'
+ccr-test='cd /Users/mac/tools/Claude-Code-Remote && node claude-hook-notify.js completed'
+ccr-test-telegram='cd /Users/mac/tools/Claude-Code-Remote && node test-telegram-notification.js'
+ccr-web='ccr-new $1 web'
+ccr-workdir=/Users/mac/tools/Claude-Code-Remote/create-new-session-with-workdir.sh
+ccrm=/Users/mac/tools/Claude-Code-Remote/create-new-session.sh
+ccrm-advanced=/Users/mac/tools/Claude-Code-Remote/create-new-session-advanced.sh
+ccrm-sessions='tmux list-sessions | grep claude'
+cl='claude --dangerously-skip-permissions'
+clc='cl --continue'
+clr='cl --resume'
+run-help=man
+which-command=whence
+]633;D;0]633;P;Cwd=/Users/mac/tools/Backlog.md]633;Amac@MacBook-Air-cua-Mac Backlog.md % ]633;B]633;E;ls;]633;CAGENTS.md
+API_CLIENT_FIX.md
+BASH_EXECUTION_IMPROVEMENTS.md
+CCRM_DUPLICATE_FIX.md
+CLAUDE.local.md
+CLAUDE.md
+CONTRIBUTING.md
+DEPLOYMENT.md
+DEVELOPMENT.md
+GEMINI.md
+HISTORY_FEATURE_SUMMARY.md
+INSTALL.md
+LICENSE
+MERMAID_INTEGRATION.md
+Makefile
+README.md
+TASK_7_8_SUMMARY.md
+WORKTREE_BUTTON_FIX.md
+WORKTREE_CREATION_FIX.md
+WORKTREE_FIX_SUMMARY.md
+WORKTREE_PATH_NAMING_FIX.md
+backlog
+backlog.md
+biome.json
+bl-wrapper.sh
+bun.lock
+bun.nix
+bunfig.toml
+claude-code-remote
+create-new-session-fixed.sh
+create-new-session-safe.sh
+deploy-global.sh
+deploy.sh
+dist
+example-sprint-with-mermaid.md
+flake.lock
+flake.nix
+install-bl.sh
+install.sh
+node_modules
+package-lock.json
+package.json
+quick-install.sh
+restart-server.sh
+scripts
+src
+start-test-server.js
+test-bash-execution.js
+test-ccrm.js
+test-mermaid-integration.md
+test-sprint-board.md
+test-worktree-button.js
+test-worktree-complete.js
+test-worktree-creation.js
+test-worktree-path.js
+tmp
+tsconfig.json
+[1m[7m%[27m[1m[0m 
+ 
+]633;D;0]633;P;Cwd=/Users/mac/tools/Backlog.md]633;Amac@MacBook-Air-cua-Mac Backlog.md % ]633;B]633;E;whoami;]633;Cmac
+[1m[7m%[27m[1m[0m 
+ 
+]633;D;0]633;P;Cwd=/Users/mac/tools/Backlog.md]633;Amac@MacBook-Air-cua-Mac Backlog.md % ]633;B]633;E;ps aux | grep claude;]633;Cmac               2651  13.9  5.4 444056736 900448 s005  S+    8:52AM   9:15.51 claude   
+mac               3879   7.9  3.6 443740768 596480 s003  S+    8:52AM   7:10.13 claude   
+mac              50824   0.0  1.3 443403136 225312 s015  S+    9:17AM   1:25.82 claude  
+mac              12440   0.0  0.7 443393568 122160 s011  S+    8:58AM   1:35.41 claude  
+mac               3267   0.0  1.8 443427264 296192 s007  S+    8:52AM   7:42.09 claude   
+mac              82874   0.0  0.0 410199728   1152   ??  S     9:37AM   0:00.00 grep claude
+mac              75406   0.0  0.7 443354192 110528   ??  S     9:32AM   0:01.32 claude  
+mac              71623   0.0  0.3 442985808  51200   ??  S     9:29AM   0:01.42 claude  
+mac              69840   0.0  0.3 443355472  50832   ??  S     9:28AM   0:01.34 claude 
+mac              68584   0.0  0.0 410387984    976   ??  Ss    9:28AM   0:00.02 /bin/zsh -c -l source /Users/mac/.claude/shell-snapshots/snapshot-zsh-1755483455731-1wqkxw.sh && eval ./restart-server.sh \< /dev/null && pwd -P >| /var/folders/5j/_dfjk4596j10khz091cpmy8h0000gn/T/claude-9193-cwd
+[1m[7m%[27m[1m[0m 
+ 
+]633;D;0]633;P;Cwd=/Users/mac/tools/Backlog.md]633;Amac@MacBook-Air-cua-Mac Backlog.md % ]633;B]633;E;cl;]633;C[1m[7m%[27m[1m[0m 
+ 
+]633;Amac@MacBook-Air-cua-Mac Backlog.md % ]633;B]633;D;143]633;P;Cwd=/Users/mac/tools/Backlog.md

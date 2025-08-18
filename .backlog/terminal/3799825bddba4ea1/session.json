@@ -1,0 +1,15 @@
+{
+  "id": "3799825bddba4ea1",
+  "taskId": "task-006",
+  "name": "Terminal (TASK-006)",
+  "status": "exited",
+  "workingDir": "/Users/mac/tools/Backlog.md/.tree/T08_S01_Basic_CRUD_Services",
+  "startedAt": "2025-08-18T02:26:21.398Z",
+  "command": [
+    "/bin/sh"
+  ],
+  "cols": 80,
+  "rows": 24,
+  "pid": 65208,
+  "exitCode": 1
+}

@@ -1,0 +1,4 @@
+alias
+cl
+claude --version
+cl --help 2>&1

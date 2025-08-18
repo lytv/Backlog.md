@@ -1,0 +1,9 @@
+cl --help 2>&1
+cl --version
+cl
+claude --versioin
+claude --version
+cl --print "hello world"
+cl --print "hello world"
+echo "hello" | cl --print
+cl config list

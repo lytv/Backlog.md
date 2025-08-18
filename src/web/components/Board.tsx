@@ -3,6 +3,7 @@ import { type Task } from '../../types';
 import { apiClient } from '../lib/api';
 import TaskColumn from './TaskColumn';
 import SprintFilter from './SprintFilter';
+import { getKanbanSettings, updateKanbanSettings } from '../utils/pageSettings';
 
 interface BoardProps {
   onEditTask: (task: Task) => void;
@@ -13,11 +14,14 @@ interface BoardProps {
 }
 
 const Board: React.FC<BoardProps> = ({ onEditTask, onNewTask, highlightTaskId, tasks, onRefreshData }) => {
+  // Initialize settings from localStorage
+  const kanbanSettings = getKanbanSettings();
+  
   const [statuses, setStatuses] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(false);
-  const [selectedSprint, setSelectedSprint] = useState<string>('');
+  const [selectedSprint, setSelectedSprint] = useState<string>(kanbanSettings.selectedSprint);
 
   useEffect(() => {
     loadStatuses();
@@ -32,6 +36,11 @@ const Board: React.FC<BoardProps> = ({ onEditTask, onNewTask, highlightTaskId, t
     
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
+
+  // Save selectedSprint to localStorage when it changes
+  useEffect(() => {
+    updateKanbanSettings({ selectedSprint });
+  }, [selectedSprint]);
 
   // Handle highlighting a task (opening its edit popup)
   useEffect(() => {

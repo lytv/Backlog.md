@@ -10,6 +10,7 @@ import TaskList from './components/TaskList';
 import DraftsList from './components/DraftsList';
 import Settings from './components/Settings';
 import Statistics from './components/Statistics';
+import ProjectDashboard from './components/ProjectDashboard';
 import WorktreesPage from './components/WorktreesPage';
 import WorktreeErrorBoundary from './components/WorktreeErrorBoundary';
 import TerminalPage from './components/TerminalPage';
@@ -295,6 +296,7 @@ function App() {
             <Route path="decisions/:id" element={<DecisionDetail decisions={decisions} onRefreshData={refreshData} />} />
             <Route path="decisions/:id/:title" element={<DecisionDetail decisions={decisions} onRefreshData={refreshData} />} />
             <Route path="statistics" element={<Statistics tasks={tasks} isLoading={isLoading} onEditTask={handleEditTask} projectName={projectName} />} />
+            <Route path="progress" element={<ProjectDashboard projectName={projectName} />} />
             <Route path="worktrees" element={
               <WorktreeErrorBoundary>
                 <WorktreesPage tasks={tasks} worktrees={worktrees} isLoading={isLoading} onRefreshData={refreshData} />

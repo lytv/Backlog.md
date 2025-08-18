@@ -38,21 +38,11 @@ export class TerminalManager extends EventEmitter {
 	 * Clean terminal output by removing unwanted ANSI escape sequences
 	 */
 	private cleanTerminalOutput(output: string): string {
-		// Remove OSC (Operating System Command) sequences like ]633;D;0, ]633;A, etc.
-		// These are used by modern terminals for integration but clutter the output
+		// Very minimal cleaning - only remove obviously problematic sequences
 		let cleaned = output
-			// Remove OSC sequences: \033]...\007 or \033]...\033\\
-			.replace(/\x1b\]633;[^\\]*(\x07|\x1b\\)/g, '')
-			.replace(/\x1b\]133;[^\\]*(\x07|\x1b\\)/g, '')
-			.replace(/\x1b\]7;[^\\]*(\x07|\x1b\\)/g, '')
-			.replace(/\x1b\]P;[^\\]*(\x07|\x1b\\)/g, '')
-			.replace(/\x1b\]E;[^\\]*(\x07|\x1b\\)/g, '')
-			.replace(/\x1b\]C[^\\]*(\x07|\x1b\\)/g, '')
-			.replace(/\x1b\]D[^\\]*(\x07|\x1b\\)/g, '')
-			// Remove other common problematic sequences
-			.replace(/\x1b\[\?2004[hl]/g, '') // Bracketed paste mode
-			.replace(/\x1b\[>[0-9;]*c/g, '') // Device attributes
-			// Clean up extra whitespace but preserve intentional formatting
+			// Remove bracketed paste mode
+			.replace(/\x1b\[\?2004[hl]/g, '')
+			// Clean up line endings but preserve content
 			.replace(/\r\n/g, '\n')
 			.replace(/\r/g, '\n');
 		
@@ -329,20 +319,25 @@ export class TerminalManager extends EventEmitter {
 			shellProcess.stdout.on('data', async (data: Buffer) => {
 				try {
 					const rawOutput = data.toString();
+					console.log(`[TerminalManager] Raw shell output for ${sessionId}:`, JSON.stringify(rawOutput));
 					const cleanedOutput = this.cleanTerminalOutput(rawOutput);
-					console.log(`[TerminalManager] Shell output for ${sessionId}:`, JSON.stringify(cleanedOutput));
+					console.log(`[TerminalManager] Cleaned shell output for ${sessionId}:`, JSON.stringify(cleanedOutput));
 					
-					// Write cleaned output to stdout file
-					await appendFile(stdoutPath, cleanedOutput).catch((error) => {
-						console.error(`[TerminalManager] Error writing stdout for session ${sessionId}:`, error);
-					});
+					// Always emit output, even if it's just ANSI sequences
+					if (rawOutput.length > 0) {
+						// Write cleaned output to stdout file
+						await appendFile(stdoutPath, cleanedOutput).catch((error) => {
+							console.error(`[TerminalManager] Error writing stdout for session ${sessionId}:`, error);
+						});
 
-					// Emit cleaned output to listeners
-					this.emitToSession(sessionId, {
-						type: "output",
-						sessionId,
-						data: cleanedOutput,
-					});
+						// Emit the output to listeners (use raw output if cleaned is empty)
+						const outputToEmit = cleanedOutput.length > 0 ? cleanedOutput : rawOutput;
+						this.emitToSession(sessionId, {
+							type: "output",
+							sessionId,
+							data: outputToEmit,
+						});
+					}
 				} catch (error) {
 					console.error(`[TerminalManager] Error in shell stdout handler for session ${sessionId}:`, error);
 				}
@@ -352,20 +347,25 @@ export class TerminalManager extends EventEmitter {
 			shellProcess.stderr.on('data', async (data: Buffer) => {
 				try {
 					const rawOutput = data.toString();
+					console.log(`[TerminalManager] Raw shell stderr for ${sessionId}:`, JSON.stringify(rawOutput));
 					const cleanedOutput = this.cleanTerminalOutput(rawOutput);
-					console.log(`[TerminalManager] Shell stderr for ${sessionId}:`, JSON.stringify(cleanedOutput));
+					console.log(`[TerminalManager] Cleaned shell stderr for ${sessionId}:`, JSON.stringify(cleanedOutput));
 					
-					// Write cleaned output to stdout file (combine stderr with stdout)
-					await appendFile(stdoutPath, cleanedOutput).catch((error) => {
-						console.error(`[TerminalManager] Error writing stderr for session ${sessionId}:`, error);
-					});
+					// Always emit output, even if it's just ANSI sequences
+					if (rawOutput.length > 0) {
+						// Write cleaned output to stdout file (combine stderr with stdout)
+						await appendFile(stdoutPath, cleanedOutput).catch((error) => {
+							console.error(`[TerminalManager] Error writing stderr for session ${sessionId}:`, error);
+						});
 
-					// Emit cleaned output to listeners
-					this.emitToSession(sessionId, {
-						type: "output",
-						sessionId,
-						data: cleanedOutput,
-					});
+						// Emit the output to listeners (use raw output if cleaned is empty)
+						const outputToEmit = cleanedOutput.length > 0 ? cleanedOutput : rawOutput;
+						this.emitToSession(sessionId, {
+							type: "output",
+							sessionId,
+							data: outputToEmit,
+						});
+					}
 				} catch (error) {
 					console.error(`[TerminalManager] Error in shell stderr handler for session ${sessionId}:`, error);
 				}
@@ -961,11 +961,11 @@ export class TerminalManager extends EventEmitter {
 				reject(error);
 			});
 
-			// Reduced timeout for faster response
+			// Increased timeout for commands like Claude Code
 			setTimeout(() => {
 				proc.kill();
-				reject(new Error('Command timeout after 2s'));
-			}, 2000);
+				reject(new Error('Command timeout after 30s'));
+			}, 30000);
 		});
 	}
 }

@@ -1,0 +1,14 @@
+{
+  "id": "bdb29e6eda3c4905",
+  "name": "g",
+  "status": "exited",
+  "workingDir": "/Users/mac/tools/Backlog.md",
+  "startedAt": "2025-08-18T02:31:57.106Z",
+  "command": [
+    "/bin/sh"
+  ],
+  "cols": 80,
+  "rows": 24,
+  "pid": 74087,
+  "exitCode": 1
+}
