@@ -1,0 +1,14 @@
+{
+  "id": "9e3a6c1e-124c-427a-a911-fe22114cbcdc",
+  "name": "Fixed Terminal",
+  "command": [
+    "/bin/zsh",
+    "-l"
+  ],
+  "workingDir": "/Users/mac/tools/Backlog.md",
+  "cols": 93,
+  "rows": 24,
+  "status": "exited",
+  "startedAt": "2025-08-19T06:36:11.666Z",
+  "pid": 18559
+}

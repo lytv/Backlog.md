@@ -1,7 +1,1098 @@
-$ bun run build:css && bun src/cli.ts server --port "6423"
-$ bun ./node_modules/@tailwindcss/cli/dist/index.mjs -i src/web/styles/source.css -o src/web/styles/style.css --minify
-≈ tailwindcss v4.1.11
+[EnhancedTerminalManager] node-pty loaded successfully
+[EnhancedTerminalManager] Initialized for project: /Users/mac/tools/Backlog.md
+[EnhancedTerminalManager] Started periodic cleanup (every 6h, max age 24h)
+[TerminalSessionManager] Control directory ensured: /Users/mac/tools/Backlog.md/.backlog/terminal
+🚀 Backlog.md browser interface running at http://localhost:6420
+📊 Project: test
+⏹️  Press Cmd+C to stop the server
+🌐 Opening browser...
+[TerminalSessionManager] Found 14 sessions
+[EnhancedTerminalManager] Found 14 persisted sessions
+[TerminalSessionManager] session.json saved for session 8f868cc9-bcaa-43d8-9798-8193980a4d0b with name: dffff
+[TerminalSessionManager] Session 8f868cc9-bcaa-43d8-9798-8193980a4d0b status updated to exited
+[WebSocket] Client connected
+[TerminalSessionManager] Found 14 sessions
+[WebSocket] Client connected
+[WebSocket] Terminal connection for session 8f868cc9-bcaa-43d8-9798-8193980a4d0b
+[EnhancedTerminalManager] Could not read output for session 8f868cc9-bcaa-43d8-9798-8193980a4d0b: ENOENT: no such file or directory, open '/Users/mac/tools/Backlog.md/.backlog/terminal/8f868cc9-bcaa-43d8-9798-8193980a4d0b/stdout'
+    path: "/Users/mac/tools/Backlog.md/.backlog/terminal/8f868cc9-bcaa-43d8-9798-8193980a4d0b/stdout",
+ syscall: "open",
+   errno: -2,
+    code: "ENOENT"
 
-Done in 279ms
-error: unknown command 'server'
-error: script "cli" exited with code 1
+
+[EnhancedTerminalManager] Resize requested for inactive session 8f868cc9-bcaa-43d8-9798-8193980a4d0b
+[TerminalSessionManager] Stdin file created: /Users/mac/tools/Backlog.md/.backlog/terminal/a60b3a6f-9bfb-4342-beec-66bfc9ecc461/stdin
+[TerminalSessionManager] Session directory created for a60b3a6f-9bfb-4342-beec-66bfc9ecc461
+[TerminalSessionManager] session.json saved for session a60b3a6f-9bfb-4342-beec-66bfc9ecc461 with name: fffffff
+[EnhancedTerminalManager] Attempting PTY creation for session a60b3a6f-9bfb-4342-beec-66bfc9ecc461
+[EnhancedTerminalManager] Skipping PTY due to ENXIO issues, using enhanced shell for session a60b3a6f-9bfb-4342-beec-66bfc9ecc461
+[EnhancedTerminalManager] Creating enhanced shell process for session a60b3a6f-9bfb-4342-beec-66bfc9ecc461
+[TerminalSessionManager] session.json saved for session a60b3a6f-9bfb-4342-beec-66bfc9ecc461 with name: fffffff
+[EnhancedTerminalManager] Setting up shell handlers for session a60b3a6f-9bfb-4342-beec-66bfc9ecc461
+[EnhancedTerminalManager] Created session a60b3a6f-9bfb-4342-beec-66bfc9ecc461 successfully
+[WebSocket] Client disconnected
+[WebSocket] Removing terminal listeners for session 8f868cc9-bcaa-43d8-9798-8193980a4d0b
+[TerminalSessionManager] Found 14 sessions
+[WebSocket] Client connected
+[WebSocket] Client disconnected
+[TerminalSessionManager] Stdin file created: /Users/mac/tools/Backlog.md/.backlog/terminal/4cf6f11a-95b0-471b-8987-5516bb3bc55f/stdin
+[TerminalSessionManager] Session directory created for 4cf6f11a-95b0-471b-8987-5516bb3bc55f
+[TerminalSessionManager] session.json saved for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f with name: đfdfdf
+[EnhancedTerminalManager] Attempting PTY creation for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f
+[EnhancedTerminalManager] Skipping PTY due to ENXIO issues, using enhanced shell for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f
+[EnhancedTerminalManager] Creating enhanced shell process for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f
+[TerminalSessionManager] session.json saved for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f with name: đfdfdf
+[EnhancedTerminalManager] Setting up shell handlers for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f
+[EnhancedTerminalManager] Created session 4cf6f11a-95b0-471b-8987-5516bb3bc55f successfully
+[WebSocket] Client connected
+[WebSocket] Terminal connection for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f
+[EnhancedTerminalManager] Resize not supported for shell session 4cf6f11a-95b0-471b-8987-5516bb3bc55f
+[TerminalSessionManager] session.json saved for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f with name: đfdfdf
+[EnhancedTerminalManager] Shell stdout data received for session a60b3a6f-9bfb-4342-beec-66bfc9ecc461: "✅ Claude Code Remote aliases loaded!\n💡 'ccr-examples' for usage examples\n"
+[EnhancedTerminalManager] Emitting shell output to session a60b3a6f-9bfb-4342-beec-66bfc9ecc461: "✅ Claude Code Remote aliases loaded!\n💡 'ccr-examples' for usage examples\n"
+[EnhancedTerminalManager] Shell stdout data received for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: "✅ Claude Code Remote aliases loaded!\n💡 'ccr-examples' for usage examples\n"
+[EnhancedTerminalManager] Emitting shell output to session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: "✅ Claude Code Remote aliases loaded!\n💡 'ccr-examples' for usage examples\n"
+[WebSocket] Client connected
+[WebSocket] Terminal connection for session 8f868cc9-bcaa-43d8-9798-8193980a4d0b
+[WebSocket] Client connected
+[WebSocket] Terminal connection for session a60b3a6f-9bfb-4342-beec-66bfc9ecc461
+[EnhancedTerminalManager] Shell stdout data received for session a60b3a6f-9bfb-4342-beec-66bfc9ecc461: "✅ Claude Code Remote aliases loaded!\n💡 'ccr-examples' for usage examples\n"
+[EnhancedTerminalManager] Emitting shell output to session a60b3a6f-9bfb-4342-beec-66bfc9ecc461: "✅ Claude Code Remote aliases loaded!\n💡 'ccr-examples' for usage examples\n"
+[EnhancedTerminalManager] Shell stdout data received for session a60b3a6f-9bfb-4342-beec-66bfc9ecc461: "\u001b]633;D\u0007"
+[EnhancedTerminalManager] Emitting shell output to session a60b3a6f-9bfb-4342-beec-66bfc9ecc461: "\u001b]633;D\u0007"
+[EnhancedTerminalManager] Shell stdout data received for session a60b3a6f-9bfb-4342-beec-66bfc9ecc461: "\u001b]633;P;Cwd=/Users/mac/tools/Backlog.md\u0007"
+[EnhancedTerminalManager] Emitting shell output to session a60b3a6f-9bfb-4342-beec-66bfc9ecc461: "\u001b]633;P;Cwd=/Users/mac/tools/Backlog.md\u0007"
+[EnhancedTerminalManager] Shell stdout data received for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: "✅ Claude Code Remote aliases loaded!\n💡 'ccr-examples' for usage examples\n"
+[EnhancedTerminalManager] Emitting shell output to session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: "✅ Claude Code Remote aliases loaded!\n💡 'ccr-examples' for usage examples\n"
+[EnhancedTerminalManager] Shell stdout data received for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: "\u001b]633;D\u0007"
+[EnhancedTerminalManager] Emitting shell output to session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: "\u001b]633;D\u0007"
+[EnhancedTerminalManager] Shell stdout data received for session a60b3a6f-9bfb-4342-beec-66bfc9ecc461: "\u001b]633;E;stty echo icanon;\u0007\u001b]633;C\u0007"
+[EnhancedTerminalManager] Emitting shell output to session a60b3a6f-9bfb-4342-beec-66bfc9ecc461: "\u001b]633;E;stty echo icanon;\u0007\u001b]633;C\u0007"
+[EnhancedTerminalManager] Shell stdout data received for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: "\u001b]633;P;Cwd=/Users/mac/tools/Backlog.md\u0007"
+[EnhancedTerminalManager] Emitting shell output to session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: "\u001b]633;P;Cwd=/Users/mac/tools/Backlog.md\u0007"
+[EnhancedTerminalManager] Shell stdout data received for session a60b3a6f-9bfb-4342-beec-66bfc9ecc461: "\u001b]633;D;1\u0007"
+[EnhancedTerminalManager] Emitting shell output to session a60b3a6f-9bfb-4342-beec-66bfc9ecc461: "\u001b]633;D;1\u0007"
+[EnhancedTerminalManager] Shell stdout data received for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: "\u001b]633;E;stty echo icanon;\u0007\u001b]633;C\u0007"
+[EnhancedTerminalManager] Emitting shell output to session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: "\u001b]633;E;stty echo icanon;\u0007\u001b]633;C\u0007"
+[EnhancedTerminalManager] Shell stdout data received for session a60b3a6f-9bfb-4342-beec-66bfc9ecc461: "\u001b]633;P;Cwd=/Users/mac/tools/Backlog.md\u0007"
+[EnhancedTerminalManager] Emitting shell output to session a60b3a6f-9bfb-4342-beec-66bfc9ecc461: "\u001b]633;P;Cwd=/Users/mac/tools/Backlog.md\u0007"
+[EnhancedTerminalManager] Shell stdout data received for session a60b3a6f-9bfb-4342-beec-66bfc9ecc461: "\u001b]633;E;set -o emacs;\u0007\u001b]633;C\u0007"
+[EnhancedTerminalManager] Emitting shell output to session a60b3a6f-9bfb-4342-beec-66bfc9ecc461: "\u001b]633;E;set -o emacs;\u0007\u001b]633;C\u0007"
+[EnhancedTerminalManager] Shell stdout data received for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: "\u001b]633;D;1\u0007"
+[EnhancedTerminalManager] Emitting shell output to session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: "\u001b]633;D;1\u0007"
+[EnhancedTerminalManager] Shell stdout data received for session a60b3a6f-9bfb-4342-beec-66bfc9ecc461: "\u001b]633;D;0\u0007"
+[EnhancedTerminalManager] Emitting shell output to session a60b3a6f-9bfb-4342-beec-66bfc9ecc461: "\u001b]633;D;0\u0007"
+[EnhancedTerminalManager] Shell stdout data received for session a60b3a6f-9bfb-4342-beec-66bfc9ecc461: "\u001b]633;P;Cwd=/Users/mac/tools/Backlog.md\u0007"
+[EnhancedTerminalManager] Emitting shell output to session a60b3a6f-9bfb-4342-beec-66bfc9ecc461: "\u001b]633;P;Cwd=/Users/mac/tools/Backlog.md\u0007"
+[EnhancedTerminalManager] Shell stdout data received for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: "\u001b]633;P;Cwd=/Users/mac/tools/Backlog.md\u0007"
+[EnhancedTerminalManager] Emitting shell output to session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: "\u001b]633;P;Cwd=/Users/mac/tools/Backlog.md\u0007"
+[EnhancedTerminalManager] Shell stdout data received for session a60b3a6f-9bfb-4342-beec-66bfc9ecc461: "\u001b]633;E;set +o vi;\u0007\u001b]633;C\u0007"
+[EnhancedTerminalManager] Emitting shell output to session a60b3a6f-9bfb-4342-beec-66bfc9ecc461: "\u001b]633;E;set +o vi;\u0007\u001b]633;C\u0007"
+[EnhancedTerminalManager] Shell stdout data received for session a60b3a6f-9bfb-4342-beec-66bfc9ecc461: "\u001b]633;D;0\u0007"
+[EnhancedTerminalManager] Emitting shell output to session a60b3a6f-9bfb-4342-beec-66bfc9ecc461: "\u001b]633;D;0\u0007"
+[EnhancedTerminalManager] Shell stdout data received for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: "\u001b]633;E;set -o emacs;\u0007\u001b]633;C\u0007"
+[EnhancedTerminalManager] Emitting shell output to session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: "\u001b]633;E;set -o emacs;\u0007\u001b]633;C\u0007"
+[EnhancedTerminalManager] Shell stdout data received for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: "\u001b]633;D;0\u0007"
+[EnhancedTerminalManager] Emitting shell output to session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: "\u001b]633;D;0\u0007"
+[EnhancedTerminalManager] Shell stdout data received for session a60b3a6f-9bfb-4342-beec-66bfc9ecc461: "\u001b]633;P;Cwd=/Users/mac/tools/Backlog.md\u0007"
+[EnhancedTerminalManager] Emitting shell output to session a60b3a6f-9bfb-4342-beec-66bfc9ecc461: "\u001b]633;P;Cwd=/Users/mac/tools/Backlog.md\u0007"
+[EnhancedTerminalManager] Shell stdout data received for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: "\u001b]633;P;Cwd=/Users/mac/tools/Backlog.md\u0007"
+[EnhancedTerminalManager] Emitting shell output to session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: "\u001b]633;P;Cwd=/Users/mac/tools/Backlog.md\u0007"
+[EnhancedTerminalManager] Shell stdout data received for session a60b3a6f-9bfb-4342-beec-66bfc9ecc461: "\u001b]633;E;stty -raw echo;\u0007\u001b]633;C\u0007\u001b]633;D;1\u0007"
+[EnhancedTerminalManager] Emitting shell output to session a60b3a6f-9bfb-4342-beec-66bfc9ecc461: "\u001b]633;E;stty -raw echo;\u0007\u001b]633;C\u0007\u001b]633;D;1\u0007"
+[EnhancedTerminalManager] Shell stdout data received for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: "\u001b]633;E;set +o vi;\u0007\u001b]633;C\u0007\u001b]633;D;0\u0007\u001b]633;P;Cwd=/Users/mac/tools/Backlog.md\u0007"
+[EnhancedTerminalManager] Emitting shell output to session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: "\u001b]633;E;set +o vi;\u0007\u001b]633;C\u0007\u001b]633;D;0\u0007\u001b]633;P;Cwd=/Users/mac/tools/Backlog.md\u0007"
+[EnhancedTerminalManager] Shell stdout data received for session a60b3a6f-9bfb-4342-beec-66bfc9ecc461: "\u001b]633;P;Cwd=/Users/mac/tools/Backlog.md\u0007"
+[EnhancedTerminalManager] Emitting shell output to session a60b3a6f-9bfb-4342-beec-66bfc9ecc461: "\u001b]633;P;Cwd=/Users/mac/tools/Backlog.md\u0007"
+[EnhancedTerminalManager] Shell stdout data received for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: "\u001b]633;E;stty -raw echo;\u0007\u001b]633;C\u0007"
+[EnhancedTerminalManager] Emitting shell output to session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: "\u001b]633;E;stty -raw echo;\u0007\u001b]633;C\u0007"
+[EnhancedTerminalManager] Shell stdout data received for session a60b3a6f-9bfb-4342-beec-66bfc9ecc461: "\u001b]633;E;export PS1=\"$ \";\u0007\u001b]633;C\u0007"
+[EnhancedTerminalManager] Emitting shell output to session a60b3a6f-9bfb-4342-beec-66bfc9ecc461: "\u001b]633;E;export PS1=\"$ \";\u0007\u001b]633;C\u0007"
+[EnhancedTerminalManager] Shell stdout data received for session a60b3a6f-9bfb-4342-beec-66bfc9ecc461: "\u001b]633;D;0\u0007"
+[EnhancedTerminalManager] Emitting shell output to session a60b3a6f-9bfb-4342-beec-66bfc9ecc461: "\u001b]633;D;0\u0007"
+[EnhancedTerminalManager] Shell stdout data received for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: "\u001b]633;D;1\u0007"
+[EnhancedTerminalManager] Emitting shell output to session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: "\u001b]633;D;1\u0007"
+[EnhancedTerminalManager] Shell stdout data received for session a60b3a6f-9bfb-4342-beec-66bfc9ecc461: "\u001b]633;P;Cwd=/Users/mac/tools/Backlog.md\u0007"
+[EnhancedTerminalManager] Emitting shell output to session a60b3a6f-9bfb-4342-beec-66bfc9ecc461: "\u001b]633;P;Cwd=/Users/mac/tools/Backlog.md\u0007"
+[EnhancedTerminalManager] Shell stdout data received for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: "\u001b]633;P;Cwd=/Users/mac/tools/Backlog.md\u0007"
+[EnhancedTerminalManager] Emitting shell output to session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: "\u001b]633;P;Cwd=/Users/mac/tools/Backlog.md\u0007"
+[EnhancedTerminalManager] Shell stdout data received for session a60b3a6f-9bfb-4342-beec-66bfc9ecc461: "\u001b]633;E;clear;\u0007\u001b]633;C\u0007\u001b[3J\u001b[H\u001b[2J\u001b]633;D;0\u0007\u001b]633;P;Cwd=/Users/mac/tools/Backlog.md\u0007"
+[EnhancedTerminalManager] Emitting shell output to session a60b3a6f-9bfb-4342-beec-66bfc9ecc461: "\u001b]633;E;clear;\u0007\u001b]633;C\u0007\u001b[3J\u001b[H\u001b[2J\u001b]633;D;0\u0007\u001b]633;P;Cwd=/Users/mac/tools/Backlog.md\u0007"
+[EnhancedTerminalManager] Shell stdout data received for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: "\u001b]633;E;export PS1=\"$ \";\u0007\u001b]633;C\u0007\u001b]633;D;0\u0007\u001b]633;P;Cwd=/Users/mac/tools/Backlog.md\u0007"
+[EnhancedTerminalManager] Emitting shell output to session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: "\u001b]633;E;export PS1=\"$ \";\u0007\u001b]633;C\u0007\u001b]633;D;0\u0007\u001b]633;P;Cwd=/Users/mac/tools/Backlog.md\u0007"
+[EnhancedTerminalManager] Shell stdout data received for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: "\u001b]633;E;clear;\u0007\u001b]633;C\u0007"
+[EnhancedTerminalManager] Emitting shell output to session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: "\u001b]633;E;clear;\u0007\u001b]633;C\u0007"
+[EnhancedTerminalManager] Shell stdout data received for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: "\u001b[3J\u001b[H\u001b[2J"
+[EnhancedTerminalManager] Emitting shell output to session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: "\u001b[3J\u001b[H\u001b[2J"
+[EnhancedTerminalManager] Shell stdout data received for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: "\u001b]633;D;0\u0007"
+[EnhancedTerminalManager] Emitting shell output to session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: "\u001b]633;D;0\u0007"
+[EnhancedTerminalManager] Shell stdout data received for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: "\u001b]633;P;Cwd=/Users/mac/tools/Backlog.md\u0007"
+[EnhancedTerminalManager] Emitting shell output to session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: "\u001b]633;P;Cwd=/Users/mac/tools/Backlog.md\u0007"
+[WebSocket] Received terminal input for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: {
+  text: "d",
+}
+[WebSocket] Calling terminalManager.sendInput...
+[EnhancedTerminalManager] sendInput called for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: {
+  text: "d",
+}
+[EnhancedTerminalManager] Processed input data: "d"
+[EnhancedTerminalManager] Writing to shell stdin
+[EnhancedTerminalManager] Input sent successfully to session 4cf6f11a-95b0-471b-8987-5516bb3bc55f
+[WebSocket] sendInput completed successfully
+[WebSocket] Received terminal input for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: {
+  text: "f",
+}
+[WebSocket] Calling terminalManager.sendInput...
+[EnhancedTerminalManager] sendInput called for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: {
+  text: "f",
+}
+[EnhancedTerminalManager] Processed input data: "f"
+[EnhancedTerminalManager] Writing to shell stdin
+[EnhancedTerminalManager] Input sent successfully to session 4cf6f11a-95b0-471b-8987-5516bb3bc55f
+[WebSocket] sendInput completed successfully
+[WebSocket] Received terminal input for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: {
+  text: "d",
+}
+[WebSocket] Calling terminalManager.sendInput...
+[EnhancedTerminalManager] sendInput called for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: {
+  text: "d",
+}
+[EnhancedTerminalManager] Processed input data: "d"
+[EnhancedTerminalManager] Writing to shell stdin
+[EnhancedTerminalManager] Input sent successfully to session 4cf6f11a-95b0-471b-8987-5516bb3bc55f
+[WebSocket] sendInput completed successfully
+[WebSocket] Received terminal input for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: {
+  text: "f",
+}
+[WebSocket] Calling terminalManager.sendInput...
+[EnhancedTerminalManager] sendInput called for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: {
+  text: "f",
+}
+[EnhancedTerminalManager] Processed input data: "f"
+[EnhancedTerminalManager] Writing to shell stdin
+[EnhancedTerminalManager] Input sent successfully to session 4cf6f11a-95b0-471b-8987-5516bb3bc55f
+[WebSocket] sendInput completed successfully
+[TerminalSessionManager] Found 16 sessions
+[WebSocket] Received terminal input for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: {
+  text: "",
+}
+[WebSocket] Calling terminalManager.sendInput...
+[EnhancedTerminalManager] sendInput called for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: {
+  text: "",
+}
+[EnhancedTerminalManager] Processed input data: ""
+[EnhancedTerminalManager] Writing to shell stdin
+[EnhancedTerminalManager] Input sent successfully to session 4cf6f11a-95b0-471b-8987-5516bb3bc55f
+[WebSocket] sendInput completed successfully
+[WebSocket] Received terminal input for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: {
+  text: "",
+}
+[WebSocket] Calling terminalManager.sendInput...
+[EnhancedTerminalManager] sendInput called for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: {
+  text: "",
+}
+[EnhancedTerminalManager] Processed input data: ""
+[EnhancedTerminalManager] Writing to shell stdin
+[EnhancedTerminalManager] Input sent successfully to session 4cf6f11a-95b0-471b-8987-5516bb3bc55f
+[WebSocket] sendInput completed successfully
+[WebSocket] Received terminal input for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: {
+  text: "",
+}
+[WebSocket] Calling terminalManager.sendInput...
+[EnhancedTerminalManager] sendInput called for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: {
+  text: "",
+}
+[EnhancedTerminalManager] Processed input data: ""
+[EnhancedTerminalManager] Writing to shell stdin
+[EnhancedTerminalManager] Input sent successfully to session 4cf6f11a-95b0-471b-8987-5516bb3bc55f
+[WebSocket] sendInput completed successfully
+[WebSocket] Received terminal input for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: {
+  text: "",
+}
+[WebSocket] Calling terminalManager.sendInput...
+[EnhancedTerminalManager] sendInput called for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: {
+  text: "",
+}
+[EnhancedTerminalManager] Processed input data: ""
+[EnhancedTerminalManager] Writing to shell stdin
+[EnhancedTerminalManager] Input sent successfully to session 4cf6f11a-95b0-471b-8987-5516bb3bc55f
+[WebSocket] sendInput completed successfully
+[WebSocket] Received terminal input for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: {
+  text: "",
+}
+[WebSocket] Calling terminalManager.sendInput...
+[EnhancedTerminalManager] sendInput called for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: {
+  text: "",
+}
+[EnhancedTerminalManager] Processed input data: ""
+[EnhancedTerminalManager] Writing to shell stdin
+[EnhancedTerminalManager] Input sent successfully to session 4cf6f11a-95b0-471b-8987-5516bb3bc55f
+[WebSocket] sendInput completed successfully
+[WebSocket] Received terminal input for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: {
+  text: "",
+}
+[WebSocket] Calling terminalManager.sendInput...
+[EnhancedTerminalManager] sendInput called for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: {
+  text: "",
+}
+[EnhancedTerminalManager] Processed input data: ""
+[EnhancedTerminalManager] Writing to shell stdin
+[EnhancedTerminalManager] Input sent successfully to session 4cf6f11a-95b0-471b-8987-5516bb3bc55f
+[WebSocket] sendInput completed successfully
+[WebSocket] Received terminal input for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: {
+  text: "",
+}
+[WebSocket] Calling terminalManager.sendInput...
+[EnhancedTerminalManager] sendInput called for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: {
+  text: "",
+}
+[EnhancedTerminalManager] Processed input data: ""
+[EnhancedTerminalManager] Writing to shell stdin
+[EnhancedTerminalManager] Input sent successfully to session 4cf6f11a-95b0-471b-8987-5516bb3bc55f
+[WebSocket] sendInput completed successfully
+[WebSocket] Received terminal input for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: {
+  text: "",
+}
+[WebSocket] Calling terminalManager.sendInput...
+[EnhancedTerminalManager] sendInput called for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: {
+  text: "",
+}
+[EnhancedTerminalManager] Processed input data: ""
+[EnhancedTerminalManager] Writing to shell stdin
+[EnhancedTerminalManager] Input sent successfully to session 4cf6f11a-95b0-471b-8987-5516bb3bc55f
+[WebSocket] sendInput completed successfully
+[WebSocket] Received terminal input for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: {
+  text: "",
+}
+[WebSocket] Calling terminalManager.sendInput...
+[EnhancedTerminalManager] sendInput called for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: {
+  text: "",
+}
+[EnhancedTerminalManager] Processed input data: ""
+[EnhancedTerminalManager] Writing to shell stdin
+[EnhancedTerminalManager] Input sent successfully to session 4cf6f11a-95b0-471b-8987-5516bb3bc55f
+[WebSocket] sendInput completed successfully
+[WebSocket] Received terminal input for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: {
+  text: "\r",
+}
+[WebSocket] Calling terminalManager.sendInput...
+[EnhancedTerminalManager] sendInput called for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: {
+  text: "\r",
+}
+[EnhancedTerminalManager] Processed input data: "\r"
+[EnhancedTerminalManager] Writing to shell stdin
+[EnhancedTerminalManager] Input sent successfully to session 4cf6f11a-95b0-471b-8987-5516bb3bc55f
+[WebSocket] sendInput completed successfully
+[WebSocket] Received terminal input for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: {
+  text: "\r",
+}
+[WebSocket] Calling terminalManager.sendInput...
+[EnhancedTerminalManager] sendInput called for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: {
+  text: "\r",
+}
+[EnhancedTerminalManager] Processed input data: "\r"
+[EnhancedTerminalManager] Writing to shell stdin
+[EnhancedTerminalManager] Input sent successfully to session 4cf6f11a-95b0-471b-8987-5516bb3bc55f
+[WebSocket] sendInput completed successfully
+[WebSocket] Client disconnected
+[WebSocket] Removing terminal listeners for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f
+[WebSocket] Client connected
+[WebSocket] Terminal connection for session a60b3a6f-9bfb-4342-beec-66bfc9ecc461
+[EnhancedTerminalManager] Resize not supported for shell session a60b3a6f-9bfb-4342-beec-66bfc9ecc461
+[TerminalSessionManager] session.json saved for session a60b3a6f-9bfb-4342-beec-66bfc9ecc461 with name: fffffff
+[WebSocket] Client disconnected
+[WebSocket] Removing terminal listeners for session a60b3a6f-9bfb-4342-beec-66bfc9ecc461
+[WebSocket] Client connected
+[WebSocket] Terminal connection for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f
+[EnhancedTerminalManager] Resize not supported for shell session 4cf6f11a-95b0-471b-8987-5516bb3bc55f
+[TerminalSessionManager] session.json saved for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f with name: đfdfdf
+[TerminalSessionManager] Found 16 sessions
+[WebSocket] Received terminal input for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: {
+  text: "d",
+}
+[WebSocket] Calling terminalManager.sendInput...
+[EnhancedTerminalManager] sendInput called for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: {
+  text: "d",
+}
+[EnhancedTerminalManager] Processed input data: "d"
+[EnhancedTerminalManager] Writing to shell stdin
+[EnhancedTerminalManager] Input sent successfully to session 4cf6f11a-95b0-471b-8987-5516bb3bc55f
+[WebSocket] sendInput completed successfully
+[WebSocket] Received terminal input for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: {
+  text: "f",
+}
+[WebSocket] Calling terminalManager.sendInput...
+[EnhancedTerminalManager] sendInput called for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: {
+  text: "f",
+}
+[EnhancedTerminalManager] Processed input data: "f"
+[EnhancedTerminalManager] Writing to shell stdin
+[EnhancedTerminalManager] Input sent successfully to session 4cf6f11a-95b0-471b-8987-5516bb3bc55f
+[WebSocket] sendInput completed successfully
+[WebSocket] Received terminal input for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: {
+  text: "d",
+}
+[WebSocket] Calling terminalManager.sendInput...
+[EnhancedTerminalManager] sendInput called for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: {
+  text: "d",
+}
+[EnhancedTerminalManager] Processed input data: "d"
+[EnhancedTerminalManager] Writing to shell stdin
+[EnhancedTerminalManager] Input sent successfully to session 4cf6f11a-95b0-471b-8987-5516bb3bc55f
+[WebSocket] sendInput completed successfully
+[WebSocket] Received terminal input for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: {
+  text: "f",
+}
+[WebSocket] Calling terminalManager.sendInput...
+[EnhancedTerminalManager] sendInput called for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: {
+  text: "f",
+}
+[EnhancedTerminalManager] Processed input data: "f"
+[EnhancedTerminalManager] Writing to shell stdin
+[EnhancedTerminalManager] Input sent successfully to session 4cf6f11a-95b0-471b-8987-5516bb3bc55f
+[WebSocket] sendInput completed successfully
+[WebSocket] Received terminal input for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: {
+  text: "d",
+}
+[WebSocket] Calling terminalManager.sendInput...
+[EnhancedTerminalManager] sendInput called for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: {
+  text: "d",
+}
+[EnhancedTerminalManager] Processed input data: "d"
+[EnhancedTerminalManager] Writing to shell stdin
+[EnhancedTerminalManager] Input sent successfully to session 4cf6f11a-95b0-471b-8987-5516bb3bc55f
+[WebSocket] sendInput completed successfully
+[WebSocket] Received terminal input for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: {
+  text: "\r",
+}
+[WebSocket] Calling terminalManager.sendInput...
+[EnhancedTerminalManager] sendInput called for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: {
+  text: "\r",
+}
+[EnhancedTerminalManager] Processed input data: "\r"
+[EnhancedTerminalManager] Writing to shell stdin
+[EnhancedTerminalManager] Input sent successfully to session 4cf6f11a-95b0-471b-8987-5516bb3bc55f
+[WebSocket] sendInput completed successfully
+[WebSocket] Client connected
+[WebSocket] Terminal connection for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f
+[WebSocket] Client connected
+[WebSocket] Terminal connection for session a60b3a6f-9bfb-4342-beec-66bfc9ecc461
+[TerminalSessionManager] Found 16 sessions
+[TerminalSessionManager] Found 16 sessions
+[TerminalSessionManager] Found 16 sessions
+[TerminalSessionManager] Found 16 sessions
+[TerminalSessionManager] Found 16 sessions
+[TerminalSessionManager] Found 16 sessions
+[TerminalSessionManager] Found 16 sessions
+[TerminalSessionManager] Found 16 sessions
+[TerminalSessionManager] Found 16 sessions
+[TerminalSessionManager] Found 16 sessions
+[TerminalSessionManager] Found 16 sessions
+[TerminalSessionManager] Found 16 sessions
+[TerminalSessionManager] Found 16 sessions
+[TerminalSessionManager] Found 16 sessions
+[TerminalSessionManager] Found 16 sessions
+[TerminalSessionManager] Found 16 sessions
+[TerminalSessionManager] Found 16 sessions
+[TerminalSessionManager] Found 16 sessions
+[TerminalSessionManager] Found 16 sessions
+[TerminalSessionManager] Found 16 sessions
+[WebSocket] Client connected
+[TerminalSessionManager] Found 16 sessions
+[TerminalSessionManager] Found 16 sessions
+[TerminalSessionManager] Found 16 sessions
+[TerminalSessionManager] Found 16 sessions
+[TerminalSessionManager] Found 16 sessions
+[TerminalSessionManager] Found 16 sessions
+[TerminalSessionManager] Found 16 sessions
+[TerminalSessionManager] Found 16 sessions
+[TerminalSessionManager] Found 16 sessions
+[WebSocket] Client connected
+[WebSocket] Terminal connection for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f
+[EnhancedTerminalManager] Resize not supported for shell session 4cf6f11a-95b0-471b-8987-5516bb3bc55f
+[TerminalSessionManager] session.json saved for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f with name: đfdfdf
+[WebSocket] Received terminal input for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: {
+  text: "t",
+}
+[WebSocket] Calling terminalManager.sendInput...
+[EnhancedTerminalManager] sendInput called for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: {
+  text: "t",
+}
+[EnhancedTerminalManager] Processed input data: "t"
+[EnhancedTerminalManager] Writing to shell stdin
+[EnhancedTerminalManager] Input sent successfully to session 4cf6f11a-95b0-471b-8987-5516bb3bc55f
+[WebSocket] sendInput completed successfully
+[WebSocket] Received terminal input for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: {
+  text: "e",
+}
+[WebSocket] Calling terminalManager.sendInput...
+[EnhancedTerminalManager] sendInput called for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: {
+  text: "e",
+}
+[EnhancedTerminalManager] Processed input data: "e"
+[EnhancedTerminalManager] Writing to shell stdin
+[EnhancedTerminalManager] Input sent successfully to session 4cf6f11a-95b0-471b-8987-5516bb3bc55f
+[WebSocket] sendInput completed successfully
+[WebSocket] Received terminal input for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: {
+  text: " ",
+}
+[WebSocket] Calling terminalManager.sendInput...
+[EnhancedTerminalManager] sendInput called for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: {
+  text: " ",
+}
+[EnhancedTerminalManager] Processed input data: " "
+[EnhancedTerminalManager] Writing to shell stdin
+[EnhancedTerminalManager] Input sent successfully to session 4cf6f11a-95b0-471b-8987-5516bb3bc55f
+[WebSocket] sendInput completed successfully
+[WebSocket] Received terminal input for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: {
+  text: "",
+}
+[WebSocket] Calling terminalManager.sendInput...
+[EnhancedTerminalManager] sendInput called for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: {
+  text: "",
+}
+[EnhancedTerminalManager] Processed input data: ""
+[EnhancedTerminalManager] Writing to shell stdin
+[EnhancedTerminalManager] Input sent successfully to session 4cf6f11a-95b0-471b-8987-5516bb3bc55f
+[WebSocket] sendInput completed successfully
+[WebSocket] Received terminal input for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: {
+  text: "",
+}
+[WebSocket] Calling terminalManager.sendInput...
+[EnhancedTerminalManager] sendInput called for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: {
+  text: "",
+}
+[EnhancedTerminalManager] Processed input data: ""
+[EnhancedTerminalManager] Writing to shell stdin
+[EnhancedTerminalManager] Input sent successfully to session 4cf6f11a-95b0-471b-8987-5516bb3bc55f
+[WebSocket] sendInput completed successfully
+[WebSocket] Received terminal input for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: {
+  text: "é",
+}
+[WebSocket] Calling terminalManager.sendInput...
+[EnhancedTerminalManager] sendInput called for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: {
+  text: "é",
+}
+[EnhancedTerminalManager] Processed input data: "é"
+[EnhancedTerminalManager] Writing to shell stdin
+[EnhancedTerminalManager] Input sent successfully to session 4cf6f11a-95b0-471b-8987-5516bb3bc55f
+[WebSocket] sendInput completed successfully
+[WebSocket] Received terminal input for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: {
+  text: "t",
+}
+[WebSocket] Calling terminalManager.sendInput...
+[EnhancedTerminalManager] sendInput called for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: {
+  text: "t",
+}
+[EnhancedTerminalManager] Processed input data: "t"
+[EnhancedTerminalManager] Writing to shell stdin
+[EnhancedTerminalManager] Input sent successfully to session 4cf6f11a-95b0-471b-8987-5516bb3bc55f
+[WebSocket] sendInput completed successfully
+[WebSocket] Received terminal input for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: {
+  text: "\r",
+}
+[WebSocket] Calling terminalManager.sendInput...
+[EnhancedTerminalManager] sendInput called for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: {
+  text: "\r",
+}
+[EnhancedTerminalManager] Processed input data: "\r"
+[EnhancedTerminalManager] Writing to shell stdin
+[EnhancedTerminalManager] Input sent successfully to session 4cf6f11a-95b0-471b-8987-5516bb3bc55f
+[WebSocket] sendInput completed successfully
+[WebSocket] Received terminal input for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: {
+  text: "\\",
+}
+[WebSocket] Calling terminalManager.sendInput...
+[EnhancedTerminalManager] sendInput called for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: {
+  text: "\\",
+}
+[EnhancedTerminalManager] Processed input data: "\\"
+[EnhancedTerminalManager] Writing to shell stdin
+[EnhancedTerminalManager] Input sent successfully to session 4cf6f11a-95b0-471b-8987-5516bb3bc55f
+[WebSocket] sendInput completed successfully
+[WebSocket] Received terminal input for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: {
+  text: "",
+}
+[WebSocket] Calling terminalManager.sendInput...
+[EnhancedTerminalManager] sendInput called for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: {
+  text: "",
+}
+[EnhancedTerminalManager] Processed input data: ""
+[EnhancedTerminalManager] Writing to shell stdin
+[EnhancedTerminalManager] Input sent successfully to session 4cf6f11a-95b0-471b-8987-5516bb3bc55f
+[WebSocket] sendInput completed successfully
+[WebSocket] Received terminal input for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: {
+  text: "\r",
+}
+[WebSocket] Calling terminalManager.sendInput...
+[EnhancedTerminalManager] sendInput called for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f: {
+  text: "\r",
+}
+[EnhancedTerminalManager] Processed input data: "\r"
+[EnhancedTerminalManager] Writing to shell stdin
+[EnhancedTerminalManager] Input sent successfully to session 4cf6f11a-95b0-471b-8987-5516bb3bc55f
+[WebSocket] sendInput completed successfully
+[WebSocket] Client disconnected
+[WebSocket] Removing terminal listeners for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f
+[WebSocket] Client connected
+[WebSocket] Terminal connection for session a60b3a6f-9bfb-4342-beec-66bfc9ecc461
+[EnhancedTerminalManager] Resize not supported for shell session a60b3a6f-9bfb-4342-beec-66bfc9ecc461
+[TerminalSessionManager] session.json saved for session a60b3a6f-9bfb-4342-beec-66bfc9ecc461 with name: fffffff
+[WebSocket] Client disconnected
+[WebSocket] Removing terminal listeners for session a60b3a6f-9bfb-4342-beec-66bfc9ecc461
+[WebSocket] Client connected
+[WebSocket] Terminal connection for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f
+[EnhancedTerminalManager] Resize not supported for shell session 4cf6f11a-95b0-471b-8987-5516bb3bc55f
+[TerminalSessionManager] session.json saved for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f with name: đfdfdf
+[TerminalSessionManager] Found 16 sessions
+[TerminalSessionManager] Stdin file created: /Users/mac/tools/Backlog.md/.backlog/terminal/88403567-cba6-433a-923d-cda28a8b8838/stdin
+[TerminalSessionManager] Session directory created for 88403567-cba6-433a-923d-cda28a8b8838
+[TerminalSessionManager] session.json saved for session 88403567-cba6-433a-923d-cda28a8b8838 with name: dte
+[EnhancedTerminalManager] Attempting PTY creation for session 88403567-cba6-433a-923d-cda28a8b8838
+[EnhancedTerminalManager] Skipping PTY due to ENXIO issues, using enhanced shell for session 88403567-cba6-433a-923d-cda28a8b8838
+[EnhancedTerminalManager] Creating enhanced shell process for session 88403567-cba6-433a-923d-cda28a8b8838
+[TerminalSessionManager] session.json saved for session 88403567-cba6-433a-923d-cda28a8b8838 with name: dte
+[EnhancedTerminalManager] Setting up shell handlers for session 88403567-cba6-433a-923d-cda28a8b8838
+[EnhancedTerminalManager] Created session 88403567-cba6-433a-923d-cda28a8b8838 successfully
+[WebSocket] Client disconnected
+[WebSocket] Removing terminal listeners for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f
+[WebSocket] Client connected
+[WebSocket] Terminal connection for session 88403567-cba6-433a-923d-cda28a8b8838
+[EnhancedTerminalManager] Resize not supported for shell session 88403567-cba6-433a-923d-cda28a8b8838
+[TerminalSessionManager] session.json saved for session 88403567-cba6-433a-923d-cda28a8b8838 with name: dte
+[WebSocket] Client connected
+[WebSocket] Terminal connection for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f
+[WebSocket] Client connected
+[WebSocket] Terminal connection for session a60b3a6f-9bfb-4342-beec-66bfc9ecc461
+[EnhancedTerminalManager] Shell stdout data received for session 88403567-cba6-433a-923d-cda28a8b8838: "✅ Claude Code Remote aliases loaded!\n💡 'ccr-examples' for usage examples\n"
+[EnhancedTerminalManager] Emitting shell output to session 88403567-cba6-433a-923d-cda28a8b8838: "✅ Claude Code Remote aliases loaded!\n💡 'ccr-examples' for usage examples\n"
+[EnhancedTerminalManager] Shell stdout data received for session 88403567-cba6-433a-923d-cda28a8b8838: "✅ Claude Code Remote aliases loaded!\n"
+[EnhancedTerminalManager] Emitting shell output to session 88403567-cba6-433a-923d-cda28a8b8838: "✅ Claude Code Remote aliases loaded!\n"
+[EnhancedTerminalManager] Shell stdout data received for session 88403567-cba6-433a-923d-cda28a8b8838: "💡 'ccr-examples' for usage examples\n"
+[EnhancedTerminalManager] Emitting shell output to session 88403567-cba6-433a-923d-cda28a8b8838: "💡 'ccr-examples' for usage examples\n"
+[EnhancedTerminalManager] Shell stdout data received for session 88403567-cba6-433a-923d-cda28a8b8838: "\u001b]633;D\u0007"
+[EnhancedTerminalManager] Emitting shell output to session 88403567-cba6-433a-923d-cda28a8b8838: "\u001b]633;D\u0007"
+[EnhancedTerminalManager] Shell stdout data received for session 88403567-cba6-433a-923d-cda28a8b8838: "\u001b]633;P;Cwd=/Users/mac/tools/Backlog.md\u0007"
+[EnhancedTerminalManager] Emitting shell output to session 88403567-cba6-433a-923d-cda28a8b8838: "\u001b]633;P;Cwd=/Users/mac/tools/Backlog.md\u0007"
+[EnhancedTerminalManager] Shell stdout data received for session 88403567-cba6-433a-923d-cda28a8b8838: "\u001b]633;E;stty echo icanon;\u0007\u001b]633;C\u0007"
+[EnhancedTerminalManager] Emitting shell output to session 88403567-cba6-433a-923d-cda28a8b8838: "\u001b]633;E;stty echo icanon;\u0007\u001b]633;C\u0007"
+[EnhancedTerminalManager] Shell stdout data received for session 88403567-cba6-433a-923d-cda28a8b8838: "\u001b]633;D;1\u0007"
+[EnhancedTerminalManager] Emitting shell output to session 88403567-cba6-433a-923d-cda28a8b8838: "\u001b]633;D;1\u0007"
+[EnhancedTerminalManager] Shell stdout data received for session 88403567-cba6-433a-923d-cda28a8b8838: "\u001b]633;P;Cwd=/Users/mac/tools/Backlog.md\u0007"
+[EnhancedTerminalManager] Emitting shell output to session 88403567-cba6-433a-923d-cda28a8b8838: "\u001b]633;P;Cwd=/Users/mac/tools/Backlog.md\u0007"
+[EnhancedTerminalManager] Shell stdout data received for session 88403567-cba6-433a-923d-cda28a8b8838: "\u001b]633;E;set -o emacs;\u0007\u001b]633;C\u0007"
+[EnhancedTerminalManager] Emitting shell output to session 88403567-cba6-433a-923d-cda28a8b8838: "\u001b]633;E;set -o emacs;\u0007\u001b]633;C\u0007"
+[EnhancedTerminalManager] Shell stdout data received for session 88403567-cba6-433a-923d-cda28a8b8838: "\u001b]633;D;0\u0007"
+[EnhancedTerminalManager] Emitting shell output to session 88403567-cba6-433a-923d-cda28a8b8838: "\u001b]633;D;0\u0007"
+[EnhancedTerminalManager] Shell stdout data received for session 88403567-cba6-433a-923d-cda28a8b8838: "\u001b]633;P;Cwd=/Users/mac/tools/Backlog.md\u0007"
+[EnhancedTerminalManager] Emitting shell output to session 88403567-cba6-433a-923d-cda28a8b8838: "\u001b]633;P;Cwd=/Users/mac/tools/Backlog.md\u0007"
+[EnhancedTerminalManager] Shell stdout data received for session 88403567-cba6-433a-923d-cda28a8b8838: "\u001b]633;E;set +o vi;\u0007\u001b]633;C\u0007"
+[EnhancedTerminalManager] Emitting shell output to session 88403567-cba6-433a-923d-cda28a8b8838: "\u001b]633;E;set +o vi;\u0007\u001b]633;C\u0007"
+[EnhancedTerminalManager] Shell stdout data received for session 88403567-cba6-433a-923d-cda28a8b8838: "\u001b]633;D;0\u0007"
+[EnhancedTerminalManager] Emitting shell output to session 88403567-cba6-433a-923d-cda28a8b8838: "\u001b]633;D;0\u0007"
+[EnhancedTerminalManager] Shell stdout data received for session 88403567-cba6-433a-923d-cda28a8b8838: "\u001b]633;P;Cwd=/Users/mac/tools/Backlog.md\u0007"
+[EnhancedTerminalManager] Emitting shell output to session 88403567-cba6-433a-923d-cda28a8b8838: "\u001b]633;P;Cwd=/Users/mac/tools/Backlog.md\u0007"
+[EnhancedTerminalManager] Shell stdout data received for session 88403567-cba6-433a-923d-cda28a8b8838: "\u001b]633;E;stty -raw echo;\u0007\u001b]633;C\u0007"
+[EnhancedTerminalManager] Emitting shell output to session 88403567-cba6-433a-923d-cda28a8b8838: "\u001b]633;E;stty -raw echo;\u0007\u001b]633;C\u0007"
+[EnhancedTerminalManager] Shell stdout data received for session 88403567-cba6-433a-923d-cda28a8b8838: "\u001b]633;D;1\u0007"
+[EnhancedTerminalManager] Emitting shell output to session 88403567-cba6-433a-923d-cda28a8b8838: "\u001b]633;D;1\u0007"
+[EnhancedTerminalManager] Shell stdout data received for session 88403567-cba6-433a-923d-cda28a8b8838: "\u001b]633;P;Cwd=/Users/mac/tools/Backlog.md\u0007"
+[EnhancedTerminalManager] Emitting shell output to session 88403567-cba6-433a-923d-cda28a8b8838: "\u001b]633;P;Cwd=/Users/mac/tools/Backlog.md\u0007"
+[EnhancedTerminalManager] Shell stdout data received for session 88403567-cba6-433a-923d-cda28a8b8838: "\u001b]633;E;export PS1=\"$ \";\u0007\u001b]633;C\u0007"
+[EnhancedTerminalManager] Emitting shell output to session 88403567-cba6-433a-923d-cda28a8b8838: "\u001b]633;E;export PS1=\"$ \";\u0007\u001b]633;C\u0007"
+[EnhancedTerminalManager] Shell stdout data received for session 88403567-cba6-433a-923d-cda28a8b8838: "\u001b]633;D;0\u0007"
+[EnhancedTerminalManager] Emitting shell output to session 88403567-cba6-433a-923d-cda28a8b8838: "\u001b]633;D;0\u0007"
+[EnhancedTerminalManager] Shell stdout data received for session 88403567-cba6-433a-923d-cda28a8b8838: "\u001b]633;P;Cwd=/Users/mac/tools/Backlog.md\u0007"
+[EnhancedTerminalManager] Emitting shell output to session 88403567-cba6-433a-923d-cda28a8b8838: "\u001b]633;P;Cwd=/Users/mac/tools/Backlog.md\u0007"
+[EnhancedTerminalManager] Shell stdout data received for session 88403567-cba6-433a-923d-cda28a8b8838: "\u001b]633;E;clear;\u0007\u001b]633;C\u0007"
+[EnhancedTerminalManager] Emitting shell output to session 88403567-cba6-433a-923d-cda28a8b8838: "\u001b]633;E;clear;\u0007\u001b]633;C\u0007"
+[EnhancedTerminalManager] Shell stdout data received for session 88403567-cba6-433a-923d-cda28a8b8838: "\u001b[3J\u001b[H\u001b[2J"
+[EnhancedTerminalManager] Emitting shell output to session 88403567-cba6-433a-923d-cda28a8b8838: "\u001b[3J\u001b[H\u001b[2J"
+[EnhancedTerminalManager] Shell stdout data received for session 88403567-cba6-433a-923d-cda28a8b8838: "\u001b]633;D;0\u0007"
+[EnhancedTerminalManager] Emitting shell output to session 88403567-cba6-433a-923d-cda28a8b8838: "\u001b]633;D;0\u0007"
+[EnhancedTerminalManager] Shell stdout data received for session 88403567-cba6-433a-923d-cda28a8b8838: "\u001b]633;P;Cwd=/Users/mac/tools/Backlog.md\u0007"
+[EnhancedTerminalManager] Emitting shell output to session 88403567-cba6-433a-923d-cda28a8b8838: "\u001b]633;P;Cwd=/Users/mac/tools/Backlog.md\u0007"
+[WebSocket] Client connected
+[WebSocket] Terminal connection for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f
+[TerminalSessionManager] Found 17 sessions
+[WebSocket] Client disconnected
+[WebSocket] Client disconnected
+[WebSocket] Removing terminal listeners for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f
+[WebSocket] Client disconnected
+[WebSocket] Removing terminal listeners for session 88403567-cba6-433a-923d-cda28a8b8838
+[WebSocket] Client disconnected
+[WebSocket] Removing terminal listeners for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f
+[WebSocket] Client disconnected
+[WebSocket] Removing terminal listeners for session a60b3a6f-9bfb-4342-beec-66bfc9ecc461
+[TerminalSessionManager] Found 17 sessions
+[WebSocket] Client disconnected
+[WebSocket] Removing terminal listeners for session 8f868cc9-bcaa-43d8-9798-8193980a4d0b
+[WebSocket] Client disconnected
+[WebSocket] Removing terminal listeners for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f
+[WebSocket] Client disconnected
+[WebSocket] Removing terminal listeners for session a60b3a6f-9bfb-4342-beec-66bfc9ecc461
+[WebSocket] Client disconnected
+[WebSocket] Removing terminal listeners for session a60b3a6f-9bfb-4342-beec-66bfc9ecc461
+[WebSocket] Client disconnected
+[WebSocket] Client disconnected
+[WebSocket] Removing terminal listeners for session 4cf6f11a-95b0-471b-8987-5516bb3bc55f
+[WebSocket] Client connected
+[TerminalSessionManager] Found 17 sessions
+[WebSocket] Client connected
+[WebSocket] Terminal connection for session 88403567-cba6-433a-923d-cda28a8b8838
+[EnhancedTerminalManager] Resize not supported for shell session 88403567-cba6-433a-923d-cda28a8b8838
+[TerminalSessionManager] session.json saved for session 88403567-cba6-433a-923d-cda28a8b8838 with name: dte
+[WebSocket] Received terminal input for session 88403567-cba6-433a-923d-cda28a8b8838: {
+  text: "e",
+}
+[WebSocket] Calling terminalManager.sendInput...
+[EnhancedTerminalManager] sendInput called for session 88403567-cba6-433a-923d-cda28a8b8838: {
+  text: "e",
+}
+[EnhancedTerminalManager] Processed input data: "e"
+[EnhancedTerminalManager] Writing to shell stdin
+[EnhancedTerminalManager] Input sent successfully to session 88403567-cba6-433a-923d-cda28a8b8838
+[WebSocket] sendInput completed successfully
+[WebSocket] Received terminal input for session 88403567-cba6-433a-923d-cda28a8b8838: {
+  text: "c",
+}
+[WebSocket] Calling terminalManager.sendInput...
+[EnhancedTerminalManager] sendInput called for session 88403567-cba6-433a-923d-cda28a8b8838: {
+  text: "c",
+}
+[EnhancedTerminalManager] Processed input data: "c"
+[EnhancedTerminalManager] Writing to shell stdin
+[EnhancedTerminalManager] Input sent successfully to session 88403567-cba6-433a-923d-cda28a8b8838
+[WebSocket] sendInput completed successfully
+[WebSocket] Received terminal input for session 88403567-cba6-433a-923d-cda28a8b8838: {
+  text: "h",
+}
+[WebSocket] Calling terminalManager.sendInput...
+[EnhancedTerminalManager] sendInput called for session 88403567-cba6-433a-923d-cda28a8b8838: {
+  text: "h",
+}
+[EnhancedTerminalManager] Processed input data: "h"
+[EnhancedTerminalManager] Writing to shell stdin
+[EnhancedTerminalManager] Input sent successfully to session 88403567-cba6-433a-923d-cda28a8b8838
+[WebSocket] sendInput completed successfully
+[WebSocket] Received terminal input for session 88403567-cba6-433a-923d-cda28a8b8838: {
+  text: "o",
+}
+[WebSocket] Calling terminalManager.sendInput...
+[EnhancedTerminalManager] sendInput called for session 88403567-cba6-433a-923d-cda28a8b8838: {
+  text: "o",
+}
+[EnhancedTerminalManager] Processed input data: "o"
+[EnhancedTerminalManager] Writing to shell stdin
+[EnhancedTerminalManager] Input sent successfully to session 88403567-cba6-433a-923d-cda28a8b8838
+[WebSocket] sendInput completed successfully
+[WebSocket] Received terminal input for session 88403567-cba6-433a-923d-cda28a8b8838: {
+  text: " ",
+}
+[WebSocket] Calling terminalManager.sendInput...
+[EnhancedTerminalManager] sendInput called for session 88403567-cba6-433a-923d-cda28a8b8838: {
+  text: " ",
+}
+[EnhancedTerminalManager] Processed input data: " "
+[EnhancedTerminalManager] Writing to shell stdin
+[EnhancedTerminalManager] Input sent successfully to session 88403567-cba6-433a-923d-cda28a8b8838
+[WebSocket] sendInput completed successfully
+[WebSocket] Received terminal input for session 88403567-cba6-433a-923d-cda28a8b8838: {
+  text: "\"",
+}
+[WebSocket] Calling terminalManager.sendInput...
+[EnhancedTerminalManager] sendInput called for session 88403567-cba6-433a-923d-cda28a8b8838: {
+  text: "\"",
+}
+[EnhancedTerminalManager] Processed input data: "\""
+[EnhancedTerminalManager] Writing to shell stdin
+[EnhancedTerminalManager] Input sent successfully to session 88403567-cba6-433a-923d-cda28a8b8838
+[WebSocket] sendInput completed successfully
+[WebSocket] Received terminal input for session 88403567-cba6-433a-923d-cda28a8b8838: {
+  text: "e",
+}
+[WebSocket] Calling terminalManager.sendInput...
+[EnhancedTerminalManager] sendInput called for session 88403567-cba6-433a-923d-cda28a8b8838: {
+  text: "e",
+}
+[EnhancedTerminalManager] Processed input data: "e"
+[EnhancedTerminalManager] Writing to shell stdin
+[EnhancedTerminalManager] Input sent successfully to session 88403567-cba6-433a-923d-cda28a8b8838
+[WebSocket] sendInput completed successfully
+[WebSocket] Received terminal input for session 88403567-cba6-433a-923d-cda28a8b8838: {
+  text: "h",
+}
+[WebSocket] Calling terminalManager.sendInput...
+[EnhancedTerminalManager] sendInput called for session 88403567-cba6-433a-923d-cda28a8b8838: {
+  text: "h",
+}
+[EnhancedTerminalManager] Processed input data: "h"
+[EnhancedTerminalManager] Writing to shell stdin
+[EnhancedTerminalManager] Input sent successfully to session 88403567-cba6-433a-923d-cda28a8b8838
+[WebSocket] sendInput completed successfully
+[WebSocket] Received terminal input for session 88403567-cba6-433a-923d-cda28a8b8838: {
+  text: "l",
+}
+[WebSocket] Calling terminalManager.sendInput...
+[EnhancedTerminalManager] sendInput called for session 88403567-cba6-433a-923d-cda28a8b8838: {
+  text: "l",
+}
+[EnhancedTerminalManager] Processed input data: "l"
+[EnhancedTerminalManager] Writing to shell stdin
+[EnhancedTerminalManager] Input sent successfully to session 88403567-cba6-433a-923d-cda28a8b8838
+[WebSocket] sendInput completed successfully
+[WebSocket] Received terminal input for session 88403567-cba6-433a-923d-cda28a8b8838: {
+  text: "l",
+}
+[WebSocket] Calling terminalManager.sendInput...
+[EnhancedTerminalManager] sendInput called for session 88403567-cba6-433a-923d-cda28a8b8838: {
+  text: "l",
+}
+[EnhancedTerminalManager] Processed input data: "l"
+[EnhancedTerminalManager] Writing to shell stdin
+[EnhancedTerminalManager] Input sent successfully to session 88403567-cba6-433a-923d-cda28a8b8838
+[WebSocket] sendInput completed successfully
+[WebSocket] Received terminal input for session 88403567-cba6-433a-923d-cda28a8b8838: {
+  text: "o",
+}
+[WebSocket] Calling terminalManager.sendInput...
+[EnhancedTerminalManager] sendInput called for session 88403567-cba6-433a-923d-cda28a8b8838: {
+  text: "o",
+}
+[EnhancedTerminalManager] Processed input data: "o"
+[EnhancedTerminalManager] Writing to shell stdin
+[EnhancedTerminalManager] Input sent successfully to session 88403567-cba6-433a-923d-cda28a8b8838
+[WebSocket] sendInput completed successfully
+[WebSocket] Received terminal input for session 88403567-cba6-433a-923d-cda28a8b8838: {
+  text: "\"",
+}
+[WebSocket] Calling terminalManager.sendInput...
+[EnhancedTerminalManager] sendInput called for session 88403567-cba6-433a-923d-cda28a8b8838: {
+  text: "\"",
+}
+[EnhancedTerminalManager] Processed input data: "\""
+[EnhancedTerminalManager] Writing to shell stdin
+[EnhancedTerminalManager] Input sent successfully to session 88403567-cba6-433a-923d-cda28a8b8838
+[WebSocket] sendInput completed successfully
+[WebSocket] Received terminal input for session 88403567-cba6-433a-923d-cda28a8b8838: {
+  text: "\r",
+}
+[WebSocket] Calling terminalManager.sendInput...
+[EnhancedTerminalManager] sendInput called for session 88403567-cba6-433a-923d-cda28a8b8838: {
+  text: "\r",
+}
+[EnhancedTerminalManager] Processed input data: "\r"
+[EnhancedTerminalManager] Writing to shell stdin
+[EnhancedTerminalManager] Input sent successfully to session 88403567-cba6-433a-923d-cda28a8b8838
+[WebSocket] sendInput completed successfully
+[TerminalSessionManager] Found 17 sessions
+[TerminalSessionManager] Found 17 sessions
+[TerminalSessionManager] Found 17 sessions
+[TerminalSessionManager] Found 17 sessions
+[TerminalSessionManager] Found 17 sessions
+[TerminalSessionManager] Found 17 sessions
+[TerminalSessionManager] Found 17 sessions
+[TerminalSessionManager] Found 17 sessions
+[TerminalSessionManager] Found 17 sessions
+[TerminalSessionManager] Found 17 sessions
+[TerminalSessionManager] Found 17 sessions
+[WebSocket] Client connected
+[TerminalSessionManager] Found 17 sessions
+[TerminalSessionManager] Found 17 sessions
+[TerminalSessionManager] Found 17 sessions
+[TerminalSessionManager] Found 17 sessions
+[TerminalSessionManager] Found 17 sessions
+[TerminalSessionManager] Found 17 sessions
+[WebSocket] Client connected
+[WebSocket] Terminal connection for session 88403567-cba6-433a-923d-cda28a8b8838
+[EnhancedTerminalManager] Resize not supported for shell session 88403567-cba6-433a-923d-cda28a8b8838
+[TerminalSessionManager] session.json saved for session 88403567-cba6-433a-923d-cda28a8b8838 with name: dte
+[TerminalSessionManager] Stdin file created: /Users/mac/tools/Backlog.md/.backlog/terminal/6e30ebb9-1af9-4062-869d-f40462209d22/stdin
+[TerminalSessionManager] Session directory created for 6e30ebb9-1af9-4062-869d-f40462209d22
+[TerminalSessionManager] session.json saved for session 6e30ebb9-1af9-4062-869d-f40462209d22 with name: d
+[EnhancedTerminalManager] Attempting PTY creation for session 6e30ebb9-1af9-4062-869d-f40462209d22
+[EnhancedTerminalManager] Skipping PTY due to ENXIO issues, using enhanced shell for session 6e30ebb9-1af9-4062-869d-f40462209d22
+[EnhancedTerminalManager] Creating enhanced shell process for session 6e30ebb9-1af9-4062-869d-f40462209d22
+[TerminalSessionManager] session.json saved for session 6e30ebb9-1af9-4062-869d-f40462209d22 with name: d
+[EnhancedTerminalManager] Setting up shell handlers for session 6e30ebb9-1af9-4062-869d-f40462209d22
+[EnhancedTerminalManager] Created session 6e30ebb9-1af9-4062-869d-f40462209d22 successfully
+[WebSocket] Client disconnected
+[WebSocket] Removing terminal listeners for session 88403567-cba6-433a-923d-cda28a8b8838
+[WebSocket] Client connected
+[WebSocket] Terminal connection for session 6e30ebb9-1af9-4062-869d-f40462209d22
+[EnhancedTerminalManager] Resize not supported for shell session 6e30ebb9-1af9-4062-869d-f40462209d22
+[TerminalSessionManager] session.json saved for session 6e30ebb9-1af9-4062-869d-f40462209d22 with name: d
+[EnhancedTerminalManager] Shell stdout data received for session 6e30ebb9-1af9-4062-869d-f40462209d22: "✅ Claude Code Remote aliases loaded!\n💡 'ccr-examples' for usage examples\n"
+[EnhancedTerminalManager] Emitting shell output to session 6e30ebb9-1af9-4062-869d-f40462209d22: "✅ Claude Code Remote aliases loaded!\n💡 'ccr-examples' for usage examples\n"
+[WebSocket] Client connected
+[WebSocket] Terminal connection for session 88403567-cba6-433a-923d-cda28a8b8838
+[EnhancedTerminalManager] Shell stdout data received for session 6e30ebb9-1af9-4062-869d-f40462209d22: "✅ Claude Code Remote aliases loaded!\n💡 'ccr-examples' for usage examples\n"
+[EnhancedTerminalManager] Emitting shell output to session 6e30ebb9-1af9-4062-869d-f40462209d22: "✅ Claude Code Remote aliases loaded!\n💡 'ccr-examples' for usage examples\n"
+[EnhancedTerminalManager] Shell stdout data received for session 6e30ebb9-1af9-4062-869d-f40462209d22: "\u001b]633;D\u0007"
+[EnhancedTerminalManager] Emitting shell output to session 6e30ebb9-1af9-4062-869d-f40462209d22: "\u001b]633;D\u0007"
+[EnhancedTerminalManager] Shell stdout data received for session 6e30ebb9-1af9-4062-869d-f40462209d22: "\u001b]633;P;Cwd=/Users/mac/tools/Backlog.md\u0007"
+[EnhancedTerminalManager] Emitting shell output to session 6e30ebb9-1af9-4062-869d-f40462209d22: "\u001b]633;P;Cwd=/Users/mac/tools/Backlog.md\u0007"
+[EnhancedTerminalManager] Shell stdout data received for session 6e30ebb9-1af9-4062-869d-f40462209d22: "\u001b]633;E;stty echo icanon;\u0007\u001b]633;C\u0007"
+[EnhancedTerminalManager] Emitting shell output to session 6e30ebb9-1af9-4062-869d-f40462209d22: "\u001b]633;E;stty echo icanon;\u0007\u001b]633;C\u0007"
+[EnhancedTerminalManager] Shell stdout data received for session 6e30ebb9-1af9-4062-869d-f40462209d22: "\u001b]633;D;1\u0007"
+[EnhancedTerminalManager] Emitting shell output to session 6e30ebb9-1af9-4062-869d-f40462209d22: "\u001b]633;D;1\u0007"
+[EnhancedTerminalManager] Shell stdout data received for session 6e30ebb9-1af9-4062-869d-f40462209d22: "\u001b]633;P;Cwd=/Users/mac/tools/Backlog.md\u0007"
+[EnhancedTerminalManager] Emitting shell output to session 6e30ebb9-1af9-4062-869d-f40462209d22: "\u001b]633;P;Cwd=/Users/mac/tools/Backlog.md\u0007"
+[EnhancedTerminalManager] Shell stdout data received for session 6e30ebb9-1af9-4062-869d-f40462209d22: "\u001b]633;E;set -o emacs;\u0007\u001b]633;C\u0007"
+[EnhancedTerminalManager] Emitting shell output to session 6e30ebb9-1af9-4062-869d-f40462209d22: "\u001b]633;E;set -o emacs;\u0007\u001b]633;C\u0007"
+[EnhancedTerminalManager] Shell stdout data received for session 6e30ebb9-1af9-4062-869d-f40462209d22: "\u001b]633;D;0\u0007"
+[EnhancedTerminalManager] Emitting shell output to session 6e30ebb9-1af9-4062-869d-f40462209d22: "\u001b]633;D;0\u0007"
+[EnhancedTerminalManager] Shell stdout data received for session 6e30ebb9-1af9-4062-869d-f40462209d22: "\u001b]633;P;Cwd=/Users/mac/tools/Backlog.md\u0007"
+[EnhancedTerminalManager] Emitting shell output to session 6e30ebb9-1af9-4062-869d-f40462209d22: "\u001b]633;P;Cwd=/Users/mac/tools/Backlog.md\u0007"
+[EnhancedTerminalManager] Shell stdout data received for session 6e30ebb9-1af9-4062-869d-f40462209d22: "\u001b]633;E;set +o vi;\u0007\u001b]633;C\u0007"
+[EnhancedTerminalManager] Emitting shell output to session 6e30ebb9-1af9-4062-869d-f40462209d22: "\u001b]633;E;set +o vi;\u0007\u001b]633;C\u0007"
+[EnhancedTerminalManager] Shell stdout data received for session 6e30ebb9-1af9-4062-869d-f40462209d22: "\u001b]633;D;0\u0007"
+[EnhancedTerminalManager] Emitting shell output to session 6e30ebb9-1af9-4062-869d-f40462209d22: "\u001b]633;D;0\u0007"
+[EnhancedTerminalManager] Shell stdout data received for session 6e30ebb9-1af9-4062-869d-f40462209d22: "\u001b]633;P;Cwd=/Users/mac/tools/Backlog.md\u0007"
+[EnhancedTerminalManager] Emitting shell output to session 6e30ebb9-1af9-4062-869d-f40462209d22: "\u001b]633;P;Cwd=/Users/mac/tools/Backlog.md\u0007"
+[EnhancedTerminalManager] Shell stdout data received for session 6e30ebb9-1af9-4062-869d-f40462209d22: "\u001b]633;E;stty -raw echo;\u0007"
+[EnhancedTerminalManager] Emitting shell output to session 6e30ebb9-1af9-4062-869d-f40462209d22: "\u001b]633;E;stty -raw echo;\u0007"
+[EnhancedTerminalManager] Shell stdout data received for session 6e30ebb9-1af9-4062-869d-f40462209d22: "\u001b]633;C\u0007"
+[EnhancedTerminalManager] Emitting shell output to session 6e30ebb9-1af9-4062-869d-f40462209d22: "\u001b]633;C\u0007"
+[EnhancedTerminalManager] Shell stdout data received for session 6e30ebb9-1af9-4062-869d-f40462209d22: "\u001b]633;D;1\u0007"
+[EnhancedTerminalManager] Emitting shell output to session 6e30ebb9-1af9-4062-869d-f40462209d22: "\u001b]633;D;1\u0007"
+[EnhancedTerminalManager] Shell stdout data received for session 6e30ebb9-1af9-4062-869d-f40462209d22: "\u001b]633;P;Cwd=/Users/mac/tools/Backlog.md\u0007"
+[EnhancedTerminalManager] Emitting shell output to session 6e30ebb9-1af9-4062-869d-f40462209d22: "\u001b]633;P;Cwd=/Users/mac/tools/Backlog.md\u0007"
+[EnhancedTerminalManager] Shell stdout data received for session 6e30ebb9-1af9-4062-869d-f40462209d22: "\u001b]633;E;export PS1=\"$ \";\u0007\u001b]633;C\u0007"
+[EnhancedTerminalManager] Emitting shell output to session 6e30ebb9-1af9-4062-869d-f40462209d22: "\u001b]633;E;export PS1=\"$ \";\u0007\u001b]633;C\u0007"
+[EnhancedTerminalManager] Shell stdout data received for session 6e30ebb9-1af9-4062-869d-f40462209d22: "\u001b]633;D;0\u0007"
+[EnhancedTerminalManager] Emitting shell output to session 6e30ebb9-1af9-4062-869d-f40462209d22: "\u001b]633;D;0\u0007"
+[EnhancedTerminalManager] Shell stdout data received for session 6e30ebb9-1af9-4062-869d-f40462209d22: "\u001b]633;P;Cwd=/Users/mac/tools/Backlog.md\u0007"
+[EnhancedTerminalManager] Emitting shell output to session 6e30ebb9-1af9-4062-869d-f40462209d22: "\u001b]633;P;Cwd=/Users/mac/tools/Backlog.md\u0007"
+[EnhancedTerminalManager] Shell stdout data received for session 6e30ebb9-1af9-4062-869d-f40462209d22: "\u001b]633;E;clear;\u0007\u001b]633;C\u0007"
+[EnhancedTerminalManager] Emitting shell output to session 6e30ebb9-1af9-4062-869d-f40462209d22: "\u001b]633;E;clear;\u0007\u001b]633;C\u0007"
+[EnhancedTerminalManager] Shell stdout data received for session 6e30ebb9-1af9-4062-869d-f40462209d22: "\u001b[3J\u001b[H\u001b[2J"
+[EnhancedTerminalManager] Emitting shell output to session 6e30ebb9-1af9-4062-869d-f40462209d22: "\u001b[3J\u001b[H\u001b[2J"
+[EnhancedTerminalManager] Shell stdout data received for session 6e30ebb9-1af9-4062-869d-f40462209d22: "\u001b]633;D;0\u0007"
+[EnhancedTerminalManager] Emitting shell output to session 6e30ebb9-1af9-4062-869d-f40462209d22: "\u001b]633;D;0\u0007"
+[EnhancedTerminalManager] Shell stdout data received for session 6e30ebb9-1af9-4062-869d-f40462209d22: "\u001b]633;P;Cwd=/Users/mac/tools/Backlog.md\u0007"
+[EnhancedTerminalManager] Emitting shell output to session 6e30ebb9-1af9-4062-869d-f40462209d22: "\u001b]633;P;Cwd=/Users/mac/tools/Backlog.md\u0007"
+[TerminalSessionManager] Found 18 sessions
+[WebSocket] Received terminal input for session 6e30ebb9-1af9-4062-869d-f40462209d22: {
+  text: "t",
+}
+[WebSocket] Calling terminalManager.sendInput...
+[EnhancedTerminalManager] sendInput called for session 6e30ebb9-1af9-4062-869d-f40462209d22: {
+  text: "t",
+}
+[EnhancedTerminalManager] Processed input data: "t"
+[EnhancedTerminalManager] Writing to shell stdin
+[EnhancedTerminalManager] Input sent successfully to session 6e30ebb9-1af9-4062-869d-f40462209d22
+[WebSocket] sendInput completed successfully
+[WebSocket] Received terminal input for session 6e30ebb9-1af9-4062-869d-f40462209d22: {
+  text: "e",
+}
+[WebSocket] Calling terminalManager.sendInput...
+[EnhancedTerminalManager] sendInput called for session 6e30ebb9-1af9-4062-869d-f40462209d22: {
+  text: "e",
+}
+[EnhancedTerminalManager] Processed input data: "e"
+[EnhancedTerminalManager] Writing to shell stdin
+[EnhancedTerminalManager] Input sent successfully to session 6e30ebb9-1af9-4062-869d-f40462209d22
+[WebSocket] sendInput completed successfully
+[WebSocket] Received terminal input for session 6e30ebb9-1af9-4062-869d-f40462209d22: {
+  text: "",
+}
+[WebSocket] Calling terminalManager.sendInput...
+[EnhancedTerminalManager] sendInput called for session 6e30ebb9-1af9-4062-869d-f40462209d22: {
+  text: "",
+}
+[EnhancedTerminalManager] Processed input data: ""
+[EnhancedTerminalManager] Writing to shell stdin
+[EnhancedTerminalManager] Input sent successfully to session 6e30ebb9-1af9-4062-869d-f40462209d22
+[WebSocket] sendInput completed successfully
+[WebSocket] Received terminal input for session 6e30ebb9-1af9-4062-869d-f40462209d22: {
+  text: "",
+}
+[WebSocket] Calling terminalManager.sendInput...
+[EnhancedTerminalManager] sendInput called for session 6e30ebb9-1af9-4062-869d-f40462209d22: {
+  text: "",
+}
+[EnhancedTerminalManager] Processed input data: ""
+[EnhancedTerminalManager] Writing to shell stdin
+[EnhancedTerminalManager] Input sent successfully to session 6e30ebb9-1af9-4062-869d-f40462209d22
+[WebSocket] sendInput completed successfully
+[WebSocket] Received terminal input for session 6e30ebb9-1af9-4062-869d-f40462209d22: {
+  text: "",
+}
+[WebSocket] Calling terminalManager.sendInput...
+[EnhancedTerminalManager] sendInput called for session 6e30ebb9-1af9-4062-869d-f40462209d22: {
+  text: "",
+}
+[EnhancedTerminalManager] Processed input data: ""
+[EnhancedTerminalManager] Writing to shell stdin
+[EnhancedTerminalManager] Input sent successfully to session 6e30ebb9-1af9-4062-869d-f40462209d22
+[WebSocket] sendInput completed successfully
+[WebSocket] Received terminal input for session 6e30ebb9-1af9-4062-869d-f40462209d22: {
+  text: "",
+}
+[WebSocket] Calling terminalManager.sendInput...
+[EnhancedTerminalManager] sendInput called for session 6e30ebb9-1af9-4062-869d-f40462209d22: {
+  text: "",
+}
+[EnhancedTerminalManager] Processed input data: ""
+[EnhancedTerminalManager] Writing to shell stdin
+[EnhancedTerminalManager] Input sent successfully to session 6e30ebb9-1af9-4062-869d-f40462209d22
+[WebSocket] sendInput completed successfully
+[WebSocket] Received terminal input for session 6e30ebb9-1af9-4062-869d-f40462209d22: {
+  text: "",
+}
+[WebSocket] Calling terminalManager.sendInput...
+[EnhancedTerminalManager] sendInput called for session 6e30ebb9-1af9-4062-869d-f40462209d22: {
+  text: "",
+}
+[EnhancedTerminalManager] Processed input data: ""
+[EnhancedTerminalManager] Writing to shell stdin
+[EnhancedTerminalManager] Input sent successfully to session 6e30ebb9-1af9-4062-869d-f40462209d22
+[WebSocket] sendInput completed successfully
+[WebSocket] Received terminal input for session 6e30ebb9-1af9-4062-869d-f40462209d22: {
+  text: "",
+}
+[WebSocket] Calling terminalManager.sendInput...
+[EnhancedTerminalManager] sendInput called for session 6e30ebb9-1af9-4062-869d-f40462209d22: {
+  text: "",
+}
+[EnhancedTerminalManager] Processed input data: ""
+[EnhancedTerminalManager] Writing to shell stdin
+[EnhancedTerminalManager] Input sent successfully to session 6e30ebb9-1af9-4062-869d-f40462209d22
+[WebSocket] sendInput completed successfully
+[WebSocket] Received terminal input for session 6e30ebb9-1af9-4062-869d-f40462209d22: {
+  text: "",
+}
+[WebSocket] Calling terminalManager.sendInput...
+[EnhancedTerminalManager] sendInput called for session 6e30ebb9-1af9-4062-869d-f40462209d22: {
+  text: "",
+}
+[EnhancedTerminalManager] Processed input data: ""
+[EnhancedTerminalManager] Writing to shell stdin
+[EnhancedTerminalManager] Input sent successfully to session 6e30ebb9-1af9-4062-869d-f40462209d22
+[WebSocket] sendInput completed successfully
+[WebSocket] Received terminal input for session 6e30ebb9-1af9-4062-869d-f40462209d22: {
+  text: "s",
+}
+[WebSocket] Calling terminalManager.sendInput...
+[EnhancedTerminalManager] sendInput called for session 6e30ebb9-1af9-4062-869d-f40462209d22: {
+  text: "s",
+}
+[EnhancedTerminalManager] Processed input data: "s"
+[EnhancedTerminalManager] Writing to shell stdin
+[EnhancedTerminalManager] Input sent successfully to session 6e30ebb9-1af9-4062-869d-f40462209d22
+[WebSocket] sendInput completed successfully
+[WebSocket] Received terminal input for session 6e30ebb9-1af9-4062-869d-f40462209d22: {
+  text: "t",
+}
+[WebSocket] Calling terminalManager.sendInput...
+[EnhancedTerminalManager] sendInput called for session 6e30ebb9-1af9-4062-869d-f40462209d22: {
+  text: "t",
+}
+[EnhancedTerminalManager] Processed input data: "t"
+[EnhancedTerminalManager] Writing to shell stdin
+[EnhancedTerminalManager] Input sent successfully to session 6e30ebb9-1af9-4062-869d-f40462209d22
+[WebSocket] sendInput completed successfully
+[WebSocket] Received terminal input for session 6e30ebb9-1af9-4062-869d-f40462209d22: {
+  text: " ",
+}
+[WebSocket] Calling terminalManager.sendInput...
+[EnhancedTerminalManager] sendInput called for session 6e30ebb9-1af9-4062-869d-f40462209d22: {
+  text: " ",
+}
+[EnhancedTerminalManager] Processed input data: " "
+[EnhancedTerminalManager] Writing to shell stdin
+[EnhancedTerminalManager] Input sent successfully to session 6e30ebb9-1af9-4062-869d-f40462209d22
+[WebSocket] sendInput completed successfully
+[WebSocket] Received terminal input for session 6e30ebb9-1af9-4062-869d-f40462209d22: {
+  text: "\"",
+}
+[WebSocket] Calling terminalManager.sendInput...
+[EnhancedTerminalManager] sendInput called for session 6e30ebb9-1af9-4062-869d-f40462209d22: {
+  text: "\"",
+}
+[EnhancedTerminalManager] Processed input data: "\""
+[EnhancedTerminalManager] Writing to shell stdin
+[EnhancedTerminalManager] Input sent successfully to session 6e30ebb9-1af9-4062-869d-f40462209d22
+[WebSocket] sendInput completed successfully
+[WebSocket] Received terminal input for session 6e30ebb9-1af9-4062-869d-f40462209d22: {
+  text: "h",
+}
+[WebSocket] Calling terminalManager.sendInput...
+[EnhancedTerminalManager] sendInput called for session 6e30ebb9-1af9-4062-869d-f40462209d22: {
+  text: "h",
+}
+[EnhancedTerminalManager] Processed input data: "h"
+[EnhancedTerminalManager] Writing to shell stdin
+[EnhancedTerminalManager] Input sent successfully to session 6e30ebb9-1af9-4062-869d-f40462209d22
+[WebSocket] sendInput completed successfully
+[WebSocket] Received terminal input for session 6e30ebb9-1af9-4062-869d-f40462209d22: {
+  text: "e",
+}
+[WebSocket] Calling terminalManager.sendInput...
+[EnhancedTerminalManager] sendInput called for session 6e30ebb9-1af9-4062-869d-f40462209d22: {
+  text: "e",
+}
+[EnhancedTerminalManager] Processed input data: "e"
+[EnhancedTerminalManager] Writing to shell stdin
+[EnhancedTerminalManager] Input sent successfully to session 6e30ebb9-1af9-4062-869d-f40462209d22
+[WebSocket] sendInput completed successfully
+[WebSocket] Received terminal input for session 6e30ebb9-1af9-4062-869d-f40462209d22: {
+  text: "l",
+}
+[WebSocket] Calling terminalManager.sendInput...
+[EnhancedTerminalManager] sendInput called for session 6e30ebb9-1af9-4062-869d-f40462209d22: {
+  text: "l",
+}
+[EnhancedTerminalManager] Processed input data: "l"
+[EnhancedTerminalManager] Writing to shell stdin
+[EnhancedTerminalManager] Input sent successfully to session 6e30ebb9-1af9-4062-869d-f40462209d22
+[WebSocket] sendInput completed successfully
+[WebSocket] Received terminal input for session 6e30ebb9-1af9-4062-869d-f40462209d22: {
+  text: "l",
+}
+[WebSocket] Calling terminalManager.sendInput...
+[EnhancedTerminalManager] sendInput called for session 6e30ebb9-1af9-4062-869d-f40462209d22: {
+  text: "l",
+}
+[EnhancedTerminalManager] Processed input data: "l"
+[EnhancedTerminalManager] Writing to shell stdin
+[EnhancedTerminalManager] Input sent successfully to session 6e30ebb9-1af9-4062-869d-f40462209d22
+[WebSocket] sendInput completed successfully
+[WebSocket] Received terminal input for session 6e30ebb9-1af9-4062-869d-f40462209d22: {
+  text: "o",
+}
+[WebSocket] Calling terminalManager.sendInput...
+[EnhancedTerminalManager] sendInput called for session 6e30ebb9-1af9-4062-869d-f40462209d22: {
+  text: "o",
+}
+[EnhancedTerminalManager] Processed input data: "o"
+[EnhancedTerminalManager] Writing to shell stdin
+[EnhancedTerminalManager] Input sent successfully to session 6e30ebb9-1af9-4062-869d-f40462209d22
+[WebSocket] sendInput completed successfully
+[WebSocket] Received terminal input for session 6e30ebb9-1af9-4062-869d-f40462209d22: {
+  text: "\"",
+}
+[WebSocket] Calling terminalManager.sendInput...
+[EnhancedTerminalManager] sendInput called for session 6e30ebb9-1af9-4062-869d-f40462209d22: {
+  text: "\"",
+}
+[EnhancedTerminalManager] Processed input data: "\""
+[EnhancedTerminalManager] Writing to shell stdin
+[EnhancedTerminalManager] Input sent successfully to session 6e30ebb9-1af9-4062-869d-f40462209d22
+[WebSocket] sendInput completed successfully
+[WebSocket] Received terminal input for session 6e30ebb9-1af9-4062-869d-f40462209d22: {
+  text: "\r",
+}
+[WebSocket] Calling terminalManager.sendInput...
+[EnhancedTerminalManager] sendInput called for session 6e30ebb9-1af9-4062-869d-f40462209d22: {
+  text: "\r",
+}
+[EnhancedTerminalManager] Processed input data: "\r"
+[EnhancedTerminalManager] Writing to shell stdin
+[EnhancedTerminalManager] Input sent successfully to session 6e30ebb9-1af9-4062-869d-f40462209d22
+[WebSocket] sendInput completed successfully
+[TerminalSessionManager] Found 18 sessions
+[TerminalSessionManager] Found 18 sessions

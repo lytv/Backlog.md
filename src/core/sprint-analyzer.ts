@@ -136,20 +136,20 @@ export class SprintAnalyzer {
 					velocity,
 				},
 				timeline: {
-					startDate: metadata.start_date || "",
-					endDate: metadata.end_date || "",
+					startDate: metadata.start_date || metadata.start_date_planned || this.generateDefaultStartDate(directoryName),
+					endDate: metadata.end_date || metadata.end_date_planned || this.generateDefaultEndDate(directoryName),
 					actualStartDate: metadata.actual_start_date,
 					actualEndDate: metadata.actual_end_date,
-					durationWeeks: metadata.duration_weeks || 0,
+					durationWeeks: metadata.duration_weeks || metadata.estimated_duration_weeks || 2,
 				},
 				team: {
-					size: metadata.team_size || 0,
-					allocation: metadata.team_allocation || [],
+					size: metadata.team_size || metadata.team_members?.length || 1,
+					allocation: metadata.team_allocation || metadata.team_members || [],
 				},
 				metadata: {
-					goal: metadata.sprint_goal || "",
-					keyDeliverables: metadata.key_deliverables || [],
-					successCriteria: metadata.success_criteria || [],
+					goal: metadata.sprint_goal || metadata.goal || "",
+					keyDeliverables: metadata.key_deliverables || metadata.deliverables || [],
+					successCriteria: metadata.success_criteria || metadata.acceptance_criteria || [],
 					dependencies: metadata.dependencies || [],
 					risks: metadata.risks || [],
 				},
@@ -402,5 +402,29 @@ export class SprintAnalyzer {
 			return parts.slice(2).join(" ").replace(/_/g, " ");
 		}
 		return directoryName.replace(/_/g, " ");
+	}
+
+	/**
+	 * Generate default start date based on sprint sequence
+	 */
+	private generateDefaultStartDate(sprintId: string): string {
+		const sprintMatch = sprintId.match(/S(\d+)_/);
+		const sprintNumber = sprintMatch ? parseInt(sprintMatch[1], 10) : 1;
+		
+		// Assume project started 2025-01-01, each sprint is 2 weeks apart
+		const projectStartDate = new Date("2025-01-01");
+		const sprintStartDate = new Date(projectStartDate.getTime() + (sprintNumber - 1) * 14 * 24 * 60 * 60 * 1000);
+		
+		return sprintStartDate.toISOString().split("T")[0]!;
+	}
+
+	/**
+	 * Generate default end date based on sprint sequence (2 weeks after start)
+	 */
+	private generateDefaultEndDate(sprintId: string): string {
+		const startDate = new Date(this.generateDefaultStartDate(sprintId));
+		const endDate = new Date(startDate.getTime() + 14 * 24 * 60 * 60 * 1000); // 2 weeks
+		
+		return endDate.toISOString().split("T")[0]!;
 	}
 }

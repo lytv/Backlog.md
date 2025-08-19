@@ -7,16 +7,18 @@ import { v4 as uuidv4 } from "uuid";
 // Import node-pty dynamically to handle different environments
 let pty: any;
 try {
-	// Temporarily disable node-pty to avoid ENXIO errors
-	// TODO: Re-enable once the PTY issue is resolved
-	if (process.env.ENABLE_PTY === "true") {
+	// Enable PTY by default, disable only if explicitly set to false
+	if (process.env.ENABLE_PTY !== "false") {
 		pty = await import("node-pty");
+		console.log("[TerminalManager] PTY functionality enabled");
 	} else {
-		console.warn("[TerminalManager] PTY functionality disabled to prevent ENXIO errors");
+		console.warn("[TerminalManager] PTY functionality explicitly disabled");
 		pty = null;
 	}
 } catch (error) {
-	console.warn("[TerminalManager] node-pty not available, terminal functionality will be limited");
+	console.error("[TerminalManager] node-pty import failed:", error);
+	console.warn("[TerminalManager] Falling back to persistent shell mode");
+	pty = null;
 }
 
 import type { CreateTerminalRequest, TerminalInput, TerminalMessage, TerminalSession } from "../../types/terminal.ts";
@@ -126,8 +128,8 @@ export class TerminalManager extends EventEmitter {
 		// Set defaults
 		const workingDir = request.workingDir ? resolve(this.projectPath, request.workingDir) : this.projectPath;
 
-		// Use simpler shell command to avoid PTY initialization issues
-		const command = request.command || (process.platform === "win32" ? ["cmd.exe"] : ["/bin/sh"]);
+		// Use proper interactive shell with login to load user profile and aliases
+		const command = request.command || (process.platform === "win32" ? ["cmd.exe"] : ["/bin/zsh", "-l", "-i"]);
 		const name = request.name || `Terminal ${new Date().toLocaleTimeString()}`;
 		const cols = request.cols || 80;
 		const rows = request.rows || 24;

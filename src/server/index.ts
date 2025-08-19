@@ -10,12 +10,12 @@ import { getVersion } from "../utils/version.ts";
 // @ts-ignore
 import favicon from "../web/favicon.png" with { type: "file" };
 import indexHtml from "../web/index.html";
-import { TerminalManager } from "./terminal/terminal-manager.ts";
+import { EnhancedTerminalManager } from "./terminal/enhanced-terminal-manager.ts";
 
 export class BacklogServer {
 	private core: Core;
 	private worktreeRepo: WorktreeRepository;
-	private terminalManager: TerminalManager;
+	private terminalManager: EnhancedTerminalManager;
 	private server: Server | null = null;
 	private projectName = "Untitled Project";
 	private runningCommands = new Set<string>();
@@ -29,7 +29,7 @@ export class BacklogServer {
 	constructor(projectPath: string) {
 		this.core = new Core(projectPath);
 		this.worktreeRepo = new WorktreeRepository(projectPath);
-		this.terminalManager = new TerminalManager(projectPath);
+		this.terminalManager = new EnhancedTerminalManager(projectPath);
 
 		// Start periodic cleanup of old terminal sessions
 		this.terminalManager.startPeriodicCleanup(6, 24); // Every 6 hours, delete sessions older than 24 hours
@@ -206,6 +206,9 @@ export class BacklogServer {
 						GET: async () => await this.handleListTerminals(),
 						POST: async (req) => await this.handleCreateTerminal(req),
 					},
+					"/api/terminals/cleanup": {
+						POST: async () => await this.handleCleanupTerminals(),
+					},
 					"/api/terminals/:id": {
 						GET: async (req) => await this.handleGetTerminal(req.params.id),
 						DELETE: async (req) => await this.handleKillTerminal(req.params.id),
@@ -259,15 +262,20 @@ export class BacklogServer {
 							} else if (data.type === "terminal_input" && data.sessionId && data.input) {
 								// Handle terminal input via WebSocket
 								console.log(`[WebSocket] Received terminal input for session ${data.sessionId}:`, data.input);
-								this.terminalManager.sendInput(data.sessionId, data.input).catch((error) => {
-									console.error("[WebSocket] Error sending terminal input:", error);
-									ws.send(
-										JSON.stringify({
-											type: "error",
-											message: error.message,
-										}),
-									);
-								});
+								console.log(`[WebSocket] Calling terminalManager.sendInput...`);
+								this.terminalManager.sendInput(data.sessionId, data.input)
+									.then(() => {
+										console.log(`[WebSocket] sendInput completed successfully`);
+									})
+									.catch((error) => {
+										console.error("[WebSocket] Error sending terminal input:", error);
+										ws.send(
+											JSON.stringify({
+												type: "error",
+												message: error instanceof Error ? error.message : "Unknown error",
+											}),
+										);
+									});
 							} else if (data.type === "terminal_resize" && data.sessionId && data.cols && data.rows) {
 								// Handle terminal resize via WebSocket
 								this.terminalManager.resizeSession(data.sessionId, data.cols, data.rows).catch((error) => {
@@ -1917,6 +1925,20 @@ export class BacklogServer {
 		} catch (error) {
 			console.error("Error getting terminal output:", error);
 			return Response.json({ error: "Failed to get terminal output" }, { status: 500 });
+		}
+	}
+
+	private async handleCleanupTerminals(): Promise<Response> {
+		try {
+			const result = await this.terminalManager.cleanupAllOldSessions();
+			return Response.json({ 
+				message: `Cleaned up ${result.cleaned} old sessions out of ${result.total} total sessions`,
+				cleaned: result.cleaned,
+				total: result.total
+			});
+		} catch (error) {
+			console.error("Error cleaning up terminals:", error);
+			return Response.json({ error: "Failed to clean up terminals" }, { status: 500 });
 		}
 	}
 }

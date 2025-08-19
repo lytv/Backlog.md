@@ -1,0 +1,13 @@
+{
+  "id": "772003d1-ac23-45a5-9e8f-432ce350c4b5",
+  "name": "n",
+  "command": [
+    "/bin/zsh",
+    "-l"
+  ],
+  "workingDir": "/Users/mac/tools/Backlog.md",
+  "cols": 80,
+  "rows": 24,
+  "status": "exited",
+  "startedAt": "2025-08-19T07:04:58.450Z"
+}

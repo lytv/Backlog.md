@@ -48,17 +48,10 @@ const SprintTimeline: React.FC<SprintTimelineProps> = ({ sprints, milestones, on
 		return match ? parseInt(match[1], 10) : 999;
 	};
 
-	// Get filtered sprints with tasks
-	const filteredSprints = sprints
-		.filter(s => 
-			// Include if has active status OR has tasks (totalTasks > 0)
-			s.status === 'active' || 
-			s.status === 'overdue' ||
-			s.status === 'completed' ||
-			s.progress.totalTasks > 0
-		);
+	// Load ALL sprints that have directories - no filtering by status or tasks
+	const filteredSprints = sprints; // Show all sprints with directories
 
-	// Group filtered sprints by milestone
+	// Group all sprints by milestone
 	const groupedSprintsByMilestone = filteredSprints.reduce((acc, sprint) => {
 		const milestone = sprint.milestone;
 		if (!acc[milestone]) {

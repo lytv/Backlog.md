@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "xterm/css/xterm.css";
 @source not inline("{rounded-full}");
 
 @custom-variant dark (&:where(.dark, .dark *));
@@ -169,5 +170,46 @@
     white-space: pre-wrap !important;
     word-break: break-word !important;
     overflow-wrap: break-word !important;
+  }
+
+  /* Enhanced Terminal Styles */
+  .terminal-container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .terminal-container .xterm {
+    height: 100% !important;
+    padding: 8px;
+  }
+
+  .terminal-container .xterm-viewport {
+    overflow-y: auto !important;
+  }
+
+  .terminal-container .xterm-screen {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  /* Improve terminal scrolling */
+  .terminal-container .xterm .xterm-viewport {
+    background-color: transparent !important;
+  }
+
+  /* Better terminal focus indication */
+  .terminal-container .xterm.focus .xterm-cursor-layer .xterm-cursor {
+    background-color: #00ff00 !important;
+  }
+
+  /* Terminal selection styling */
+  .terminal-container .xterm .xterm-selection div {
+    background-color: rgba(255, 255, 255, 0.3) !important;
+  }
+
+  /* Dark mode terminal adjustments */
+  .dark .terminal-container .xterm {
+    background-color: #1e1e1e !important;
   }
 }

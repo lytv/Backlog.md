@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import TerminalSidebar from './TerminalSidebar';
 import TerminalSession from './TerminalSession';
+import EnhancedTerminalSession from './EnhancedTerminalSession';
 import TerminalCreateModal from './TerminalCreateModal';
 import { type Task } from '../../types';
 import type { TerminalSession as TerminalSessionType } from '../../types/terminal';
@@ -243,7 +244,7 @@ const TerminalPage: React.FC<TerminalPageProps> = ({ tasks }) => {
 
 				{/* Terminal Session */}
 				{activeSession ? (
-					<TerminalSession
+					<EnhancedTerminalSession
 						session={activeSession}
 						onKill={() => handleKillSession(activeSession.id)}
 						onSplit={handleSplitSession}
