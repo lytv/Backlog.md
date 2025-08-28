@@ -5,6 +5,7 @@ import { apiClient } from '../lib/api';
 interface WorktreeButtonProps {
   task: Task;
   onWorktreeCreated?: (worktree: Worktree) => void;
+  onWorktreeDeleted?: (worktreeId: string) => void;
   className?: string;
   size?: 'sm' | 'md' | 'lg';
 }
@@ -12,12 +13,14 @@ interface WorktreeButtonProps {
 const WorktreeButton: React.FC<WorktreeButtonProps> = ({ 
   task, 
   onWorktreeCreated, 
+  onWorktreeDeleted,
   className = '',
   size = 'sm'
 }) => {
   const [worktrees, setWorktrees] = useState<Worktree[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Load worktrees linked to this task
@@ -113,6 +116,52 @@ const WorktreeButton: React.FC<WorktreeButtonProps> = ({
     }
   };
 
+  const handleDeleteWorktree = async (e: React.MouseEvent, worktree: Worktree) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Confirm deletion
+    if (!confirm(`Are you sure you want to delete worktree "${worktree.name}"? This action cannot be undone.`)) {
+      return;
+    }
+    
+    try {
+      setIsDeleting(true);
+      setError(null);
+      
+      await apiClient.deleteWorktree(worktree.id, false); // Don't force by default
+      
+      // Update local state to remove the deleted worktree
+      setWorktrees(prev => prev.filter(wt => wt.id !== worktree.id));
+      
+      // Notify parent component
+      onWorktreeDeleted?.(worktree.id);
+      
+      // Clear any previous errors on success
+      setError(null);
+    } catch (error: any) {
+      console.error('Failed to delete worktree:', error);
+      
+      // Extract meaningful error message
+      let errorMessage = 'Failed to delete worktree';
+      if (error.message) {
+        if (error.message.includes('uncommitted changes')) {
+          errorMessage = 'Worktree has uncommitted changes. Save or discard changes first.';
+        } else if (error.message.includes('permission denied')) {
+          errorMessage = 'Permission denied - check file system permissions';
+        } else if (error.message.includes('not found')) {
+          errorMessage = 'Worktree not found or already deleted';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
+      setError(errorMessage);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   const getCurrentBranch = async (): Promise<string> => {
     try {
       // Try to get current branch from git
@@ -177,19 +226,48 @@ const WorktreeButton: React.FC<WorktreeButtonProps> = ({
   }
 
   if (hasActiveWorktrees) {
+    const firstWorktree = activeWorktrees[0];
+    
     return (
-      <div className={`inline-flex items-center ${className}`}>
-        {activeWorktrees.length === 1 ? (
-          <button
-            onClick={(e) => handleOpenWorktree(e, activeWorktrees[0])}
-            className={`inline-flex items-center ${getSizeClasses()} bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors duration-200 cursor-pointer`}
-            title={`Open worktree: ${activeWorktrees[0].name}`}
-          >
-            <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-            </svg>
-            Open Worktree
-          </button>
+      <div className={`inline-flex items-center gap-1 ${className}`}>
+        {activeWorktrees.length === 1 && firstWorktree ? (
+          <>
+            <button
+              onClick={(e) => handleOpenWorktree(e, firstWorktree)}
+              disabled={isDeleting}
+              className={`inline-flex items-center ${getSizeClasses()} ${
+                isDeleting
+                  ? 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+                  : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-900/50 cursor-pointer'
+              } rounded transition-colors duration-200`}
+              title={`Open worktree: ${firstWorktree.name}`}
+            >
+              <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+              Open Worktree
+            </button>
+            <button
+              onClick={(e) => handleDeleteWorktree(e, firstWorktree)}
+              disabled={isDeleting}
+              className={`inline-flex items-center ${getSizeClasses()} ${
+                isDeleting
+                  ? 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+                  : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-900/50 cursor-pointer'
+              } rounded transition-colors duration-200`}
+              title={`Delete worktree: ${firstWorktree.name}`}
+            >
+              {isDeleting ? (
+                <svg className="w-3 h-3 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              ) : (
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              )}
+            </button>
+          </>
         ) : (
           <div className="relative">
             <button

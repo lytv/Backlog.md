@@ -144,7 +144,14 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onDragStart, onDragEn
       
       {/* Worktree Button */}
       <div className="mt-2 mb-2">
-        <WorktreeButton task={task} size="sm" />
+        <WorktreeButton 
+          task={task} 
+          size="sm" 
+          onWorktreeDeleted={(worktreeId) => {
+            // Optionally refresh the task or show a notification
+            console.log(`Worktree ${worktreeId} deleted for task ${task.id}`);
+          }}
+        />
       </div>
       
       <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mt-3 pt-2 border-t border-gray-100 dark:border-gray-600 transition-colors duration-200">

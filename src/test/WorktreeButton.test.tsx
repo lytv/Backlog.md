@@ -132,7 +132,105 @@ describe("WorktreeButton", () => {
     
     await waitFor(() => {
       expect(screen.getByText("Open Worktree")).toBeInTheDocument();
+      expect(screen.getByTitle("Delete worktree: test-worktree")).toBeInTheDocument();
     });
+  });
+
+  it("should handle delete worktree click with confirmation", async () => {
+    const mockWorktree: Worktree = {
+      id: "wt-test-123",
+      name: "test-worktree",
+      path: "/tmp/test-worktree",
+      branch: "main",
+      baseBranch: "main",
+      taskIds: ["task-1"],
+      status: {
+        isClean: true,
+        modifiedFiles: 0,
+        stagedFiles: 0,
+        untrackedFiles: 0,
+        aheadCount: 0,
+        behindCount: 0,
+        hasConflicts: false,
+        lastStatusCheck: "2024-01-01T00:00:00.000Z"
+      },
+      createdDate: "2024-01-01T00:00:00.000Z",
+      isActive: true,
+      metadata: { tags: [], autoCleanup: false }
+    };
+
+    const onWorktreeDeleted = mock();
+    
+    // Mock API to return existing worktree
+    apiClient.fetchWorktrees = mock(() => Promise.resolve([mockWorktree]));
+    apiClient.deleteWorktree = mock(() => Promise.resolve({ success: true }));
+    
+    // Mock window.confirm
+    const originalConfirm = window.confirm;
+    window.confirm = mock(() => true);
+
+    render(<WorktreeButton task={mockTask} onWorktreeDeleted={onWorktreeDeleted} />);
+    
+    await waitFor(() => {
+      const deleteButton = screen.getByTitle("Delete worktree: test-worktree");
+      fireEvent.click(deleteButton);
+    });
+
+    await waitFor(() => {
+      expect(apiClient.deleteWorktree).toHaveBeenCalledWith("wt-test-123", false);
+      expect(onWorktreeDeleted).toHaveBeenCalledWith("wt-test-123");
+    });
+    
+    // Restore original confirm
+    window.confirm = originalConfirm;
+  });
+
+  it("should not delete worktree when user cancels confirmation", async () => {
+    const mockWorktree: Worktree = {
+      id: "wt-test-123",
+      name: "test-worktree",
+      path: "/tmp/test-worktree",
+      branch: "main",
+      baseBranch: "main",
+      taskIds: ["task-1"],
+      status: {
+        isClean: true,
+        modifiedFiles: 0,
+        stagedFiles: 0,
+        untrackedFiles: 0,
+        aheadCount: 0,
+        behindCount: 0,
+        hasConflicts: false,
+        lastStatusCheck: "2024-01-01T00:00:00.000Z"
+      },
+      createdDate: "2024-01-01T00:00:00.000Z",
+      isActive: true,
+      metadata: { tags: [], autoCleanup: false }
+    };
+
+    const onWorktreeDeleted = mock();
+    
+    // Mock API to return existing worktree
+    apiClient.fetchWorktrees = mock(() => Promise.resolve([mockWorktree]));
+    apiClient.deleteWorktree = mock(() => Promise.resolve({ success: true }));
+    
+    // Mock window.confirm to return false (user cancels)
+    const originalConfirm = window.confirm;
+    window.confirm = mock(() => false);
+
+    render(<WorktreeButton task={mockTask} onWorktreeDeleted={onWorktreeDeleted} />);
+    
+    await waitFor(() => {
+      const deleteButton = screen.getByTitle("Delete worktree: test-worktree");
+      fireEvent.click(deleteButton);
+    });
+
+    // Should not call delete API when user cancels
+    expect(apiClient.deleteWorktree).not.toHaveBeenCalled();
+    expect(onWorktreeDeleted).not.toHaveBeenCalled();
+    
+    // Restore original confirm
+    window.confirm = originalConfirm;
   });
 
   it("should show multiple worktrees count when multiple active worktrees exist", async () => {

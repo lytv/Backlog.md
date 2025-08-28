@@ -61,6 +61,7 @@ export class BacklogServer {
 					"/decisions/*": indexHtml,
 					"/statistics": indexHtml,
 					"/progress": indexHtml,
+					"/worktrees": indexHtml,
 					"/settings": indexHtml,
 					"/terminal": indexHtml,
 
@@ -410,7 +411,12 @@ export class BacklogServer {
 			});
 		}
 
-		// For all other routes, return 404 since routes should handle all valid paths
+		// SPA fallback: serve index.html for all non-API routes to support client-side routing
+		if (!pathname.startsWith("/api/")) {
+			return indexHtml;
+		}
+
+		// For API routes that don't match, return 404
 		return new Response("Not Found", { status: 404 });
 	}
 
