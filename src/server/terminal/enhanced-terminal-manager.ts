@@ -1,7 +1,7 @@
+import { spawn } from "node:child_process";
 import { EventEmitter } from "node:events";
 import { appendFile, readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
-import { spawn } from "node:child_process";
 import { v4 as uuidv4 } from "uuid";
 
 // Import node-pty with proper error handling
@@ -37,7 +37,7 @@ export class EnhancedTerminalManager extends EventEmitter {
 		this.projectPath = projectPath;
 		this.sessionManager = new TerminalSessionManager(projectPath);
 		console.log(`[EnhancedTerminalManager] Initialized for project: ${projectPath}`);
-		
+
 		// Load existing sessions on startup
 		this.loadExistingSessions();
 	}
@@ -47,11 +47,13 @@ export class EnhancedTerminalManager extends EventEmitter {
 	 */
 	private cleanTerminalOutput(output: string): string {
 		// Only remove very specific problematic sequences
-		return output
-			// Remove bracketed paste mode enable/disable
-			.replace(/\x1b\[\?2004[hl]/g, '')
-			// Normalize line endings but keep most ANSI sequences
-			.replace(/\r\n/g, '\n');
+		return (
+			output
+				// Remove bracketed paste mode enable/disable
+				.replace(/\x1b\[\?2004[hl]/g, "")
+				// Normalize line endings but keep most ANSI sequences
+				.replace(/\r\n/g, "\n")
+		);
 	}
 
 	/**
@@ -59,12 +61,12 @@ export class EnhancedTerminalManager extends EventEmitter {
 	 */
 	private processBufferData(data: string): { raw: string; cleaned: string; isControl: boolean } {
 		const cleaned = this.cleanTerminalOutput(data);
-		const isControl = /^[\x00-\x1f\x7f-\x9f]/.test(data) && !data.includes('\n');
-		
+		const isControl = /^[\x00-\x1f\x7f-\x9f]/.test(data) && !data.includes("\n");
+
 		return {
 			raw: data,
 			cleaned,
-			isControl
+			isControl,
 		};
 	}
 
@@ -102,7 +104,7 @@ export class EnhancedTerminalManager extends EventEmitter {
 
 			// Skip PTY on systems with persistent ENXIO errors (like this macOS system)
 			// and use enhanced shell that better supports interactive applications
-			console.log(`[EnhancedTerminalManager] Using enhanced shell mode for better interactive app compatibility`);
+			console.log("[EnhancedTerminalManager] Using enhanced shell mode for better interactive app compatibility");
 			terminalProcess = await this.createShellProcess(sessionId, session, command, resolvedWorkingDir);
 
 			// Optional: Try PTY as backup if shell fails (currently disabled due to ENXIO)
@@ -121,7 +123,6 @@ export class EnhancedTerminalManager extends EventEmitter {
 
 			console.log(`[EnhancedTerminalManager] Created session ${sessionId} successfully`);
 			return session;
-
 		} catch (error) {
 			console.error(`[EnhancedTerminalManager] Failed to create session ${sessionId}:`, error);
 			// Clean up on failure
@@ -137,9 +138,16 @@ export class EnhancedTerminalManager extends EventEmitter {
 	/**
 	 * Create a PTY process with robust error handling and ENXIO protection
 	 */
-	private async createPtyProcess(sessionId: string, session: TerminalSession, command: string[], workingDir: string, cols: number, rows: number): Promise<any> {
+	private async createPtyProcess(
+		sessionId: string,
+		session: TerminalSession,
+		command: string[],
+		workingDir: string,
+		cols: number,
+		rows: number,
+	): Promise<any> {
 		console.log(`[EnhancedTerminalManager] Attempting PTY creation for session ${sessionId}`);
-		
+
 		const ptyOptions = {
 			name: "xterm-256color",
 			cols,
@@ -159,13 +167,13 @@ export class EnhancedTerminalManager extends EventEmitter {
 			},
 			useConpty: process.platform === "win32" ? false : undefined,
 			handleFlowControl: false,
-			windowsHide: process.platform === "win32"
+			windowsHide: process.platform === "win32",
 		};
 
 		try {
 			// Use interactive shell directly for better compatibility
-			let ptyProcess = pty.spawn('/bin/zsh', ['-i'], ptyOptions);
-			
+			const ptyProcess = pty.spawn("/bin/zsh", ["-i"], ptyOptions);
+
 			// Test PTY immediately to catch ENXIO errors early
 			if (!ptyProcess?.pid) {
 				throw new Error("PTY process failed to initialize - no PID");
@@ -193,9 +201,9 @@ export class EnhancedTerminalManager extends EventEmitter {
 				if (ptyProcess.onError) {
 					ptyProcess.onError(errorHandler);
 				}
-				
+
 				// Also catch process errors
-				ptyProcess.on?.('error', errorHandler);
+				ptyProcess.on?.("error", errorHandler);
 			});
 
 			// Update session with PID
@@ -205,12 +213,15 @@ export class EnhancedTerminalManager extends EventEmitter {
 
 			// Set up PTY event handlers
 			this.setupPtyHandlers(sessionId, ptyProcess);
-			
-			console.log(`[EnhancedTerminalManager] PTY created successfully for session ${sessionId} with PID ${session.pid}`);
-			return ptyProcess;
 
+			console.log(
+				`[EnhancedTerminalManager] PTY created successfully for session ${sessionId} with PID ${session.pid}`,
+			);
+			return ptyProcess;
 		} catch (primaryError) {
-			console.warn(`[EnhancedTerminalManager] PTY creation failed (${primaryError.code || primaryError.message}), using shell fallback`);
+			console.warn(
+				`[EnhancedTerminalManager] PTY creation failed (${primaryError.code || primaryError.message}), using shell fallback`,
+			);
 			return null;
 		}
 	}
@@ -218,33 +229,38 @@ export class EnhancedTerminalManager extends EventEmitter {
 	/**
 	 * Create enhanced shell process fallback
 	 */
-	private async createShellProcess(sessionId: string, session: TerminalSession, command: string[], workingDir: string): Promise<any> {
+	private async createShellProcess(
+		sessionId: string,
+		session: TerminalSession,
+		command: string[],
+		workingDir: string,
+	): Promise<any> {
 		console.log(`[EnhancedTerminalManager] Creating enhanced shell process for session ${sessionId}`);
-		
-		const shellProcess = spawn('/bin/zsh', ['-i', '-l'], {
+
+		const shellProcess = spawn("/bin/zsh", ["-i", "-l"], {
 			cwd: workingDir,
-			stdio: ['pipe', 'pipe', 'pipe'],
+			stdio: ["pipe", "pipe", "pipe"],
 			env: {
 				...process.env,
-				SHELL: '/bin/zsh',
+				SHELL: "/bin/zsh",
 				HOME: process.env.HOME,
 				USER: process.env.USER,
-				TERM: 'xterm-256color',
-				COLORTERM: 'truecolor',
-				LANG: 'en_US.UTF-8',
-				LC_ALL: 'en_US.UTF-8',
+				TERM: "xterm-256color",
+				COLORTERM: "truecolor",
+				LANG: "en_US.UTF-8",
+				LC_ALL: "en_US.UTF-8",
 				// Force loading of interactive and login shell configs
-				PS1: '$ ',
+				PS1: "$ ",
 				// Enable TTY-like behavior for interactive apps
-				FORCE_COLOR: '1',
+				FORCE_COLOR: "1",
 				// Ensure shell loads all configurations
 				ZDOTDIR: process.env.ZDOTDIR || process.env.HOME,
 				// Help interactive applications work without real TTY
-				NO_UPDATE_NOTIFIER: '1',
-				CI: 'false',
+				NO_UPDATE_NOTIFIER: "1",
+				CI: "false",
 				// Enable better terminal emulation
-				TERM_PROGRAM: 'xterm',
-				TERM_PROGRAM_VERSION: '1.0',
+				TERM_PROGRAM: "xterm",
+				TERM_PROGRAM_VERSION: "1.0",
 			},
 			// Enable TTY-like behavior without PTY
 			windowsHide: false,
@@ -261,35 +277,35 @@ export class EnhancedTerminalManager extends EventEmitter {
 
 		// Set up enhanced shell handlers
 		this.setupShellHandlers(sessionId, shellProcess);
-		
+
 		// Initialize shell with proper prompt and TTY simulation
 		setTimeout(() => {
 			try {
 				console.log(`[EnhancedTerminalManager] Starting shell initialization for session ${sessionId}`);
 				// Force reload shell configuration to ensure aliases are available
-				shellProcess.stdin?.write('source ~/.zshrc 2>/dev/null || true\n');
-				shellProcess.stdin?.write('source ~/.zprofile 2>/dev/null || true\n');
-				shellProcess.stdin?.write('source ~/.profile 2>/dev/null || true\n');
+				shellProcess.stdin?.write("source ~/.zshrc 2>/dev/null || true\n");
+				shellProcess.stdin?.write("source ~/.zprofile 2>/dev/null || true\n");
+				shellProcess.stdin?.write("source ~/.profile 2>/dev/null || true\n");
 				// Directly set the cl alias to ensure it works
 				shellProcess.stdin?.write('alias cl="claude --dangerously-skip-permissions"\n');
 				// Test if alias was set
 				shellProcess.stdin?.write('echo "DEBUG: Alias set. Testing with alias command:"\n');
-				shellProcess.stdin?.write('alias cl\n');
+				shellProcess.stdin?.write("alias cl\n");
 				// Set up better shell environment for interactive applications
 				shellProcess.stdin?.write('export PS1="$ "\n');
-				shellProcess.stdin?.write('export FORCE_COLOR=1\n');
-				shellProcess.stdin?.write('export NO_UPDATE_NOTIFIER=1\n');
-				shellProcess.stdin?.write('export CI=false\n');
-				shellProcess.stdin?.write('stty -echo 2>/dev/null || true\n'); // Disable shell echo since we handle it
-				shellProcess.stdin?.write('exec 2>&1\n'); // Merge stderr with stdout
+				shellProcess.stdin?.write("export FORCE_COLOR=1\n");
+				shellProcess.stdin?.write("export NO_UPDATE_NOTIFIER=1\n");
+				shellProcess.stdin?.write("export CI=false\n");
+				shellProcess.stdin?.write("stty -echo 2>/dev/null || true\n"); // Disable shell echo since we handle it
+				shellProcess.stdin?.write("exec 2>&1\n"); // Merge stderr with stdout
 				shellProcess.stdin?.write('echo "Enhanced Terminal ready - supports interactive applications and aliases"\n');
 				shellProcess.stdin?.write('printf "$ "\n');
 				console.log(`[EnhancedTerminalManager] Shell initialization commands sent for session ${sessionId}`);
 			} catch (error) {
-				console.warn(`[EnhancedTerminalManager] Shell initialization warning:`, error);
+				console.warn("[EnhancedTerminalManager] Shell initialization warning:", error);
 			}
 		}, 300);
-		
+
 		// Send initial welcome message
 		const initialMessage = `\x1b[H\x1b[2J\x1b[32mTerminal Session Started\x1b[0m\nWorking Directory: \x1b[36m${workingDir}\x1b[0m\n\n`;
 		this.emitToSession(sessionId, {
@@ -306,24 +322,24 @@ export class EnhancedTerminalManager extends EventEmitter {
 	 */
 	private setupPtyHandlers(sessionId: string, ptyProcess: any): void {
 		console.log(`[EnhancedTerminalManager] Setting up PTY handlers for session ${sessionId}`);
-		
+
 		// Handle PTY data output
 		ptyProcess.onData((data: string) => {
 			try {
 				const processed = this.processBufferData(data);
-				
+
 				// Update session buffer
 				const activeSession = this.sessions.get(sessionId);
 				if (activeSession) {
 					activeSession.bufferData += processed.cleaned;
 					activeSession.lastActivity = new Date();
-					
+
 					// Keep buffer size manageable (last 100KB)
 					if (activeSession.bufferData.length > 100000) {
 						activeSession.bufferData = activeSession.bufferData.slice(-50000);
 					}
 				}
-				
+
 				// Emit to WebSocket clients
 				this.emitToSession(sessionId, {
 					type: "output",
@@ -333,7 +349,7 @@ export class EnhancedTerminalManager extends EventEmitter {
 					isControl: processed.isControl,
 				});
 			} catch (error) {
-				console.error(`[EnhancedTerminalManager] Error in PTY data handler:`, error);
+				console.error("[EnhancedTerminalManager] Error in PTY data handler:", error);
 			}
 		});
 
@@ -359,7 +375,7 @@ export class EnhancedTerminalManager extends EventEmitter {
 					this.sessions.delete(sessionId);
 				}, 5000);
 			} catch (error) {
-				console.error(`[EnhancedTerminalManager] Error in PTY exit handler:`, error);
+				console.error("[EnhancedTerminalManager] Error in PTY exit handler:", error);
 			}
 		});
 
@@ -367,7 +383,7 @@ export class EnhancedTerminalManager extends EventEmitter {
 		if (ptyProcess.onError) {
 			ptyProcess.onError((error: Error) => {
 				console.error(`[EnhancedTerminalManager] PTY error for session ${sessionId}:`, error);
-				
+
 				const errorMessage = `\n\x1b[31m[Terminal Error: ${error.message}]\x1b[0m\n`;
 				this.emitToSession(sessionId, {
 					type: "error",
@@ -385,52 +401,58 @@ export class EnhancedTerminalManager extends EventEmitter {
 		console.log(`[EnhancedTerminalManager] Setting up shell handlers for session ${sessionId}`);
 
 		// Handle stdout
-		shellProcess.stdout?.on('data', (data: Buffer) => {
+		shellProcess.stdout?.on("data", (data: Buffer) => {
 			try {
-				const dataStr = data.toString('utf8');
-				console.log(`[EnhancedTerminalManager] Shell stdout data received for session ${sessionId}:`, JSON.stringify(dataStr));
-				
+				const dataStr = data.toString("utf8");
+				console.log(
+					`[EnhancedTerminalManager] Shell stdout data received for session ${sessionId}:`,
+					JSON.stringify(dataStr),
+				);
+
 				const processed = this.processBufferData(dataStr);
-				
+
 				// Update session buffer
 				const activeSession = this.sessions.get(sessionId);
 				if (activeSession) {
 					activeSession.bufferData += processed.cleaned;
 					activeSession.lastActivity = new Date();
-					
+
 					// Keep buffer manageable
 					if (activeSession.bufferData.length > 100000) {
 						activeSession.bufferData = activeSession.bufferData.slice(-50000);
 					}
 				}
-				
+
 				// Emit to clients
-				console.log(`[EnhancedTerminalManager] Emitting shell output to session ${sessionId}:`, JSON.stringify(processed.cleaned));
+				console.log(
+					`[EnhancedTerminalManager] Emitting shell output to session ${sessionId}:`,
+					JSON.stringify(processed.cleaned),
+				);
 				this.emitToSession(sessionId, {
 					type: "output",
 					sessionId,
 					data: processed.cleaned,
 				});
 			} catch (error) {
-				console.error(`[EnhancedTerminalManager] Error in shell stdout handler:`, error);
+				console.error("[EnhancedTerminalManager] Error in shell stdout handler:", error);
 			}
 		});
 
 		// Handle stderr
-		shellProcess.stderr?.on('data', (data: Buffer) => {
+		shellProcess.stderr?.on("data", (data: Buffer) => {
 			try {
-				const processed = this.processBufferData(data.toString('utf8'));
-				
+				const processed = this.processBufferData(data.toString("utf8"));
+
 				// Color stderr output red
 				const stderrMarked = `\x1b[31m${processed.cleaned}\x1b[0m`;
-				
+
 				// Update session buffer
 				const activeSession = this.sessions.get(sessionId);
 				if (activeSession) {
 					activeSession.bufferData += stderrMarked;
 					activeSession.lastActivity = new Date();
 				}
-				
+
 				// Emit stderr as output
 				this.emitToSession(sessionId, {
 					type: "output",
@@ -438,12 +460,12 @@ export class EnhancedTerminalManager extends EventEmitter {
 					data: stderrMarked,
 				});
 			} catch (error) {
-				console.error(`[EnhancedTerminalManager] Error in shell stderr handler:`, error);
+				console.error("[EnhancedTerminalManager] Error in shell stderr handler:", error);
 			}
 		});
 
 		// Handle shell exit
-		shellProcess.on('exit', async (code: number | null, signal: string | null) => {
+		shellProcess.on("exit", async (code: number | null, signal: string | null) => {
 			try {
 				const exitCode = code ?? 0;
 				console.log(`[EnhancedTerminalManager] Shell session ${sessionId} exited with code ${exitCode}`);
@@ -465,14 +487,14 @@ export class EnhancedTerminalManager extends EventEmitter {
 					this.sessions.delete(sessionId);
 				}, 5000);
 			} catch (error) {
-				console.error(`[EnhancedTerminalManager] Error in shell exit handler:`, error);
+				console.error("[EnhancedTerminalManager] Error in shell exit handler:", error);
 			}
 		});
 
 		// Handle shell errors
-		shellProcess.on('error', (error: Error) => {
+		shellProcess.on("error", (error: Error) => {
 			console.error(`[EnhancedTerminalManager] Shell error for session ${sessionId}:`, error);
-			
+
 			const errorMessage = `\n\x1b[31m[Shell Error: ${error.message}]\x1b[0m\n`;
 			this.emitToSession(sessionId, {
 				type: "error",
@@ -489,7 +511,7 @@ export class EnhancedTerminalManager extends EventEmitter {
 		if (process.platform === "win32") {
 			return [process.env.COMSPEC || "cmd.exe"];
 		}
-		
+
 		// Prefer user's shell, fallback to zsh, then bash
 		const userShell = process.env.SHELL || "/bin/zsh";
 		return [userShell, "-l"];
@@ -500,7 +522,7 @@ export class EnhancedTerminalManager extends EventEmitter {
 	 */
 	async sendInput(sessionId: string, input: TerminalInput): Promise<void> {
 		console.log(`[EnhancedTerminalManager] sendInput called for session ${sessionId}:`, input);
-		
+
 		const activeSession = this.sessions.get(sessionId);
 		if (!activeSession) {
 			// Try to use the session manager's stdin file approach for compatibility
@@ -514,11 +536,11 @@ export class EnhancedTerminalManager extends EventEmitter {
 				} else {
 					throw new Error("Either text or key must be provided");
 				}
-				console.log(`[EnhancedTerminalManager] Writing to stdin file:`, inputData);
+				console.log("[EnhancedTerminalManager] Writing to stdin file:", inputData);
 				await this.sessionManager.writeToStdin(sessionId, inputData);
 				return;
 			} catch (fallbackError) {
-				console.error(`[EnhancedTerminalManager] Fallback input failed:`, fallbackError);
+				console.error("[EnhancedTerminalManager] Fallback input failed:", fallbackError);
 				throw new Error(`Session ${sessionId} not found or not active`);
 			}
 		}
@@ -533,40 +555,40 @@ export class EnhancedTerminalManager extends EventEmitter {
 			throw new Error("Either text or key must be provided");
 		}
 
-		console.log(`[EnhancedTerminalManager] Processed input data:`, JSON.stringify(inputData));
+		console.log("[EnhancedTerminalManager] Processed input data:", JSON.stringify(inputData));
 
 		// Send to process
 		try {
-			if (typeof activeSession.ptyProcess?.write === 'function') {
+			if (typeof activeSession.ptyProcess?.write === "function") {
 				// Real PTY process - send input directly (PTY handles echoing)
-				console.log(`[EnhancedTerminalManager] Writing to PTY process:`, JSON.stringify(inputData));
+				console.log("[EnhancedTerminalManager] Writing to PTY process:", JSON.stringify(inputData));
 				activeSession.ptyProcess.write(inputData);
 			} else if (activeSession.ptyProcess?.stdin?.write) {
 				// Shell process - handle special keys and input
-				console.log(`[EnhancedTerminalManager] Processing shell input`);
-				
-				if (inputData === '\r' || inputData === '\n') {
+				console.log("[EnhancedTerminalManager] Processing shell input");
+
+				if (inputData === "\r" || inputData === "\n") {
 					// Enter key - execute command
-					console.log(`[EnhancedTerminalManager] Enter key pressed, sending newline to shell`);
+					console.log("[EnhancedTerminalManager] Enter key pressed, sending newline to shell");
 					// Echo newline to UI for visual feedback
 					this.emitToSession(sessionId, {
 						type: "output",
 						sessionId,
-						data: '\n',
+						data: "\n",
 					});
 					// Send only newline to shell, not carriage return
-					activeSession.ptyProcess.stdin.write('\n');
-				} else if (inputData === '' || inputData === '\b' || inputData === '\x7f') {
+					activeSession.ptyProcess.stdin.write("\n");
+				} else if (inputData === "" || inputData === "\b" || inputData === "\x7f") {
 					// Backspace/Delete key - handle character deletion
-					console.log(`[EnhancedTerminalManager] Backspace key pressed`);
+					console.log("[EnhancedTerminalManager] Backspace key pressed");
 					// Send backspace sequence to UI for visual feedback
 					this.emitToSession(sessionId, {
 						type: "output",
 						sessionId,
-						data: '\b \b', // Backspace, space, backspace
+						data: "\b \b", // Backspace, space, backspace
 					});
 					// Send backspace to shell
-					activeSession.ptyProcess.stdin.write('\b');
+					activeSession.ptyProcess.stdin.write("\b");
 				} else if (inputData.length === 1 && inputData.charCodeAt(0) >= 32) {
 					// Printable characters - send to shell and echo back to UI
 					activeSession.ptyProcess.stdin.write(inputData);
@@ -577,41 +599,40 @@ export class EnhancedTerminalManager extends EventEmitter {
 					});
 				} else {
 					// Handle special control sequences
-					if (inputData === '\x03') {
+					if (inputData === "\x03") {
 						// Ctrl+C - send interrupt signal
-						console.log(`[EnhancedTerminalManager] Ctrl+C pressed, sending SIGINT`);
+						console.log("[EnhancedTerminalManager] Ctrl+C pressed, sending SIGINT");
 						try {
 							if (activeSession.ptyProcess.pid) {
-								process.kill(activeSession.ptyProcess.pid, 'SIGINT');
+								process.kill(activeSession.ptyProcess.pid, "SIGINT");
 							}
 						} catch (error) {
-							console.warn(`[EnhancedTerminalManager] Could not send SIGINT:`, error);
+							console.warn("[EnhancedTerminalManager] Could not send SIGINT:", error);
 						}
 						// Also echo ^C to terminal
 						this.emitToSession(sessionId, {
 							type: "output",
 							sessionId,
-							data: '^C\n$ ',
+							data: "^C\n$ ",
 						});
 					} else {
 						// Other input - send to shell directly
-						console.log(`[EnhancedTerminalManager] Sending special input to shell:`, JSON.stringify(inputData));
+						console.log("[EnhancedTerminalManager] Sending special input to shell:", JSON.stringify(inputData));
 						activeSession.ptyProcess.stdin.write(inputData);
 					}
 				}
 			} else {
 				console.error(`[EnhancedTerminalManager] No writable process found for session ${sessionId}`);
-				console.error(`[EnhancedTerminalManager] Process type:`, typeof activeSession.ptyProcess);
-				console.error(`[EnhancedTerminalManager] Process write function:`, typeof activeSession.ptyProcess?.write);
-				console.error(`[EnhancedTerminalManager] Process stdin:`, typeof activeSession.ptyProcess?.stdin);
-				console.error(`[EnhancedTerminalManager] Process stdin write:`, typeof activeSession.ptyProcess?.stdin?.write);
+				console.error("[EnhancedTerminalManager] Process type:", typeof activeSession.ptyProcess);
+				console.error("[EnhancedTerminalManager] Process write function:", typeof activeSession.ptyProcess?.write);
+				console.error("[EnhancedTerminalManager] Process stdin:", typeof activeSession.ptyProcess?.stdin);
+				console.error("[EnhancedTerminalManager] Process stdin write:", typeof activeSession.ptyProcess?.stdin?.write);
 				throw new Error(`Process for session ${sessionId} is not writable`);
 			}
-			
+
 			// Update last activity
 			activeSession.lastActivity = new Date();
 			console.log(`[EnhancedTerminalManager] Input sent successfully to session ${sessionId}`);
-			
 		} catch (error) {
 			console.error(`[EnhancedTerminalManager] Error sending input to session ${sessionId}:`, error);
 			throw error;
@@ -623,36 +644,36 @@ export class EnhancedTerminalManager extends EventEmitter {
 	 */
 	private mapKeyToSequence(key: string): string {
 		const keyMap: Record<string, string> = {
-			'ArrowUp': '\x1b[A',
-			'ArrowDown': '\x1b[B',
-			'ArrowRight': '\x1b[C',
-			'ArrowLeft': '\x1b[D',
-			'Home': '\x1b[H',
-			'End': '\x1b[F',
-			'PageUp': '\x1b[5~',
-			'PageDown': '\x1b[6~',
-			'Delete': '\x1b[3~',
-			'Backspace': '\x7f',
-			'Tab': '\t',
-			'Enter': '\r',
-			'Escape': '\x1b',
+			ArrowUp: "\x1b[A",
+			ArrowDown: "\x1b[B",
+			ArrowRight: "\x1b[C",
+			ArrowLeft: "\x1b[D",
+			Home: "\x1b[H",
+			End: "\x1b[F",
+			PageUp: "\x1b[5~",
+			PageDown: "\x1b[6~",
+			Delete: "\x1b[3~",
+			Backspace: "\x7f",
+			Tab: "\t",
+			Enter: "\r",
+			Escape: "\x1b",
 			// Control sequences
-			'Ctrl+C': '\x03',
-			'Ctrl+D': '\x04',
-			'Ctrl+Z': '\x1a',
+			"Ctrl+C": "\x03",
+			"Ctrl+D": "\x04",
+			"Ctrl+Z": "\x1a",
 			// Function keys
-			'F1': '\x1bOP',
-			'F2': '\x1bOQ',
-			'F3': '\x1bOR',
-			'F4': '\x1bOS',
-			'F5': '\x1b[15~',
-			'F6': '\x1b[17~',
-			'F7': '\x1b[18~',
-			'F8': '\x1b[19~',
-			'F9': '\x1b[20~',
-			'F10': '\x1b[21~',
-			'F11': '\x1b[23~',
-			'F12': '\x1b[24~',
+			F1: "\x1bOP",
+			F2: "\x1bOQ",
+			F3: "\x1bOR",
+			F4: "\x1bOS",
+			F5: "\x1b[15~",
+			F6: "\x1b[17~",
+			F7: "\x1b[18~",
+			F8: "\x1b[19~",
+			F9: "\x1b[20~",
+			F10: "\x1b[21~",
+			F11: "\x1b[23~",
+			F12: "\x1b[24~",
 		};
 
 		return keyMap[key] || key;
@@ -670,7 +691,7 @@ export class EnhancedTerminalManager extends EventEmitter {
 		}
 
 		try {
-			if (typeof activeSession.ptyProcess?.resize === 'function') {
+			if (typeof activeSession.ptyProcess?.resize === "function") {
 				// Real PTY process
 				activeSession.ptyProcess.resize(cols, rows);
 				console.log(`[EnhancedTerminalManager] Resized PTY session ${sessionId} to ${cols}x${rows}`);
@@ -678,12 +699,11 @@ export class EnhancedTerminalManager extends EventEmitter {
 				// Shell process - resize not supported but don't error
 				console.log(`[EnhancedTerminalManager] Resize not supported for shell session ${sessionId}`);
 			}
-			
+
 			// Update session info
 			activeSession.session.cols = cols;
 			activeSession.session.rows = rows;
 			await this.sessionManager.saveSessionInfo(sessionId, activeSession.session);
-			
 		} catch (error) {
 			console.warn(`[EnhancedTerminalManager] Error resizing session ${sessionId}:`, error);
 			// Don't throw - resize failure shouldn't break the session
@@ -698,16 +718,16 @@ export class EnhancedTerminalManager extends EventEmitter {
 
 		if (activeSession?.ptyProcess) {
 			try {
-				if (typeof activeSession.ptyProcess.kill === 'function') {
+				if (typeof activeSession.ptyProcess.kill === "function") {
 					// Graceful termination
-					activeSession.ptyProcess.kill('SIGTERM');
+					activeSession.ptyProcess.kill("SIGTERM");
 					console.log(`[EnhancedTerminalManager] Sent SIGTERM to session ${sessionId}`);
-					
+
 					// Force kill after 5 seconds if still running
 					setTimeout(() => {
 						if (activeSession.ptyProcess && !activeSession.ptyProcess.killed) {
 							try {
-								activeSession.ptyProcess.kill('SIGKILL');
+								activeSession.ptyProcess.kill("SIGKILL");
 								console.log(`[EnhancedTerminalManager] Force killed session ${sessionId}`);
 							} catch (error) {
 								console.warn(`[EnhancedTerminalManager] Error force killing session ${sessionId}:`, error);
@@ -720,14 +740,22 @@ export class EnhancedTerminalManager extends EventEmitter {
 			}
 		}
 
-		// Clean up session
+		// Clean up session from memory
 		this.sessions.delete(sessionId);
-		
-		// Update session status
+
+		// Update session status to exited first
 		try {
 			await this.sessionManager.updateSessionStatus(sessionId, "exited");
 		} catch (error) {
-			console.warn(`[EnhancedTerminalManager] Error updating session status:`, error);
+			console.warn("[EnhancedTerminalManager] Error updating session status:", error);
+		}
+
+		// Completely remove session directory and files from filesystem
+		try {
+			await this.sessionManager.cleanupSession(sessionId);
+			console.log(`[EnhancedTerminalManager] Session ${sessionId} completely removed from filesystem`);
+		} catch (error) {
+			console.warn(`[EnhancedTerminalManager] Error cleaning up session files for ${sessionId}:`, error);
 		}
 	}
 
@@ -743,7 +771,7 @@ export class EnhancedTerminalManager extends EventEmitter {
 		// Try to load from file for non-active sessions
 		try {
 			const paths = this.sessionManager.getSessionPaths(sessionId);
-			return await readFile(paths.stdoutPath, 'utf8');
+			return await readFile(paths.stdoutPath, "utf8");
 		} catch (error) {
 			console.warn(`[EnhancedTerminalManager] Could not read output for session ${sessionId}:`, error);
 			return "";
@@ -757,16 +785,22 @@ export class EnhancedTerminalManager extends EventEmitter {
 		try {
 			const persistedSessions = await this.sessionManager.listSessions();
 			console.log(`[EnhancedTerminalManager] Found ${persistedSessions.length} persisted sessions`);
-			
-			// Note: We don't restore running processes, just mark them as available for connection
+
+			// Mark all persisted sessions as exited since we can't restore the actual processes
 			for (const session of persistedSessions) {
 				if (session.status === "running") {
-					// Mark as exited since we can't restore the actual process
 					await this.sessionManager.updateSessionStatus(session.id, "exited");
 				}
 			}
+
+			// Automatically clean up all exited sessions on startup to keep the terminal list clean
+			console.log("[EnhancedTerminalManager] Cleaning up exited sessions on startup");
+			const cleanupResult = await this.cleanupAllOldSessions();
+			console.log(
+				`[EnhancedTerminalManager] Startup cleanup completed: ${cleanupResult.cleaned}/${cleanupResult.total} sessions cleaned`,
+			);
 		} catch (error) {
-			console.error(`[EnhancedTerminalManager] Error loading existing sessions:`, error);
+			console.error("[EnhancedTerminalManager] Error loading existing sessions:", error);
 		}
 	}
 
@@ -820,7 +854,7 @@ export class EnhancedTerminalManager extends EventEmitter {
 				try {
 					listener(message);
 				} catch (error) {
-					console.error(`[EnhancedTerminalManager] Error in session listener:`, error);
+					console.error("[EnhancedTerminalManager] Error in session listener:", error);
 				}
 			}
 		}
@@ -829,16 +863,21 @@ export class EnhancedTerminalManager extends EventEmitter {
 	/**
 	 * Start periodic cleanup of old sessions
 	 */
-	startPeriodicCleanup(intervalHours: number = 6, maxAgeHours: number = 24): void {
+	startPeriodicCleanup(intervalHours = 6, maxAgeHours = 24): void {
 		if (this.cleanupIntervalId) {
 			clearInterval(this.cleanupIntervalId);
 		}
 
-		this.cleanupIntervalId = setInterval(async () => {
-			await this.cleanupOldSessions(maxAgeHours);
-		}, intervalHours * 60 * 60 * 1000);
+		this.cleanupIntervalId = setInterval(
+			async () => {
+				await this.cleanupOldSessions(maxAgeHours);
+			},
+			intervalHours * 60 * 60 * 1000,
+		);
 
-		console.log(`[EnhancedTerminalManager] Started periodic cleanup (every ${intervalHours}h, max age ${maxAgeHours}h)`);
+		console.log(
+			`[EnhancedTerminalManager] Started periodic cleanup (every ${intervalHours}h, max age ${maxAgeHours}h)`,
+		);
 	}
 
 	/**
@@ -860,14 +899,14 @@ export class EnhancedTerminalManager extends EventEmitter {
 				}
 			}
 		} catch (error) {
-			console.error(`[EnhancedTerminalManager] Error during cleanup:`, error);
+			console.error("[EnhancedTerminalManager] Error during cleanup:", error);
 		}
 	}
 
 	/**
 	 * Manual cleanup of all old/exited sessions
 	 */
-	async cleanupAllOldSessions(): Promise<{ cleaned: number, total: number }> {
+	async cleanupAllOldSessions(): Promise<{ cleaned: number; total: number }> {
 		try {
 			const sessions = await this.sessionManager.listSessions();
 			let cleaned = 0;
@@ -890,7 +929,7 @@ export class EnhancedTerminalManager extends EventEmitter {
 			console.log(`[EnhancedTerminalManager] Manual cleanup completed: ${cleaned}/${total} sessions cleaned`);
 			return { cleaned, total };
 		} catch (error) {
-			console.error(`[EnhancedTerminalManager] Error during manual cleanup:`, error);
+			console.error("[EnhancedTerminalManager] Error during manual cleanup:", error);
 			throw error;
 		}
 	}
@@ -910,8 +949,8 @@ export class EnhancedTerminalManager extends EventEmitter {
 		for (const [sessionId, activeSession] of this.sessions) {
 			if (activeSession.ptyProcess) {
 				try {
-					if (typeof activeSession.ptyProcess.kill === 'function') {
-						activeSession.ptyProcess.kill('SIGTERM');
+					if (typeof activeSession.ptyProcess.kill === "function") {
+						activeSession.ptyProcess.kill("SIGTERM");
 						console.log(`[EnhancedTerminalManager] Terminated session ${sessionId} during cleanup`);
 					}
 				} catch (error) {
@@ -921,6 +960,6 @@ export class EnhancedTerminalManager extends EventEmitter {
 		}
 
 		this.sessions.clear();
-		console.log(`[EnhancedTerminalManager] Cleanup completed`);
+		console.log("[EnhancedTerminalManager] Cleanup completed");
 	}
 }

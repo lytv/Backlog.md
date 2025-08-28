@@ -24,10 +24,10 @@ export class TerminalAPI {
 	async createSession(request: CreateTerminalRequest): Promise<TerminalSession> {
 		try {
 			console.log("[TerminalAPI] Creating session with request:", request);
-			
+
 			// Sanitize the request to prevent circular references
 			const sanitizedRequest = this.sanitizeRequestData(request);
-			
+
 			const response = await fetch(`${this.baseUrl}/api/terminals`, {
 				method: "POST",
 				headers: {
@@ -83,6 +83,22 @@ export class TerminalAPI {
 			const error = await response.json();
 			throw new Error(error.error || `Failed to kill terminal: ${response.statusText}`);
 		}
+	}
+
+	/**
+	 * Clean up all old/exited terminal sessions
+	 */
+	async cleanupSessions(): Promise<{ cleaned: number; total: number; message: string }> {
+		const response = await fetch(`${this.baseUrl}/api/terminals/cleanup`, {
+			method: "POST",
+		});
+
+		if (!response.ok) {
+			const error = await response.json();
+			throw new Error(error.error || `Failed to cleanup terminals: ${response.statusText}`);
+		}
+
+		return response.json();
 	}
 
 	/**
@@ -155,7 +171,7 @@ export class TerminalAPI {
 
 			// For arrays
 			if (Array.isArray(data)) {
-				return data.map(item => this.sanitizeRequestData(item)).filter(item => item !== undefined);
+				return data.map((item) => this.sanitizeRequestData(item)).filter((item) => item !== undefined);
 			}
 
 			// For plain objects, create a clean copy
@@ -283,7 +299,7 @@ export class TerminalWebSocket {
 
 			// For arrays and plain objects, recursively sanitize
 			if (Array.isArray(data)) {
-				return data.map(item => this.sanitizeData(item));
+				return data.map((item) => this.sanitizeData(item));
 			}
 
 			// For plain objects, create a clean copy

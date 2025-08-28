@@ -37,7 +37,7 @@ interface TerminalPageProps {
 }
 
 const TerminalPage: React.FC<TerminalPageProps> = ({ tasks }) => {
-	const { sessions: realSessions, loading, error, createSession, killSession, refreshSessions } = useTerminal();
+	const { sessions: realSessions, loading, error, createSession, killSession, cleanupSessions, refreshSessions } = useTerminal();
 
 	const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
 	const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
@@ -86,6 +86,23 @@ const TerminalPage: React.FC<TerminalPageProps> = ({ tasks }) => {
 			} catch (error) {
 				console.error('Error killing all sessions:', error);
 				alert('Failed to kill all sessions');
+			}
+		}
+	};
+
+	const handleCleanup = async () => {
+		if (confirm('Are you sure you want to clean up all exited terminal sessions? This will permanently remove them from the filesystem.')) {
+			try {
+				const result = await cleanupSessions();
+				
+				// Refresh sessions list to ensure UI is updated
+				await refreshSessions();
+				
+				alert(`Cleanup completed: ${result.cleaned} old sessions removed out of ${result.total} total sessions.`);
+				console.log('Cleanup completed:', result);
+			} catch (error) {
+				console.error('Error cleaning up sessions:', error);
+				alert('Failed to cleanup sessions');
 			}
 		}
 	};
@@ -229,6 +246,7 @@ const TerminalPage: React.FC<TerminalPageProps> = ({ tasks }) => {
 				activeSessionId={activeSessionId || ''}
 				onSessionSelect={handleSessionSelect}
 				onKillAll={handleKillAll}
+				onCleanup={handleCleanup}
 				isCollapsed={isSidebarCollapsed}
 				onToggleCollapsed={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
 			/>

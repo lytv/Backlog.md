@@ -1,0 +1,31 @@
+{
+  "id": "wt-Worker_API_Endpoints-meutit3v",
+  "name": "Worker_API_Endpoints",
+  "path": "/Users/mac/tools/Backlog.md/.tree/Worker_API_Endpoints",
+  "branch": "feature/worker_api_endpoints",
+  "baseBranch": "08-20-demo_63c9e1be_add_activity_feed_api",
+  "taskIds": [
+    "task-001"
+  ],
+  "status": {
+    "isClean": true,
+    "modifiedFiles": 0,
+    "stagedFiles": 0,
+    "untrackedFiles": 0,
+    "aheadCount": 0,
+    "behindCount": 0,
+    "hasConflicts": false,
+    "lastStatusCheck": "2025-08-28T03:03:28.531Z"
+  },
+  "createdDate": "2025-08-28T03:02:14.691Z",
+  "lastAccessedDate": "2025-08-28T03:02:14.691Z",
+  "isActive": true,
+  "metadata": {
+    "description": "Worktree for task: Worker API Endpoints",
+    "tags": [
+      "task",
+      "normal"
+    ],
+    "autoCleanup": false
+  }
+}

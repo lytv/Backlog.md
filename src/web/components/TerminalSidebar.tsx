@@ -15,6 +15,7 @@ interface TerminalSidebarProps {
 	activeSessionId: string;
 	onSessionSelect: (sessionId: string) => void;
 	onKillAll: () => void;
+	onCleanup: () => void;
 	isCollapsed?: boolean;
 	onToggleCollapsed?: () => void;
 }
@@ -24,6 +25,7 @@ const TerminalSidebar: React.FC<TerminalSidebarProps> = ({
 	activeSessionId,
 	onSessionSelect,
 	onKillAll,
+	onCleanup,
 	isCollapsed = false,
 	onToggleCollapsed
 }) => {
@@ -147,12 +149,18 @@ const TerminalSidebar: React.FC<TerminalSidebarProps> = ({
 
 			{/* Sidebar Footer */}
 			{sessions.length > 0 && !isCollapsed && (
-				<div className="p-4 border-t border-gray-200 dark:border-gray-700">
+				<div className="p-4 border-t border-gray-200 dark:border-gray-700 space-y-2">
 					<button
 						onClick={onKillAll}
 						className="w-full px-4 py-2 bg-red-600 dark:bg-red-700 text-white text-sm font-medium rounded-lg hover:bg-red-700 dark:hover:bg-red-600 transition-colors duration-200"
 					>
 						Kill All
+					</button>
+					<button
+						onClick={onCleanup}
+						className="w-full px-4 py-2 bg-orange-600 dark:bg-orange-700 text-white text-sm font-medium rounded-lg hover:bg-orange-700 dark:hover:bg-orange-600 transition-colors duration-200"
+					>
+						Cleanup Exited
 					</button>
 				</div>
 			)}

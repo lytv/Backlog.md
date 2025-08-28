@@ -8,6 +8,7 @@ export interface UseTerminalReturn {
 	error: string | null;
 	createSession: (request: CreateTerminalRequest) => Promise<TerminalSession>;
 	killSession: (sessionId: string) => Promise<void>;
+	cleanupSessions: () => Promise<{ cleaned: number; total: number; message: string }>;
 	refreshSessions: () => Promise<void>;
 }
 
@@ -56,6 +57,20 @@ export function useTerminal(): UseTerminalReturn {
 		}
 	}, []);
 
+	const cleanupSessions = useCallback(async (): Promise<{ cleaned: number; total: number; message: string }> => {
+		try {
+			setError(null);
+			const result = await apiRef.current.cleanupSessions();
+			// Refresh sessions list after cleanup
+			await refreshSessions();
+			return result;
+		} catch (err) {
+			const errorMessage = err instanceof Error ? err.message : "Failed to cleanup sessions";
+			setError(errorMessage);
+			throw new Error(errorMessage);
+		}
+	}, [refreshSessions]);
+
 	// Load sessions on mount
 	useEffect(() => {
 		refreshSessions();
@@ -73,6 +88,7 @@ export function useTerminal(): UseTerminalReturn {
 		error,
 		createSession,
 		killSession,
+		cleanupSessions,
 		refreshSessions,
 	};
 }
