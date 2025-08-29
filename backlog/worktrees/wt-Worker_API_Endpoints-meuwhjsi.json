@@ -1,31 +1,26 @@
 {
-  "id": "wt-Worker_API_Endpoints-meuwhjsi",
-  "name": "Worker_API_Endpoints",
-  "path": "/Users/mac/tools/Backlog.md/.tree/Worker_API_Endpoints",
-  "branch": "feature/worker_api_endpoints",
-  "baseBranch": "08-20-demo_63c9e1be_add_activity_feed_api",
-  "taskIds": [
-    "task-001"
-  ],
-  "status": {
-    "isClean": true,
-    "modifiedFiles": 0,
-    "stagedFiles": 0,
-    "untrackedFiles": 0,
-    "aheadCount": 0,
-    "behindCount": 0,
-    "hasConflicts": false,
-    "lastStatusCheck": "2025-08-28T04:42:27.595Z"
-  },
-  "createdDate": "2025-08-28T04:25:14.803Z",
-  "lastAccessedDate": "2025-08-28T04:25:14.803Z",
-  "isActive": true,
-  "metadata": {
-    "description": "Worktree for task: Worker API Endpoints",
-    "tags": [
-      "task",
-      "normal"
-    ],
-    "autoCleanup": false
-  }
+	"id": "wt-Worker_API_Endpoints-meuwhjsi",
+	"name": "Worker_API_Endpoints",
+	"path": "/Users/mac/tools/Backlog.md/.tree/Worker_API_Endpoints",
+	"branch": "feature/worker_api_endpoints",
+	"baseBranch": "08-20-demo_63c9e1be_add_activity_feed_api",
+	"taskIds": ["task-001"],
+	"status": {
+		"isClean": true,
+		"modifiedFiles": 0,
+		"stagedFiles": 0,
+		"untrackedFiles": 0,
+		"aheadCount": 0,
+		"behindCount": 0,
+		"hasConflicts": false,
+		"lastStatusCheck": "2025-08-29T03:00:45.385Z"
+	},
+	"createdDate": "2025-08-28T04:25:14.803Z",
+	"lastAccessedDate": "2025-08-28T04:25:14.803Z",
+	"isActive": true,
+	"metadata": {
+		"description": "Worktree for task: Worker API Endpoints",
+		"tags": ["task", "normal"],
+		"autoCleanup": false
+	}
 }
